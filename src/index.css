@@ -2,12 +2,13 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
-All colors MUST be HSL.
-*/
-
+/* Design system: HSL tokens, gradients, fonts, shadows, motion */
 @layer base {
+  /* Font */
+  @import url('https://fonts.googleapis.com/css2?family=Manrope:wght@300..800&display=swap');
+
   :root {
+    /* Core palette */
     --background: 0 0% 100%;
     --foreground: 222.2 84% 4.9%;
 
@@ -17,7 +18,8 @@ All colors MUST be HSL.
     --popover: 0 0% 100%;
     --popover-foreground: 222.2 84% 4.9%;
 
-    --primary: 222.2 47.4% 11.2%;
+    /* Brand and accent (vibrant and positive) */
+    --primary: 262 83% 58%; /* Indigo */
     --primary-foreground: 210 40% 98%;
 
     --secondary: 210 40% 96.1%;
@@ -26,7 +28,7 @@ All colors MUST be HSL.
     --muted: 210 40% 96.1%;
     --muted-foreground: 215.4 16.3% 46.9%;
 
-    --accent: 210 40% 96.1%;
+    --accent: 200 94% 56%; /* Cyan */
     --accent-foreground: 222.2 47.4% 11.2%;
 
     --destructive: 0 84.2% 60.2%;
@@ -34,25 +36,26 @@ All colors MUST be HSL.
 
     --border: 214.3 31.8% 91.4%;
     --input: 214.3 31.8% 91.4%;
-    --ring: 222.2 84% 4.9%;
+    --ring: 262 83% 58%;
 
-    --radius: 0.5rem;
+    --radius: 0.8rem;
 
+    /* Sidebar tokens */
     --sidebar-background: 0 0% 98%;
-
     --sidebar-foreground: 240 5.3% 26.1%;
-
-    --sidebar-primary: 240 5.9% 10%;
-
+    --sidebar-primary: 262 83% 58%;
     --sidebar-primary-foreground: 0 0% 98%;
-
     --sidebar-accent: 240 4.8% 95.9%;
-
     --sidebar-accent-foreground: 240 5.9% 10%;
-
     --sidebar-border: 220 13% 91%;
-
     --sidebar-ring: 217.2 91.2% 59.8%;
+
+    /* Design tokens */
+    --font-sans: 'Manrope', ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
+    --gradient-primary: linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(var(--accent)) 100%);
+    --gradient-soft: linear-gradient(180deg, hsl(var(--muted)) 0%, hsl(var(--background)) 100%);
+    --shadow-elev: 0 10px 30px -10px hsl(var(--primary) / 0.25);
+    --shadow-glow: 0 8px 24px hsl(var(--accent) / 0.35), 0 2px 8px hsl(var(--primary) / 0.25);
   }
 
   .dark {
@@ -66,7 +69,7 @@ All colors MUST be HSL.
     --popover-foreground: 210 40% 98%;
 
     --primary: 210 40% 98%;
-    --primary-foreground: 222.2 47.4% 11.2%;
+    --primary-foreground: 262 83% 20%;
 
     --secondary: 217.2 32.6% 17.5%;
     --secondary-foreground: 210 40% 98%;
@@ -74,7 +77,7 @@ All colors MUST be HSL.
     --muted: 217.2 32.6% 17.5%;
     --muted-foreground: 215 20.2% 65.1%;
 
-    --accent: 217.2 32.6% 17.5%;
+    --accent: 262 83% 58%;
     --accent-foreground: 210 40% 98%;
 
     --destructive: 0 62.8% 30.6%;
@@ -83,6 +86,7 @@ All colors MUST be HSL.
     --border: 217.2 32.6% 17.5%;
     --input: 217.2 32.6% 17.5%;
     --ring: 212.7 26.8% 83.9%;
+
     --sidebar-background: 240 5.9% 10%;
     --sidebar-foreground: 240 4.8% 95.9%;
     --sidebar-primary: 224.3 76.3% 48%;
@@ -91,6 +95,8 @@ All colors MUST be HSL.
     --sidebar-accent-foreground: 240 4.8% 95.9%;
     --sidebar-border: 240 3.7% 15.9%;
     --sidebar-ring: 217.2 91.2% 59.8%;
+
+    --shadow-glow: 0 8px 24px hsl(var(--primary) / 0.45), 0 2px 8px hsl(var(--accent) / 0.3);
   }
 }
 
@@ -100,6 +106,63 @@ All colors MUST be HSL.
   }
 
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground antialiased;
+    font-family: var(--font-sans);
+    background-image: var(--gradient-soft);
+    background-attachment: fixed;
+  }
+}
+
+/* Components and utilities using tokens */
+@layer components {
+  .bg-gradient-primary {
+    background-image: var(--gradient-primary);
+  }
+  .shadow-elev {
+    box-shadow: var(--shadow-elev);
+  }
+  .shadow-glow {
+    box-shadow: var(--shadow-glow);
+  }
+  .surface-card {
+    @apply bg-card border rounded-lg; 
+    box-shadow: var(--shadow-elev);
+  }
+  .btn-hero {
+    background-image: var(--gradient-primary);
+    color: hsl(var(--primary-foreground));
+    @apply px-6 py-2 rounded-md font-semibold;
+    transition: transform 180ms ease, filter 180ms ease;
+  }
+  .btn-hero:hover {
+    transform: translateY(-1px);
+    filter: brightness(1.05);
+  }
+  .hover-tilt {
+    transform-style: preserve-3d;
+    transition: transform 300ms cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  .hover-tilt:hover {
+    transform: perspective(1000px) rotateX(2deg) rotateY(-2deg) translateY(-2px);
+  }
+
+  /* Signature: animated glow following cursor */
+  .glow-field {
+    position: relative;
+    isolation: isolate;
+  }
+  .glow-field::before {
+    content: "";
+    position: absolute;
+    inset: -10%;
+    background: radial-gradient(600px circle at var(--x,50%) var(--y,50%), hsl(var(--accent) / 0.12), transparent 40%);
+    filter: blur(20px);
+    z-index: -1;
+    pointer-events: none;
+    transition: opacity 200ms ease;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .hover-tilt, .btn-hero { transition: none; }
+    .glow-field::before { display: none; }
   }
 }
