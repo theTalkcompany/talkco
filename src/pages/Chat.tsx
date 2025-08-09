@@ -1,29 +1,28 @@
 import { Helmet } from "react-helmet-async";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import WillowChat from "@/components/chat/WillowChat";
 
 const Chat = () => {
   return (
     <>
       <Helmet>
-        <title>Chat — Talk</title>
-        <meta name="description" content="Join live community rooms or talk to an AI for instant support on Talk." />
+        <title>Chat with Willow — Talk</title>
+        <meta name="description" content="Chat with Willow for supportive, judgment-free guidance, or join community rooms on Talk." />
         <link rel="canonical" href="/chat" />
       </Helmet>
 
       <h1 className="text-3xl font-bold mb-4">Talk Live</h1>
       <Tabs defaultValue="ai">
         <TabsList>
-          <TabsTrigger value="ai">AI Support</TabsTrigger>
+          <TabsTrigger value="ai">Willow</TabsTrigger>
           <TabsTrigger value="community">Community Rooms</TabsTrigger>
         </TabsList>
         <TabsContent value="ai" className="mt-4">
           <article className="surface-card p-6">
-            <h2 className="text-2xl font-semibold">Talk to an AI</h2>
-            <p className="mt-2 text-muted-foreground">Private, always-on support to help you process your feelings.</p>
-            <div className="mt-4">
-              <Button variant="hero" disabled>Start AI Session</Button>
-            </div>
+            <h2 className="text-2xl font-semibold">Talk with Willow</h2>
+            <p className="mt-2 text-muted-foreground">Private, judgment-free support. Willow listens, reflects, and offers gentle, practical steps.</p>
+            <WillowChat />
           </article>
         </TabsContent>
         <TabsContent value="community" className="mt-4">
