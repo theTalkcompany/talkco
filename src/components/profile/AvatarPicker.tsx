@@ -41,10 +41,28 @@ export default function AvatarPicker({ builtIn = [], onSelect }: AvatarPickerPro
 
   const defaultTab = categories[0]?.key ?? "built-in";
 
+  const Grid = ({ children }: { children: React.ReactNode }) => (
+    <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-4">
+      {children}
+    </div>
+  );
+
+  const Cell = ({ children, onClick, label }: { children: React.ReactNode; onClick: () => void; label: string }) => (
+    <button
+      onClick={onClick}
+      aria-label={label}
+      className="group inline-flex items-center justify-center rounded-lg border bg-background hover:shadow focus:outline-none focus:ring-2 focus:ring-ring transition"
+    >
+      <div className="h-20 w-20 rounded-md overflow-hidden">
+        {children}
+      </div>
+    </button>
+  );
+
   return (
     <div className="space-y-4">
       <Tabs defaultValue={defaultTab} className="w-full">
-        <TabsList className="flex flex-wrap gap-2">
+        <TabsList className="flex flex-wrap gap-2 bg-background z-10">
           {categories.map((c) => (
             <TabsTrigger key={c.key} value={c.key} className="whitespace-nowrap">
               {c.label}
@@ -55,44 +73,36 @@ export default function AvatarPicker({ builtIn = [], onSelect }: AvatarPickerPro
         {categories.map((c) => (
           <TabsContent key={c.key} value={c.key} className="mt-4">
             {c.type === "built-in" ? (
-              <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 gap-3">
+              <Grid>
                 {builtIn.map((url) => (
-                  <button
-                    key={url}
-                    onClick={() => onSelect(url)}
-                    className="rounded-lg border hover:shadow focus:outline-none focus:ring-2 focus:ring-ring p-2"
-                    aria-label={`Select built-in avatar`}
-                  >
+                  <Cell key={url} onClick={() => onSelect(url)} label={`Select built-in avatar`}>
                     <img
                       src={url}
                       alt="Built-in avatar option"
                       loading="lazy"
-                      className="h-16 w-16 object-cover"
+                      decoding="async"
+                      className="h-full w-full object-cover"
                     />
-                  </button>
+                  </Cell>
                 ))}
-              </div>
+              </Grid>
             ) : (
-              <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 gap-3">
+              <Grid>
                 {SEEDS.map((seed) => {
                   const url = buildDicebearUrl(c.style!, seed);
                   return (
-                    <button
-                      key={`${c.key}-${seed}`}
-                      onClick={() => onSelect(url)}
-                      className="rounded-lg border hover:shadow focus:outline-none focus:ring-2 focus:ring-ring p-2"
-                      aria-label={`Select ${c.label} avatar for ${seed}`}
-                    >
+                    <Cell key={`${c.key}-${seed}`} onClick={() => onSelect(url)} label={`Select ${c.label} avatar for ${seed}`}>
                       <img
                         src={url}
                         alt={`${c.label} avatar, seed ${seed}`}
                         loading="lazy"
-                        className="h-16 w-16 object-cover"
+                        decoding="async"
+                        className="h-full w-full object-cover"
                       />
-                    </button>
+                    </Cell>
                   );
                 })}
-              </div>
+              </Grid>
             )}
           </TabsContent>
         ))}
