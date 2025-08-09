@@ -83,6 +83,15 @@ const Auth = () => {
       toast({ title: "Sign up failed", description: error.message, variant: "destructive" });
       return;
     }
+
+    try {
+      await supabase.functions.invoke("send-welcome-email", {
+        body: { email, name: fullName || undefined },
+      });
+    } catch (err) {
+      console.error("Failed to send welcome email", err);
+    }
+
     if (!data.session) {
       toast({ title: "Check your email", description: "Confirm your email to finish sign up." });
     } else {
