@@ -10,6 +10,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import AvatarPicker from "@/components/profile/AvatarPicker";
+import MyPosts from "@/components/profile/MyPosts";
 
 interface ProfileRow {
   user_id: string;
@@ -270,6 +271,15 @@ const [editing, setEditing] = useState({
                 <Button onClick={handleSave} disabled={loading}>{loading ? "Saving..." : "Save changes"}</Button>
               </div>
             </div>
+          </CardContent>
+        </Card>
+
+        <Card className="md:col-span-3">
+          <CardHeader>
+            <CardTitle>My Posts & Feedback</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <MyPosts userId={userId} />
           </CardContent>
         </Card>
       </section>
