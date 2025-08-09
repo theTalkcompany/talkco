@@ -226,7 +226,7 @@ const [editing, setEditing] = useState({
                       <p className="text-sm text-muted-foreground">Upload a square image for best results.</p>
                       <Input type="file" accept="image/*" onChange={onFileChange} />
                     </TabsContent>
-                    <TabsContent value="choose">
+                    <TabsContent value="choose" className="mt-4">
                       <AvatarPicker builtIn={presetAvatars} onSelect={choosePreset} />
                     </TabsContent>
                   </Tabs>

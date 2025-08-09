@@ -66,7 +66,7 @@ export default function AvatarPicker({ builtIn = [], onSelect }: AvatarPickerPro
   const defaultTab = categories[0]?.key ?? "built-in";
 
   const Grid = ({ children }: { children: React.ReactNode }) => (
-    <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-5">
+    <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-6 pt-2">
       {children}
     </div>
   );
@@ -86,7 +86,7 @@ export default function AvatarPicker({ builtIn = [], onSelect }: AvatarPickerPro
   return (
     <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-1">
       <Tabs defaultValue={defaultTab} className="w-full">
-        <TabsList className="border rounded-md flex flex-wrap gap-2 p-1 mb-6 md:mb-8 bg-background">
+        <TabsList className="border rounded-lg flex flex-wrap gap-2 p-2 mb-10 sm:mb-12 bg-background shadow-sm">
           {categories.map((c) => (
             <TabsTrigger key={c.key} value={c.key} className="whitespace-nowrap">
               {c.label}
