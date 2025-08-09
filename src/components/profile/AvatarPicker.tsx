@@ -42,7 +42,7 @@ export default function AvatarPicker({ builtIn = [], onSelect }: AvatarPickerPro
   const defaultTab = categories[0]?.key ?? "built-in";
 
   const Grid = ({ children }: { children: React.ReactNode }) => (
-    <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-4">
+    <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-5">
       {children}
     </div>
   );
@@ -51,18 +51,18 @@ export default function AvatarPicker({ builtIn = [], onSelect }: AvatarPickerPro
     <button
       onClick={onClick}
       aria-label={label}
-      className="group inline-flex items-center justify-center rounded-lg border bg-background hover:shadow focus:outline-none focus:ring-2 focus:ring-ring transition"
+      className="group inline-flex items-center justify-center rounded-lg border bg-background shadow-sm hover:shadow focus:outline-none focus:ring-2 focus:ring-ring transition"
     >
-      <div className="h-20 w-20 rounded-md overflow-hidden">
+      <div className="h-20 w-20 aspect-square rounded-md overflow-hidden bg-background">
         {children}
       </div>
     </button>
   );
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-1">
       <Tabs defaultValue={defaultTab} className="w-full">
-        <TabsList className="flex flex-wrap gap-2 bg-background z-10">
+        <TabsList className="sticky top-0 z-30 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border rounded-md flex flex-wrap gap-2 p-1">
           {categories.map((c) => (
             <TabsTrigger key={c.key} value={c.key} className="whitespace-nowrap">
               {c.label}
@@ -71,7 +71,7 @@ export default function AvatarPicker({ builtIn = [], onSelect }: AvatarPickerPro
         </TabsList>
 
         {categories.map((c) => (
-          <TabsContent key={c.key} value={c.key} className="mt-4">
+          <TabsContent key={c.key} value={c.key} className="mt-4 relative z-0">
             {c.type === "built-in" ? (
               <Grid>
                 {builtIn.map((url) => (
@@ -81,7 +81,7 @@ export default function AvatarPicker({ builtIn = [], onSelect }: AvatarPickerPro
                       alt="Built-in avatar option"
                       loading="lazy"
                       decoding="async"
-                      className="h-full w-full object-cover"
+                      className="h-full w-full object-contain"
                     />
                   </Cell>
                 ))}
@@ -97,7 +97,7 @@ export default function AvatarPicker({ builtIn = [], onSelect }: AvatarPickerPro
                         alt={`${c.label} avatar, seed ${seed}`}
                         loading="lazy"
                         decoding="async"
-                        className="h-full w-full object-cover"
+                        className="h-full w-full object-contain"
                       />
                     </Cell>
                   );
