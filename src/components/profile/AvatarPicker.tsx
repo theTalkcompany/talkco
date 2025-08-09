@@ -1,5 +1,5 @@
 import React from "react";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+
 
 interface AvatarPickerProps {
   builtIn?: string[];
@@ -46,24 +46,7 @@ const buildOpenmojiUrl = (code: string) =>
   `https://cdn.jsdelivr.net/npm/openmoji@${OPENMOJI_VERSION}/color/svg/${code}.svg`;
 
 export default function AvatarPicker({ builtIn = [], onSelect }: AvatarPickerProps) {
-  const categories: { key: string; label: string; type: "built-in" | "dicebear" | "robohash" | "openmoji"; style?: string }[] = [];
-
-  if (builtIn.length > 0) {
-    categories.push({ key: "built-in", label: "Built‑in", type: "built-in" });
-  }
-
-  DICEBEAR_STYLES.forEach((s) => categories.push({ key: s.key, label: s.label, type: "dicebear", style: s.key }));
-
-  // Robohash categories
-  categories.push({ key: "robo-robots", label: "Robohash: Robots", type: "robohash", style: "set1" });
-  categories.push({ key: "robo-monsters", label: "Robohash: Monsters", type: "robohash", style: "set2" });
-  categories.push({ key: "robo-cats", label: "Robohash: Cats", type: "robohash", style: "set4" });
-
-  // OpenMoji categories
-  categories.push({ key: "om-animals", label: "Animals", type: "openmoji", style: "animals" });
-  categories.push({ key: "om-vehicles", label: "Vehicles", type: "openmoji", style: "vehicles" });
-
-  const defaultTab = categories[0]?.key ?? "built-in";
+  // Long list mode: aggregate avatars into a single grid (no category tabs)
 
   const Grid = ({ children }: { children: React.ReactNode }) => (
     <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-6 pt-2">
@@ -83,85 +66,39 @@ export default function AvatarPicker({ builtIn = [], onSelect }: AvatarPickerPro
     </button>
   );
 
-  return (
-    <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-1">
-      <Tabs defaultValue={defaultTab} className="w-full">
-        <TabsList className="border rounded-lg flex flex-wrap gap-2 p-2 mb-10 sm:mb-12 bg-background shadow-sm">
-          {categories.map((c) => (
-            <TabsTrigger key={c.key} value={c.key} className="whitespace-nowrap">
-              {c.label}
-            </TabsTrigger>
-          ))}
-        </TabsList>
+  // Build a single long list of avatars
+  const urls: { url: string; alt: string }[] = [];
+  if (builtIn.length) {
+    for (const u of builtIn) urls.push({ url: u, alt: "Built-in avatar option" });
+  }
+  const styles = DICEBEAR_STYLES.slice(0, 3).map((s) => s.key);
+  for (const style of styles) {
+    for (const seed of SEEDS) {
+      urls.push({ url: buildDicebearUrl(style, seed), alt: `${style} avatar, seed ${seed}` });
+    }
+  }
+  for (const seed of SEEDS) {
+    urls.push({ url: buildRobohashUrl(seed, "set1"), alt: `Robohash robot, seed ${seed}` });
+  }
+  for (const code of OPENMOJI_ANIMALS.slice(0, 24)) {
+    urls.push({ url: buildOpenmojiUrl(code), alt: `OpenMoji ${code}` });
+  }
 
-        {categories.map((c) => (
-          <TabsContent key={c.key} value={c.key} className="mt-4 relative z-0">
-            {c.type === "built-in" ? (
-              <Grid>
-                {builtIn.map((url) => (
-                  <Cell key={url} onClick={() => onSelect(url)} label={`Select built-in avatar`}>
-                    <img
-                      src={url}
-                      alt="Built-in avatar option"
-                      loading="lazy"
-                      decoding="async"
-                      className="h-full w-full object-contain"
-                    />
-                  </Cell>
-                ))}
-              </Grid>
-            ) : c.type === "dicebear" ? (
-              <Grid>
-                {SEEDS.map((seed) => {
-                  const url = buildDicebearUrl(c.style!, seed);
-                  return (
-                    <Cell key={`${c.key}-${seed}`} onClick={() => onSelect(url)} label={`Select ${c.label} avatar for ${seed}`}>
-                      <img
-                        src={url}
-                        alt={`${c.label} avatar, seed ${seed}`}
-                        loading="lazy"
-                        decoding="async"
-                        className="h-full w-full object-contain"
-                      />
-                    </Cell>
-                  );
-                })}
-              </Grid>
-            ) : c.type === "robohash" ? (
-              <Grid>
-                {SEEDS.map((seed) => {
-                  const url = buildRobohashUrl(seed, c.style!);
-                  return (
-                    <Cell key={`${c.key}-${seed}`} onClick={() => onSelect(url)} label={`Select ${c.label} avatar for ${seed}`}>
-                      <img
-                        src={url}
-                        alt={`${c.label} avatar, seed ${seed}`}
-                        loading="lazy"
-                        decoding="async"
-                        className="h-full w-full object-contain"
-                      />
-                    </Cell>
-                  );
-                })}
-              </Grid>
-            ) : (
-              <Grid>
-                {(c.style === "animals" ? OPENMOJI_ANIMALS : OPENMOJI_VEHICLES).map((code) => (
-                  <Cell key={`${c.key}-${code}`} onClick={() => onSelect(buildOpenmojiUrl(code))} label={`Select ${c.label} ${code}`}>
-                    <img
-                      src={buildOpenmojiUrl(code)}
-                      alt={`${c.label} ${code}`}
-                      loading="lazy"
-                      decoding="async"
-                      className="h-full w-full object-contain"
-                    />
-                  </Cell>
-                ))}
-              </Grid>
-            )}
-          </TabsContent>
+  return (
+    <div className="max-h-[60vh] overflow-y-auto pr-1">
+      <Grid>
+        {urls.map((item, idx) => (
+          <Cell key={`${item.url}-${idx}`} onClick={() => onSelect(item.url)} label={`Select avatar ${idx + 1}`}>
+            <img
+              src={item.url}
+              alt={item.alt}
+              loading="lazy"
+              decoding="async"
+              className="h-full w-full object-contain"
+            />
+          </Cell>
         ))}
-      </Tabs>
+      </Grid>
     </div>
   );
 }
