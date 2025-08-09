@@ -33,6 +33,9 @@ const Index = () => {
               <Link to="/feed">Explore the Feed</Link>
             </Button>
           </div>
+          <p className="mt-3 text-sm opacity-90">
+            Already have an account? <Link to="/auth" className="underline">Log in</Link>
+          </p>
         </div>
       </section>
 

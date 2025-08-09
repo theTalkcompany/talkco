@@ -1,7 +1,13 @@
-import { ReactNode, useCallback } from "react";
+import { ReactNode, useCallback, useEffect, useState } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
 import Navbar from "./Navbar";
 
 const MainLayout = ({ children }: { children: ReactNode }) => {
+  const location = useLocation();
+  const navigate = useNavigate();
+  const [sessionExists, setSessionExists] = useState<boolean | null>(null);
+
   const onMouseMove = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
     const target = e.currentTarget;
     const rect = target.getBoundingClientRect();
@@ -10,6 +16,25 @@ const MainLayout = ({ children }: { children: ReactNode }) => {
     target.style.setProperty("--x", `${x}%`);
     target.style.setProperty("--y", `${y}%`);
   }, []);
+
+  useEffect(() => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSessionExists(!!session);
+    });
+    supabase.auth.getSession().then(({ data: { session } }) => setSessionExists(!!session));
+    return () => subscription.unsubscribe();
+  }, []);
+
+  useEffect(() => {
+    if (sessionExists === null) return; // not ready yet
+    // Protect all routes except /auth
+    if (!sessionExists && location.pathname !== "/auth") {
+      navigate("/auth");
+    }
+    if (sessionExists && location.pathname === "/auth") {
+      navigate("/");
+    }
+  }, [sessionExists, location.pathname, navigate]);
 
   return (
     <div className="min-h-screen glow-field" onMouseMove={onMouseMove}>
