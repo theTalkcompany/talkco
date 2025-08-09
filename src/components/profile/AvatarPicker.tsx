@@ -86,7 +86,7 @@ export default function AvatarPicker({ builtIn = [], onSelect }: AvatarPickerPro
   return (
     <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-1">
       <Tabs defaultValue={defaultTab} className="w-full">
-        <TabsList className="sticky top-0 z-30 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border rounded-md flex flex-wrap gap-2 p-1 mb-6 md:mb-8">
+        <TabsList className="border rounded-md flex flex-wrap gap-2 p-1 mb-6 md:mb-8 bg-background">
           {categories.map((c) => (
             <TabsTrigger key={c.key} value={c.key} className="whitespace-nowrap">
               {c.label}

@@ -7,13 +7,14 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import AvatarPicker from "@/components/profile/AvatarPicker";
 
 interface ProfileRow {
   user_id: string;
   full_name: string | null;
+  display_name: string | null;
   email: string | null;
   phone: string | null;
   address: string | null;
@@ -32,12 +33,13 @@ export default function Profile() {
   const [loading, setLoading] = useState(true);
   const [userId, setUserId] = useState<string | null>(null);
   const [profile, setProfile] = useState<ProfileRow | null>(null);
-  const [editing, setEditing] = useState({
-    full_name: "",
-    email: "",
-    phone: "",
-    address: "",
-  });
+const [editing, setEditing] = useState({
+  full_name: "",
+  display_name: "",
+  email: "",
+  phone: "",
+  address: "",
+});
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
 
@@ -55,7 +57,7 @@ export default function Profile() {
       // Load profile
       const { data, error } = await supabase
         .from("profiles")
-        .select("user_id, full_name, email, phone, address, avatar_url")
+        .select("user_id, full_name, display_name, email, phone, address, avatar_url")
         .eq("user_id", uid)
         .maybeSingle();
       if (error) {
@@ -66,6 +68,7 @@ export default function Profile() {
         setProfile(data as ProfileRow | null);
         setEditing({
           full_name: (data?.full_name as string) || "",
+          display_name: (data?.display_name as string) || "",
           email: (data?.email as string) || session?.user?.email || "",
           phone: (data?.phone as string) || "",
           address: (data?.address as string) || "",
@@ -87,6 +90,7 @@ export default function Profile() {
           .from("profiles")
           .update({
             full_name: editing.full_name || null,
+            display_name: editing.display_name || null,
             email: editing.email || null,
             phone: editing.phone || null,
             address: editing.address || null,
@@ -100,6 +104,7 @@ export default function Profile() {
           .insert({
             user_id: userId,
             full_name: editing.full_name || null,
+            display_name: editing.display_name || null,
             email: editing.email || null,
             phone: editing.phone || null,
             address: editing.address || null,
@@ -139,6 +144,7 @@ export default function Profile() {
           user_id: userId,
           avatar_url: publicUrl,
           full_name: editing.full_name || null,
+          display_name: editing.display_name || null,
           email: editing.email || null,
           phone: editing.phone || null,
           address: editing.address || null,
@@ -162,6 +168,7 @@ export default function Profile() {
           user_id: userId,
           avatar_url: url,
           full_name: editing.full_name || null,
+          display_name: editing.display_name || null,
           email: editing.email || null,
           phone: editing.phone || null,
           address: editing.address || null,
@@ -208,6 +215,7 @@ export default function Profile() {
                 <DialogContent className="max-w-2xl">
                   <DialogHeader>
                     <DialogTitle>Update your avatar</DialogTitle>
+                    <DialogDescription>Select a built-in style or upload your own image.</DialogDescription>
                   </DialogHeader>
                   <Tabs defaultValue="upload">
                     <TabsList>
@@ -238,6 +246,11 @@ export default function Profile() {
               <div className="grid gap-2">
                 <Label htmlFor="full_name">Full name</Label>
                 <Input id="full_name" value={editing.full_name} onChange={(e) => setEditing((v) => ({ ...v, full_name: e.target.value }))} placeholder="Your name" />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="display_name">Display name (optional)</Label>
+                <Input id="display_name" value={editing.display_name} onChange={(e) => setEditing((v) => ({ ...v, display_name: e.target.value }))} placeholder="Shown instead of your name" />
+                <p className="text-xs text-muted-foreground">Leave blank to appear as Anonymous in posts and chats.</p>
               </div>
               <div className="grid gap-2">
                 <Label htmlFor="email">Email</Label>

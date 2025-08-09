@@ -129,6 +129,7 @@ export type Database = {
           address: string | null
           avatar_url: string | null
           created_at: string
+          display_name: string | null
           email: string | null
           full_name: string | null
           phone: string | null
@@ -139,6 +140,7 @@ export type Database = {
           address?: string | null
           avatar_url?: string | null
           created_at?: string
+          display_name?: string | null
           email?: string | null
           full_name?: string | null
           phone?: string | null
@@ -149,6 +151,7 @@ export type Database = {
           address?: string | null
           avatar_url?: string | null
           created_at?: string
+          display_name?: string | null
           email?: string | null
           full_name?: string | null
           phone?: string | null

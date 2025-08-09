@@ -22,10 +22,11 @@ const Feed = () => {
   const [loading, setLoading] = useState(true);
   const [posting, setPosting] = useState(false);
   const [commenting, setCommenting] = useState<Record<string, boolean>>({});
-  const [posts, setPosts] = useState<PostRow[]>([]);
-  const [newPost, setNewPost] = useState("");
-  const [commentInputs, setCommentInputs] = useState<Record<string, string>>({});
-  const [expanded, setExpanded] = useState<Record<string, boolean>>({});
+const [posts, setPosts] = useState<PostRow[]>([]);
+const [newPost, setNewPost] = useState("");
+const [commentInputs, setCommentInputs] = useState<Record<string, string>>({});
+const [expanded, setExpanded] = useState<Record<string, boolean>>({});
+const [nameMap, setNameMap] = useState<Record<string, string>>({});
 
   useEffect(() => {
     const init = async () => {
@@ -41,19 +42,40 @@ const Feed = () => {
     return () => subscription.unsubscribe();
   }, []);
 
-  const loadPosts = async () => {
-    const { data, error } = await supabase
-      .from("posts")
-      .select("id, content, user_id, created_at, likes(id, user_id), comments(id, content, user_id, created_at)")
-      .order("created_at", { ascending: false });
+const loadPosts = async () => {
+  const { data, error } = await supabase
+    .from("posts")
+    .select("id, content, user_id, created_at, likes(id, user_id), comments(id, content, user_id, created_at)")
+    .order("created_at", { ascending: false });
 
-    if (error) {
-      console.error(error);
-      toast({ title: "Couldn’t load feed", description: error.message, variant: "destructive" });
-      return;
+  if (error) {
+    console.error(error);
+    toast({ title: "Couldn’t load feed", description: error.message, variant: "destructive" });
+    return;
+  }
+  const postsData = data as unknown as PostRow[];
+  setPosts(postsData);
+
+  // Build list of unique user IDs from posts and comments
+  const userIds = new Set<string>();
+  postsData.forEach((p) => {
+    userIds.add(p.user_id);
+    p.comments?.forEach((c) => userIds.add(c.user_id));
+  });
+  if (userIds.size > 0) {
+    const { data: profiles, error: pErr } = await supabase
+      .from("profiles")
+      .select("user_id, display_name")
+      .in("user_id", Array.from(userIds));
+    if (!pErr && profiles) {
+      const map: Record<string, string> = {};
+      (profiles as any[]).forEach((pr) => {
+        if (pr.display_name) map[pr.user_id] = pr.display_name as string;
+      });
+      setNameMap(map);
     }
-    setPosts(data as unknown as PostRow[]);
-  };
+  }
+};
 
   const canPost = useMemo(() => !!sessionUserId && newPost.trim().length > 0 && !posting, [sessionUserId, newPost, posting]);
 
@@ -154,7 +176,7 @@ const Feed = () => {
               const comments = post.comments || [];
               return (
                 <article key={post.id} className="rounded-lg border bg-card p-4 hover-tilt">
-                  <h2 className="font-semibold">Anonymous</h2>
+                  <h2 className="font-semibold">{nameMap[post.user_id] || "Anonymous"}</h2>
                   <p className="mt-2 text-foreground/90 whitespace-pre-wrap">{post.content}</p>
                   <div className="mt-3 flex items-center gap-3 text-sm text-muted-foreground">
                     <button
@@ -186,7 +208,7 @@ const Feed = () => {
                           {comments.map((c) => (
                             <li key={c.id} className="rounded bg-card p-2">
                               <p className="text-sm">{c.content}</p>
-                              <div className="mt-1 text-xs text-muted-foreground">Anonymous • {new Date(c.created_at).toLocaleString()}</div>
+                              <div className="mt-1 text-xs text-muted-foreground">{nameMap[c.user_id] || "Anonymous"} • {new Date(c.created_at).toLocaleString()}</div>
                             </li>
                           ))}
                         </ul>
