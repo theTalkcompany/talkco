@@ -1,38 +1,41 @@
 import { useEffect, useMemo, useState } from "react";
 import { Helmet } from "react-helmet-async";
-import { useNavigate, Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { useToast } from "@/components/ui/use-toast";
+import "./auth-styles.css";
 
 const Auth = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
+
+  // UI state for toggle animation
+  const [active, setActive] = useState(false); // false = login, true = signup
+
+  // Auth fields
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [fullName, setFullName] = useState("");
   const [phone, setPhone] = useState("");
   const [address, setAddress] = useState("");
   const [loading, setLoading] = useState(false);
-  const [initialized, setInitialized] = useState(false);
 
+  // Keep session listener and create profile on first auth
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       if (session) {
-        // Defer Supabase calls to avoid deadlocks
         setTimeout(async () => {
           try {
-            // Ensure a profile row exists for this user
-            await supabase.from("profiles").upsert({
-              user_id: session.user.id,
-              email: session.user.email ?? undefined,
-              full_name: fullName || undefined,
-              phone: phone || undefined,
-              address: address || undefined,
-            }, { onConflict: "user_id" });
+            await supabase.from("profiles").upsert(
+              {
+                user_id: session.user.id,
+                email: session.user.email ?? undefined,
+                full_name: fullName || undefined,
+                phone: phone || undefined,
+                address: address || undefined,
+              },
+              { onConflict: "user_id" }
+            );
           } catch (e) {
             console.error(e);
           } finally {
@@ -44,34 +47,14 @@ const Auth = () => {
 
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session) navigate("/");
-      setInitialized(true);
     });
 
     return () => subscription.unsubscribe();
-  }, [navigate, fullName, phone, address]);
+    // We intentionally omit deps like fullName to avoid re-subscribing
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [navigate]);
 
   const redirectUrl = useMemo(() => `${window.location.origin}/`, []);
-
-  const handleSignUp = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (loading) return;
-    setLoading(true);
-    const { error, data } = await supabase.auth.signUp({
-      email,
-      password,
-      options: { emailRedirectTo: redirectUrl }
-    });
-    setLoading(false);
-    if (error) {
-      toast({ title: "Sign up failed", description: error.message, variant: "destructive" });
-      return;
-    }
-    if (!data.session) {
-      toast({ title: "Check your email", description: "Confirm your email to finish sign up." });
-    } else {
-      toast({ title: "Welcome!", description: "Your account has been created." });
-    }
-  };
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -86,72 +69,157 @@ const Auth = () => {
     toast({ title: "Logged in", description: "Welcome back." });
   };
 
+  const handleSignUp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (loading) return;
+    setLoading(true);
+    const { error, data } = await supabase.auth.signUp({
+      email,
+      password,
+      options: { emailRedirectTo: redirectUrl },
+    });
+    setLoading(false);
+    if (error) {
+      toast({ title: "Sign up failed", description: error.message, variant: "destructive" });
+      return;
+    }
+    if (!data.session) {
+      toast({ title: "Check your email", description: "Confirm your email to finish sign up." });
+    } else {
+      toast({ title: "Welcome!", description: "Your account has been created." });
+    }
+  };
+
   return (
     <>
       <Helmet>
         <title>Login & Sign Up — Talk</title>
-        <meta name="description" content="Log in or create your Talk account to post, chat, and save your profile securely." />
+        <meta name="description" content="Beautiful login and signup for Talk, secured by Supabase with profiles and RLS." />
         <link rel="canonical" href="/auth" />
       </Helmet>
 
-      <section className="surface-card p-6 max-w-xl mx-auto">
-        <h1 className="text-3xl font-bold">Login or Create your account</h1>
-        <p className="mt-2 text-muted-foreground">Your info is private and stored securely with row‑level security.</p>
+      <div className="auth-login">
+        <div className={`auth-container ${active ? "active" : ""}`}>
+          {/* Forms panel */}
+          <div className="auth-form-box login">
+            <div style={{ width: "100%" }}>
+              <h1>Welcome back</h1>
+              <p>Log in to continue your conversation.</p>
+              <form className="auth-form" onSubmit={handleSignIn}>
+                <div className="auth-input-box">
+                  <input
+                    type="email"
+                    placeholder="Email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    required
+                    autoComplete="email"
+                  />
+                </div>
+                <div className="auth-input-box">
+                  <input
+                    type="password"
+                    placeholder="Password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
+                    autoComplete="current-password"
+                  />
+                </div>
+                <div className="forgot-link">
+                  <Link to="#">Forgot your password?</Link>
+                </div>
+                <button type="submit" className="auth-btn" disabled={loading}>
+                  {loading ? "Logging in…" : "Log in"}
+                </button>
+                <p style={{ marginTop: 16, fontSize: 13 }}>
+                  New here? <button type="button" onClick={() => setActive(true)} style={{ color: "#7494ec", background: "transparent", border: 0, cursor: "pointer" }}>Create an account</button>
+                </p>
+                <p style={{ marginTop: 8, fontSize: 12 }}>
+                  <Link to="/" style={{ color: "#333" }}>Back Home</Link>
+                </p>
+              </form>
+            </div>
+          </div>
 
-        <Tabs defaultValue="login" className="mt-6">
-          <TabsList className="grid grid-cols-2 w-full">
-            <TabsTrigger value="login">Log in</TabsTrigger>
-            <TabsTrigger value="signup">Sign up</TabsTrigger>
-          </TabsList>
+          <div className="auth-form-box register">
+            <div style={{ width: "100%" }}>
+              <h1>Create account</h1>
+              <p>Join Talk and keep your info private.</p>
+              <form className="auth-form" onSubmit={handleSignUp}>
+                <div className="auth-input-box">
+                  <input
+                    type="email"
+                    placeholder="Email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    required
+                    autoComplete="email"
+                  />
+                </div>
+                <div className="auth-input-box">
+                  <input
+                    type="password"
+                    placeholder="Password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
+                    autoComplete="new-password"
+                  />
+                </div>
+                <div className="auth-input-box">
+                  <input
+                    placeholder="Full name (optional)"
+                    value={fullName}
+                    onChange={(e) => setFullName(e.target.value)}
+                  />
+                </div>
+                <div className="auth-input-box">
+                  <input
+                    placeholder="Phone (optional)"
+                    value={phone}
+                    onChange={(e) => setPhone(e.target.value)}
+                  />
+                </div>
+                <div className="auth-input-box">
+                  <input
+                    placeholder="Address (optional)"
+                    value={address}
+                    onChange={(e) => setAddress(e.target.value)}
+                  />
+                </div>
+                <button type="submit" className="auth-btn" disabled={loading}>
+                  {loading ? "Creating…" : "Create account"}
+                </button>
+                <p style={{ marginTop: 16, fontSize: 13 }}>
+                  Already have an account? <button type="button" onClick={() => setActive(false)} style={{ color: "#7494ec", background: "transparent", border: 0, cursor: "pointer" }}>Log in</button>
+                </p>
+                <p style={{ marginTop: 8, fontSize: 12 }}>
+                  <Link to="/" style={{ color: "#333" }}>Back Home</Link>
+                </p>
+              </form>
+            </div>
+          </div>
 
-          <TabsContent value="login" className="mt-6">
-            <form onSubmit={handleSignIn} className="space-y-4">
-              <div>
-                <Label htmlFor="email">Email</Label>
-                <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required autoComplete="email" />
-              </div>
-              <div>
-                <Label htmlFor="password">Password</Label>
-                <Input id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required autoComplete="current-password" />
-              </div>
-              <div className="flex gap-3">
-                <Button type="submit" variant="hero" disabled={loading}>{loading ? "Logging in…" : "Log in"}</Button>
-                <Button variant="outline" asChild><Link to="/">Back Home</Link></Button>
-              </div>
-            </form>
-          </TabsContent>
-
-          <TabsContent value="signup" className="mt-6">
-            <form onSubmit={handleSignUp} className="space-y-4">
-              <div>
-                <Label htmlFor="signup-email">Email</Label>
-                <Input id="signup-email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required autoComplete="email" />
-              </div>
-              <div>
-                <Label htmlFor="signup-password">Password</Label>
-                <Input id="signup-password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required autoComplete="new-password" />
-              </div>
-              <div>
-                <Label htmlFor="fullName">Full name (optional)</Label>
-                <Input id="fullName" value={fullName} onChange={(e) => setFullName(e.target.value)} />
-              </div>
-              <div>
-                <Label htmlFor="phone">Phone (optional)</Label>
-                <Input id="phone" value={phone} onChange={(e) => setPhone(e.target.value)} />
-              </div>
-              <div>
-                <Label htmlFor="address">Address (optional)</Label>
-                <Input id="address" value={address} onChange={(e) => setAddress(e.target.value)} />
-              </div>
-              <div className="flex gap-3">
-                <Button type="submit" variant="hero" disabled={loading}>{loading ? "Creating…" : "Create account"}</Button>
-                <Button variant="outline" asChild><Link to="/">Back Home</Link></Button>
-              </div>
-              <p className="text-xs text-muted-foreground">We’ll send a confirmation email. Make sure the redirect URL is allowed in Supabase Auth settings.</p>
-            </form>
-          </TabsContent>
-        </Tabs>
-      </section>
+          {/* Toggle panels */}
+          <div className="auth-toggle-box">
+            <div className="auth-toggle-panel toggle-left">
+              <h1>Welcome Back!</h1>
+              <p>To keep connected, please log in with your personal info.</p>
+              <button className="auth-btn" onClick={() => setActive(false)}>
+                Log in
+              </button>
+            </div>
+            <div className="auth-toggle-panel toggle-right">
+              <h1>Hello, Friend!</h1>
+              <p>Enter your details and start a journey of healing.</p>
+              <button className="auth-btn" onClick={() => setActive(true)}>
+                Sign up
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
     </>
   );
 };
