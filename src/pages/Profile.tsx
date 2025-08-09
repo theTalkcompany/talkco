@@ -9,6 +9,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import AvatarPicker from "@/components/profile/AvatarPicker";
 
 interface ProfileRow {
   user_id: string;
@@ -218,13 +219,7 @@ export default function Profile() {
                       <Input type="file" accept="image/*" onChange={onFileChange} />
                     </TabsContent>
                     <TabsContent value="choose">
-                      <div className="grid grid-cols-4 gap-3">
-                        {presetAvatars.map((url) => (
-                          <button key={url} onClick={() => choosePreset(url)} className="rounded-lg border hover:shadow focus:outline-none focus:ring-2 focus:ring-ring p-2">
-                            <img src={url} alt="Preset avatar option" loading="lazy" className="h-16 w-16 object-cover" />
-                          </button>
-                        ))}
-                      </div>
+                      <AvatarPicker builtIn={presetAvatars} onSelect={choosePreset} />
                     </TabsContent>
                   </Tabs>
                 </DialogContent>
