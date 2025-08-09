@@ -72,7 +72,7 @@ const Navbar = () => {
                 <Menu className="h-5 w-5" />
               </Button>
             </SheetTrigger>
-            <SheetContent side="left">
+            <SheetContent side="right">
               <nav className="mt-8 flex flex-col gap-4">
                 <NavLink to="/feed" className={({isActive}) => isActive ? "text-primary" : "text-foreground/80 hover:text-foreground"}>Feed</NavLink>
                 <NavLink to="/chat" className={({isActive}) => isActive ? "text-primary" : "text-foreground/80 hover:text-foreground"}>Chat</NavLink>
