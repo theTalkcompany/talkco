@@ -38,6 +38,7 @@ const Navbar = () => {
           <NavLink to="/chat" className={({isActive}) => isActive ? "text-primary" : "text-foreground/80 hover:text-foreground"}>Chat</NavLink>
           <NavLink to="/help" className={({isActive}) => isActive ? "text-primary" : "text-foreground/80 hover:text-foreground"}>Get Help</NavLink>
           <NavLink to="/quotes" className={({isActive}) => isActive ? "text-primary" : "text-foreground/80 hover:text-foreground"}>Quotes</NavLink>
+          <NavLink to="/profile" className={({isActive}) => isActive ? "text-primary" : "text-foreground/80 hover:text-foreground"}>Profile</NavLink>
         </div>
         <div className="flex items-center gap-2">
           {loggedIn ? (
