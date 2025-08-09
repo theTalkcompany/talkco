@@ -43,25 +43,6 @@ const Navbar = () => {
           <NavLink to="/profile" className={({isActive}) => isActive ? "text-primary" : "text-foreground/80 hover:text-foreground"}>Profile</NavLink>
         </div>
 
-        {/* Mobile menu */}
-        <div className="md:hidden">
-          <Sheet>
-            <SheetTrigger asChild>
-              <Button variant="ghost" size="icon" aria-label="Open menu">
-                <Menu className="h-5 w-5" />
-              </Button>
-            </SheetTrigger>
-            <SheetContent side="left">
-              <nav className="mt-8 flex flex-col gap-4">
-                <NavLink to="/feed" className={({isActive}) => isActive ? "text-primary" : "text-foreground/80 hover:text-foreground"}>Feed</NavLink>
-                <NavLink to="/chat" className={({isActive}) => isActive ? "text-primary" : "text-foreground/80 hover:text-foreground"}>Chat</NavLink>
-                <NavLink to="/help" className={({isActive}) => isActive ? "text-primary" : "text-foreground/80 hover:text-foreground"}>Get Help</NavLink>
-                <NavLink to="/quotes" className={({isActive}) => isActive ? "text-primary" : "text-foreground/80 hover:text-foreground"}>Quotes</NavLink>
-                <NavLink to="/profile" className={({isActive}) => isActive ? "text-primary" : "text-foreground/80 hover:text-foreground"}>Profile</NavLink>
-              </nav>
-            </SheetContent>
-          </Sheet>
-        </div>
 
         <div className="flex items-center gap-2">
           {loggedIn ? (
@@ -81,6 +62,26 @@ const Navbar = () => {
               </Button>
             </>
           )}
+        </div>
+
+        {/* Mobile menu */}
+        <div className="md:hidden">
+          <Sheet>
+            <SheetTrigger asChild>
+              <Button variant="ghost" size="icon" aria-label="Open menu">
+                <Menu className="h-5 w-5" />
+              </Button>
+            </SheetTrigger>
+            <SheetContent side="left">
+              <nav className="mt-8 flex flex-col gap-4">
+                <NavLink to="/feed" className={({isActive}) => isActive ? "text-primary" : "text-foreground/80 hover:text-foreground"}>Feed</NavLink>
+                <NavLink to="/chat" className={({isActive}) => isActive ? "text-primary" : "text-foreground/80 hover:text-foreground"}>Chat</NavLink>
+                <NavLink to="/help" className={({isActive}) => isActive ? "text-primary" : "text-foreground/80 hover:text-foreground"}>Get Help</NavLink>
+                <NavLink to="/quotes" className={({isActive}) => isActive ? "text-primary" : "text-foreground/80 hover:text-foreground"}>Quotes</NavLink>
+                <NavLink to="/profile" className={({isActive}) => isActive ? "text-primary" : "text-foreground/80 hover:text-foreground"}>Profile</NavLink>
+              </nav>
+            </SheetContent>
+          </Sheet>
         </div>
       </nav>
     </header>
