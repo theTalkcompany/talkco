@@ -1,3 +1,4 @@
+
 import { useEffect, useMemo, useState } from "react";
 import { Helmet } from "react-helmet-async";
 import { Link, useNavigate } from "react-router-dom";
@@ -11,6 +12,7 @@ const Auth = () => {
 
   // UI state for toggle animation
   const [active, setActive] = useState(false); // false = login, true = signup
+  const [showSuccess, setShowSuccess] = useState(false); // New state for success message
 
   // Auth fields
   const [email, setEmail] = useState("");
@@ -92,12 +94,55 @@ const Auth = () => {
       console.error("Failed to send welcome email", err);
     }
 
+    // Show success message regardless of whether email confirmation is required
+    setShowSuccess(true);
+    
     if (!data.session) {
-      toast({ title: "Check your email", description: "Confirm your email to finish sign up." });
+      toast({ title: "Account created!", description: "You can now log in with your credentials." });
     } else {
-      toast({ title: "Welcome!", description: "Your account has been created." });
+      toast({ title: "Welcome!", description: "Your account has been created and you're logged in." });
     }
   };
+
+  // Success screen component
+  if (showSuccess) {
+    return (
+      <>
+        <Helmet>
+          <title>Welcome to Talk!</title>
+        </Helmet>
+        <div className="auth-login">
+          <div className="auth-container" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <div style={{ textAlign: 'center', padding: '40px' }}>
+              <h1 style={{ fontSize: '48px', marginBottom: '20px', color: '#7494ec' }}>🎉</h1>
+              <h1 style={{ fontSize: '36px', marginBottom: '16px', color: '#333' }}>Thank You!</h1>
+              <p style={{ fontSize: '18px', marginBottom: '24px', color: '#666' }}>
+                Your account has been created successfully.
+              </p>
+              <p style={{ fontSize: '16px', marginBottom: '32px', color: '#666' }}>
+                You can now log in with your credentials.
+              </p>
+              <button 
+                className="auth-btn" 
+                onClick={() => {
+                  setShowSuccess(false);
+                  setActive(false); // Switch to login form
+                  setEmail("");
+                  setPassword("");
+                  setFullName("");
+                  setPhone("");
+                  setAddress("");
+                }}
+                style={{ width: '200px' }}
+              >
+                Go to Login
+              </button>
+            </div>
+          </div>
+        </div>
+      </>
+    );
+  }
 
   return (
     <>
