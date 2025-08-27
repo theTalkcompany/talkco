@@ -213,17 +213,17 @@ const Auth = () => {
           {/* Toggle panels */}
           <div className="auth-toggle-box">
             <div className="auth-toggle-panel toggle-left">
-              <h1>Welcome Back!</h1>
-              <p>To keep connected, please log in with your personal info.</p>
-              <button className="auth-btn" onClick={() => setActive(false)}>
-                Log in
-              </button>
-            </div>
-            <div className="auth-toggle-panel toggle-right">
               <h1>Hello, Friend!</h1>
               <p>Enter your details and start a journey of healing.</p>
               <button className="auth-btn" onClick={() => setActive(true)}>
                 Sign up
+              </button>
+            </div>
+            <div className="auth-toggle-panel toggle-right">
+              <h1>Welcome Back!</h1>
+              <p>To keep connected, please log in with your personal info.</p>
+              <button className="auth-btn" onClick={() => setActive(false)}>
+                Log in
               </button>
             </div>
           </div>
