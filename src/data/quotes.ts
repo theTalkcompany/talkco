@@ -1,33 +1,96 @@
+import { supabase } from "@/integrations/supabase/client";
+
 export type Quote = { text: string; author: string };
 
-const QUOTES: Quote[] = [
-  { text: "You are stronger than you think, braver than you feel.", author: "Unknown" },
-  { text: "This too shall pass.", author: "Persian Proverb" },
-  { text: "No storm, not even the one in your life, can last forever.", author: "Iyanla Vanzant" },
-  { text: "Be gentle with yourself—you’re doing the best you can.", author: "Unknown" },
-  { text: "One day at a time.", author: "Al-Anon" },
-  { text: "You matter more than you know.", author: "Unknown" },
-  { text: "Small steps still move you forward.", author: "Unknown" },
-  { text: "Your feelings are valid. Your voice matters.", author: "Unknown" },
-  { text: "Healing is not linear.", author: "Unknown" },
-  { text: "You’ve survived 100% of your bad days so far.", author: "Unknown" },
-];
+// Admin user ID - replace with your actual user ID after creating account
+const ADMIN_USER_ID = "admin"; // You'll need to replace this with your actual user ID
+
+export async function isAdmin(): Promise<boolean> {
+  const { data: { user } } = await supabase.auth.getUser();
+  // For now, check if user email contains "admin" - you can make this more secure later
+  return user?.email?.includes("admin") || false;
+}
 
 function todayKey() {
   const d = new Date();
   return `${d.getFullYear()}-${d.getMonth()+1}-${d.getDate()}`;
 }
 
-export function getDailyQuote(): Quote {
-  const key = todayKey();
-  const storedKey = localStorage.getItem("talk_quote_date");
-  const stored = localStorage.getItem("talk_quote_text");
-  if (storedKey === key && stored) {
-    const found = QUOTES.find(q => q.text === stored);
-    if (found) return found;
+function getUserSeed(userId: string, date: string): number {
+  // Create a simple hash from userId and date for consistent randomization
+  let hash = 0;
+  const str = userId + date;
+  for (let i = 0; i < str.length; i++) {
+    const char = str.charCodeAt(i);
+    hash = ((hash << 5) - hash) + char;
+    hash = hash & hash; // Convert to 32-bit integer
   }
-  const q = QUOTES[Math.floor(Math.random() * QUOTES.length)];
-  localStorage.setItem("talk_quote_date", key);
-  localStorage.setItem("talk_quote_text", q.text);
-  return q;
+  return Math.abs(hash);
+}
+
+export async function getDailyQuote(userId?: string): Promise<Quote> {
+  const key = todayKey();
+  const storageKey = `talk_quote_${userId || 'anonymous'}_${key}`;
+  
+  // Check if we already have today's quote cached
+  const cached = localStorage.getItem(storageKey);
+  if (cached) {
+    try {
+      return JSON.parse(cached);
+    } catch (e) {
+      // If parsing fails, we'll fetch a new quote
+    }
+  }
+
+  // Fetch all quotes from database
+  const { data: quotes, error } = await supabase
+    .from('quotes')
+    .select('text, author');
+
+  if (error || !quotes || quotes.length === 0) {
+    // Fallback to default quote if database is empty
+    const fallback = { text: "You are stronger than you think, braver than you feel.", author: "Unknown" };
+    localStorage.setItem(storageKey, JSON.stringify(fallback));
+    return fallback;
+  }
+
+  // Use user-specific seed for consistent daily quote selection
+  const seed = getUserSeed(userId || 'anonymous', key);
+  const selectedQuote = quotes[seed % quotes.length];
+  
+  // Cache the quote for today
+  localStorage.setItem(storageKey, JSON.stringify(selectedQuote));
+  
+  return selectedQuote;
+}
+
+export async function addQuote(text: string, author: string): Promise<boolean> {
+  const { error } = await supabase
+    .from('quotes')
+    .insert([{ text, author }]);
+  
+  return !error;
+}
+
+export async function getAllQuotes(): Promise<Quote[]> {
+  const { data: quotes, error } = await supabase
+    .from('quotes')
+    .select('text, author')
+    .order('created_at', { ascending: false });
+  
+  if (error) {
+    console.error('Error fetching quotes:', error);
+    return [];
+  }
+  
+  return quotes || [];
+}
+
+export async function deleteQuote(text: string): Promise<boolean> {
+  const { error } = await supabase
+    .from('quotes')
+    .delete()
+    .eq('text', text);
+  
+  return !error;
 }
