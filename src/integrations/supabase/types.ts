@@ -184,6 +184,36 @@ export type Database = {
         }
         Relationships: []
       }
+      willow_config: {
+        Row: {
+          additional_instructions: string | null
+          created_at: string
+          created_by: string | null
+          custom_knowledge: string | null
+          id: string
+          system_prompt: string
+          updated_at: string
+        }
+        Insert: {
+          additional_instructions?: string | null
+          created_at?: string
+          created_by?: string | null
+          custom_knowledge?: string | null
+          id?: string
+          system_prompt?: string
+          updated_at?: string
+        }
+        Update: {
+          additional_instructions?: string | null
+          created_at?: string
+          created_by?: string | null
+          custom_knowledge?: string | null
+          id?: string
+          system_prompt?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

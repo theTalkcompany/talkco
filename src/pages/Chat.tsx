@@ -1,9 +1,51 @@
 import { Helmet } from "react-helmet-async";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Settings } from "lucide-react";
+import { useState, useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
 import WillowChat from "@/components/chat/WillowChat";
+import WillowAdmin from "@/components/admin/WillowAdmin";
 
 const Chat = () => {
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [showAdmin, setShowAdmin] = useState(false);
+
+  useEffect(() => {
+    checkAdminStatus();
+  }, []);
+
+  const checkAdminStatus = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user?.email === 'talkco@outlook.com') {
+        setIsAdmin(true);
+      }
+    } catch (error) {
+      console.error('Error checking admin status:', error);
+    }
+  };
+
+  if (showAdmin && isAdmin) {
+    return (
+      <>
+        <Helmet>
+          <title>Willow Admin — Talk</title>
+          <meta name="description" content="Configure Willow AI settings and customization." />
+          <link rel="canonical" href="/chat" />
+        </Helmet>
+
+        <div className="flex items-center justify-between mb-6">
+          <h1 className="text-3xl font-bold">Willow Admin</h1>
+          <Button variant="outline" onClick={() => setShowAdmin(false)}>
+            Back to Chat
+          </Button>
+        </div>
+        <WillowAdmin />
+      </>
+    );
+  }
+
   return (
     <>
       <Helmet>
@@ -12,7 +54,16 @@ const Chat = () => {
         <link rel="canonical" href="/chat" />
       </Helmet>
 
-      <h1 className="text-3xl font-bold mb-4">Talk Live</h1>
+      <div className="flex items-center justify-between mb-4">
+        <h1 className="text-3xl font-bold">Talk Live</h1>
+        {isAdmin && (
+          <Button variant="outline" size="sm" onClick={() => setShowAdmin(true)}>
+            <Settings className="h-4 w-4 mr-2" />
+            Willow Settings
+          </Button>
+        )}
+      </div>
+      
       <Tabs defaultValue="ai">
         <TabsList>
           <TabsTrigger value="ai">Willow</TabsTrigger>

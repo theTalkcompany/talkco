@@ -1,5 +1,6 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -14,21 +15,45 @@ serve(async (req) => {
 
   try {
     const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY");
+    const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
+    const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+    
     if (!OPENAI_API_KEY) {
       throw new Error("OPENAI_API_KEY is not set");
     }
+    if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
+      throw new Error("Supabase credentials not set");
+    }
+
+    // Initialize Supabase client
+    const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
     const body = await req.json().catch(() => ({}));
     const incomingMessages: Array<{ role: string; content: string }> = body?.messages ?? [];
 
-    // Willow's supportive system prompt
-    const systemPrompt = `You are Willow, a warm, compassionate, trauma-informed mental health support companion.
-- Core style: empathetic, non-judgmental, validating, strengths-based. Use short paragraphs.
-- Goals: help users feel heard, offer gentle guidance, practical steps, and celebrate small wins.
-- Safety: You are not a clinician. Do not provide medical advice or diagnosis. Encourage professional help when appropriate.
-- Crisis protocol: If user mentions intent to harm self or others, advise immediate help: call local emergency services or go to the nearest emergency department. If available, suggest local hotlines (e.g., in the US call or text 988).
-- Method: Reflect back feelings; ask one clarifying question at a time; offer 2-4 concrete, small, doable steps; finish with an encouraging note.
-- Boundaries: Avoid prescriptive absolutes; avoid shaming; be inclusive and culturally sensitive.`;
+    // Load Willow's configuration from database
+    const { data: config, error: configError } = await supabase
+      .from('willow_config')
+      .select('system_prompt, custom_knowledge, additional_instructions')
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .single();
+
+    if (configError) {
+      console.error("Error loading config:", configError);
+      throw new Error("Failed to load Willow configuration");
+    }
+
+    // Build the complete system prompt
+    let systemPrompt = config.system_prompt;
+    
+    if (config.custom_knowledge && config.custom_knowledge.trim()) {
+      systemPrompt += `\n\nAdditional Knowledge:\n${config.custom_knowledge}`;
+    }
+    
+    if (config.additional_instructions && config.additional_instructions.trim()) {
+      systemPrompt += `\n\nAdditional Instructions:\n${config.additional_instructions}`;
+    }
 
     // Build OpenAI messages, prepend system prompt
     const messages = [
