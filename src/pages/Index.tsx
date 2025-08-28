@@ -3,10 +3,8 @@ import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { getDailyQuote, type Quote } from "@/data/quotes";
 import { useState, useEffect } from "react";
-
 const Index = () => {
   const [quote, setQuote] = useState<Quote | null>(null);
-
   useEffect(() => {
     const loadQuote = async () => {
       const dailyQuote = await getDailyQuote();
@@ -14,9 +12,7 @@ const Index = () => {
     };
     loadQuote();
   }, []);
-
-  return (
-    <>
+  return <>
       <Helmet>
         <title>Talk — Anonymous Mental Health Support</title>
         <meta name="description" content="Find anonymous support, share openly, chat with others, and receive a daily uplifting quote on Talk." />
@@ -52,14 +48,10 @@ const Index = () => {
         <article className="surface-card p-6">
           <h2 className="text-2xl font-bold">Today's Encouragement</h2>
           <p className="mt-3 text-muted-foreground">Your daily quote is saved for today.</p>
-          {quote ? (
-            <>
+          {quote ? <>
               <blockquote className="mt-4 text-lg leading-relaxed">"{quote.text}"</blockquote>
               <cite className="block mt-2 text-sm text-muted-foreground">— {quote.author}</cite>
-            </>
-          ) : (
-            <p className="mt-4 text-muted-foreground">Loading your daily quote...</p>
-          )}
+            </> : <p className="mt-4 text-muted-foreground">Loading your daily quote...</p>}
           <div className="mt-6">
             <Button variant="soft" asChild>
               <Link to="/quotes">Open Quotes</Link>
@@ -72,7 +64,7 @@ const Index = () => {
           <ul className="mt-3 space-y-2 text-muted-foreground list-disc pl-5">
             <li>Post anonymously and receive kind advice</li>
             <li>Join community rooms for live conversations</li>
-            <li>Talk to an AI for quick support any time</li>
+            <li>Talk Willow, our friendly AI system for quick support any time</li>
             <li>Find professional resources when you need them</li>
           </ul>
           <div className="mt-6 flex gap-3">
@@ -81,8 +73,6 @@ const Index = () => {
           </div>
         </article>
       </section>
-    </>
-  );
+    </>;
 };
-
 export default Index;
