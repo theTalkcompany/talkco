@@ -1,10 +1,19 @@
 import { Helmet } from "react-helmet-async";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
-import { getDailyQuote } from "@/data/quotes";
+import { getDailyQuote, type Quote } from "@/data/quotes";
+import { useState, useEffect } from "react";
 
 const Index = () => {
-  const quote = getDailyQuote();
+  const [quote, setQuote] = useState<Quote | null>(null);
+
+  useEffect(() => {
+    const loadQuote = async () => {
+      const dailyQuote = await getDailyQuote();
+      setQuote(dailyQuote);
+    };
+    loadQuote();
+  }, []);
 
   return (
     <>
@@ -41,10 +50,16 @@ const Index = () => {
 
       <section className="grid md:grid-cols-2 gap-6 mt-8">
         <article className="surface-card p-6">
-          <h2 className="text-2xl font-bold">Today’s Encouragement</h2>
+          <h2 className="text-2xl font-bold">Today's Encouragement</h2>
           <p className="mt-3 text-muted-foreground">Your daily quote is saved for today.</p>
-          <blockquote className="mt-4 text-lg leading-relaxed">“{quote.text}”</blockquote>
-          <cite className="block mt-2 text-sm text-muted-foreground">— {quote.author}</cite>
+          {quote ? (
+            <>
+              <blockquote className="mt-4 text-lg leading-relaxed">"{quote.text}"</blockquote>
+              <cite className="block mt-2 text-sm text-muted-foreground">— {quote.author}</cite>
+            </>
+          ) : (
+            <p className="mt-4 text-muted-foreground">Loading your daily quote...</p>
+          )}
           <div className="mt-6">
             <Button variant="soft" asChild>
               <Link to="/quotes">Open Quotes</Link>
