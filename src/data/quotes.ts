@@ -4,8 +4,9 @@ export type Quote = { text: string; author: string };
 
 export async function isAdmin(): Promise<boolean> {
   const { data: { user } } = await supabase.auth.getUser();
-  // For now, check if user email contains "admin" - you can make this more secure later
-  return user?.email?.includes("admin") || false;
+  // Replace with your actual email address
+  const ADMIN_EMAIL = "your-email@example.com";
+  return user?.email === ADMIN_EMAIL;
 }
 
 function todayKey() {
