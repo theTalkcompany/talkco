@@ -64,7 +64,7 @@ const Index = () => {
           <ul className="mt-3 space-y-2 text-muted-foreground list-disc pl-5">
             <li>Post anonymously and receive kind advice</li>
             <li>Join community rooms for live conversations</li>
-            <li>Talk Willow, our friendly AI system for quick support any time</li>
+            <li>Talk to Willow, our friendly AI system for quick support any time</li>
             <li>Find professional resources when you need them</li>
           </ul>
           <div className="mt-6 flex gap-3">
