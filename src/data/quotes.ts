@@ -4,8 +4,7 @@ export type Quote = { text: string; author: string };
 
 export async function isAdmin(): Promise<boolean> {
   const { data: { user } } = await supabase.auth.getUser();
-  // Replace 'admin@example.com' with your actual email address
-  return user?.email === 'admin@example.com';
+  return user?.email === 'talkco@outlook.com';
 }
 
 function todayKey() {
