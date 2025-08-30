@@ -6,6 +6,7 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import WillowChat from "@/components/chat/WillowChat";
 import WillowAdmin from "@/components/admin/WillowAdmin";
+import CommunityRooms from "@/components/chat/CommunityRooms";
 
 const Chat = () => {
   const [isAdmin, setIsAdmin] = useState(false);
@@ -80,10 +81,8 @@ const Chat = () => {
           <article className="surface-card p-6">
             <h2 className="text-2xl font-semibold">Join a Room</h2>
             <p className="mt-2 text-muted-foreground">Group conversations where people support each other in real time.</p>
-            <div className="mt-4 flex gap-3 flex-wrap">
-              {["Anxiety","Low Mood","Loneliness"].map((room) => (
-                <Button key={room} variant="outline" disabled>#{room}</Button>
-              ))}
+            <div className="mt-4">
+              <CommunityRooms />
             </div>
           </article>
         </TabsContent>
