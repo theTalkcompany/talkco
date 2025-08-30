@@ -129,6 +129,7 @@ export type Database = {
           address: string | null
           avatar_url: string | null
           created_at: string
+          date_of_birth: string | null
           display_name: string | null
           email: string | null
           full_name: string | null
@@ -140,6 +141,7 @@ export type Database = {
           address?: string | null
           avatar_url?: string | null
           created_at?: string
+          date_of_birth?: string | null
           display_name?: string | null
           email?: string | null
           full_name?: string | null
@@ -151,6 +153,7 @@ export type Database = {
           address?: string | null
           avatar_url?: string | null
           created_at?: string
+          date_of_birth?: string | null
           display_name?: string | null
           email?: string | null
           full_name?: string | null
@@ -307,6 +310,8 @@ export type Database = {
       }
       rooms: {
         Row: {
+          age_max: number
+          age_min: number
           created_at: string
           created_by: string | null
           description: string | null
@@ -315,6 +320,8 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          age_max?: number
+          age_min?: number
           created_at?: string
           created_by?: string | null
           description?: string | null
@@ -323,6 +330,8 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          age_max?: number
+          age_min?: number
           created_at?: string
           created_by?: string | null
           description?: string | null
@@ -367,7 +376,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      calculate_age: {
+        Args: { birth_date: string }
+        Returns: number
+      }
     }
     Enums: {
       [_ in never]: never
