@@ -16,6 +16,8 @@ interface Room {
   description: string;
   participant_count?: number;
   created_by?: string;
+  age_min: number;
+  age_max: number;
 }
 
 const CommunityRooms = () => {
@@ -25,6 +27,8 @@ const CommunityRooms = () => {
   const [showCreateRoom, setShowCreateRoom] = useState(false);
   const [newRoomName, setNewRoomName] = useState("");
   const [newRoomDescription, setNewRoomDescription] = useState("");
+  const [newRoomAgeMin, setNewRoomAgeMin] = useState("13");
+  const [newRoomAgeMax, setNewRoomAgeMax] = useState("99");
   const [creating, setCreating] = useState(false);
   const { toast } = useToast();
 
@@ -80,6 +84,18 @@ const CommunityRooms = () => {
       return;
     }
 
+    const ageMin = parseInt(newRoomAgeMin);
+    const ageMax = parseInt(newRoomAgeMax);
+    
+    if (ageMin < 13 || ageMax > 99 || ageMin > ageMax) {
+      toast({
+        title: "Error", 
+        description: "Please enter a valid age range (13-99)",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setCreating(true);
     try {
       const { data: { user } } = await supabase.auth.getUser();
@@ -99,12 +115,16 @@ const CommunityRooms = () => {
           name: newRoomName.trim(),
           description: newRoomDescription.trim(),
           created_by: user.id,
+          age_min: ageMin,
+          age_max: ageMax,
         });
 
       if (error) throw error;
 
       setNewRoomName("");
       setNewRoomDescription("");
+      setNewRoomAgeMin("13");
+      setNewRoomAgeMax("99");
       setShowCreateRoom(false);
       fetchRooms();
       
@@ -135,6 +155,46 @@ const CommunityRooms = () => {
           variant: "destructive",
         });
         return;
+      }
+
+      // Check if user is admin
+      const isAdmin = user.email === 'talkco@outlook.com';
+      
+      if (!isAdmin) {
+        // Get user's profile to check age
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('date_of_birth')
+          .eq('user_id', user.id)
+          .maybeSingle();
+          
+        if (!profile?.date_of_birth) {
+          toast({
+            title: "Profile incomplete",
+            description: "Please update your date of birth in your profile to join rooms",
+            variant: "destructive",
+          });
+          return;
+        }
+        
+        // Calculate user's age
+        const birthDate = new Date(profile.date_of_birth);
+        const today = new Date();
+        let userAge = today.getFullYear() - birthDate.getFullYear();
+        const monthDiff = today.getMonth() - birthDate.getMonth();
+        if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+          userAge--;
+        }
+        
+        // Check if user's age is within room's age range
+        if (userAge < room.age_min || userAge > room.age_max) {
+          toast({
+            title: "Age restriction",
+            description: `This room is for ages ${room.age_min}-${room.age_max}. You are ${userAge} years old.`,
+            variant: "destructive",
+          });
+          return;
+        }
       }
 
       // Check if already a participant
@@ -229,6 +289,39 @@ const CommunityRooms = () => {
                   rows={3}
                 />
               </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label htmlFor="ageMin" className="text-sm font-medium">
+                    Minimum Age
+                  </label>
+                  <Input
+                    id="ageMin"
+                    type="number"
+                    value={newRoomAgeMin}
+                    onChange={(e) => setNewRoomAgeMin(e.target.value)}
+                    min="13"
+                    max="99"
+                    placeholder="13"
+                  />
+                </div>
+                <div>
+                  <label htmlFor="ageMax" className="text-sm font-medium">
+                    Maximum Age
+                  </label>
+                  <Input
+                    id="ageMax"
+                    type="number"
+                    value={newRoomAgeMax}
+                    onChange={(e) => setNewRoomAgeMax(e.target.value)}
+                    min="13"
+                    max="99"
+                    placeholder="99"
+                  />
+                </div>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Set the age range for users allowed to join this room. You can enter any room as admin.
+              </p>
               <div className="flex gap-2">
                 <Button 
                   onClick={createRoom} 
@@ -263,6 +356,11 @@ const CommunityRooms = () => {
               </div>
               <CardDescription>
                 {room.description}
+                <div className="mt-2 flex items-center gap-2">
+                  <Badge variant="outline" className="text-xs">
+                    Ages {room.age_min}-{room.age_max}
+                  </Badge>
+                </div>
               </CardDescription>
             </CardHeader>
             <CardContent>

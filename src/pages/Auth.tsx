@@ -20,6 +20,7 @@ const Auth = () => {
   const [fullName, setFullName] = useState("");
   const [phone, setPhone] = useState("");
   const [address, setAddress] = useState("");
+  const [dateOfBirth, setDateOfBirth] = useState("");
   const [loading, setLoading] = useState(false);
 
   // Keep session listener and create profile on first auth
@@ -27,17 +28,18 @@ const Auth = () => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       if (session) {
         setTimeout(async () => {
-          try {
-            await supabase.from("profiles").upsert(
-              {
-                user_id: session.user.id,
-                email: session.user.email ?? undefined,
-                full_name: fullName || undefined,
-                phone: phone || undefined,
-                address: address || undefined,
-              },
-              { onConflict: "user_id" }
-            );
+            try {
+              await supabase.from("profiles").upsert(
+                {
+                  user_id: session.user.id,
+                  email: session.user.email ?? undefined,
+                  full_name: fullName || undefined,
+                  phone: phone || undefined,
+                  address: address || undefined,
+                  date_of_birth: dateOfBirth || undefined,
+                },
+                { onConflict: "user_id" }
+              );
           } catch (e) {
             console.error(e);
           } finally {
@@ -74,6 +76,27 @@ const Auth = () => {
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
     if (loading) return;
+    
+    // Validate date of birth
+    if (!dateOfBirth) {
+      toast({ title: "Date of birth required", description: "Please enter your date of birth to continue.", variant: "destructive" });
+      return;
+    }
+    
+    // Check if user is at least 13 years old
+    const birthDate = new Date(dateOfBirth);
+    const today = new Date();
+    let age = today.getFullYear() - birthDate.getFullYear();
+    const monthDiff = today.getMonth() - birthDate.getMonth();
+    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+      age--;
+    }
+    
+    if (age < 13) {
+      toast({ title: "Age requirement", description: "You must be at least 13 years old to create an account.", variant: "destructive" });
+      return;
+    }
+    
     setLoading(true);
     const { error, data } = await supabase.auth.signUp({
       email,
@@ -132,6 +155,7 @@ const Auth = () => {
                   setFullName("");
                   setPhone("");
                   setAddress("");
+                  setDateOfBirth("");
                 }}
                 style={{ width: '200px' }}
               >
@@ -227,6 +251,19 @@ const Auth = () => {
                     value={fullName}
                     onChange={(e) => setFullName(e.target.value)}
                   />
+                </div>
+                <div className="auth-input-box">
+                  <input
+                    type="date"
+                    placeholder="Date of Birth"
+                    value={dateOfBirth}
+                    onChange={(e) => setDateOfBirth(e.target.value)}
+                    required
+                    max={new Date().toISOString().split('T')[0]}
+                  />
+                  <label style={{ fontSize: '12px', color: '#666', marginTop: '4px' }}>
+                    Date of Birth (Required)
+                  </label>
                 </div>
                 <div className="auth-input-box">
                   <input
