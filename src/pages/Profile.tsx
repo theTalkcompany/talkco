@@ -9,8 +9,10 @@ import { useToast } from "@/components/ui/use-toast";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Shield, AlertTriangle } from "lucide-react";
 import AvatarPicker from "@/components/profile/AvatarPicker";
 import MyPosts from "@/components/profile/MyPosts";
+import ReportsAdmin from "@/components/admin/ReportsAdmin";
 
 interface ProfileRow {
   user_id: string;
@@ -34,6 +36,8 @@ export default function Profile() {
   const [loading, setLoading] = useState(true);
   const [userId, setUserId] = useState<string | null>(null);
   const [profile, setProfile] = useState<ProfileRow | null>(null);
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [showReports, setShowReports] = useState(false);
 const [editing, setEditing] = useState({
   full_name: "",
   display_name: "",
@@ -55,6 +59,12 @@ const [editing, setEditing] = useState({
       }
       if (!mounted) return;
       setUserId(uid);
+      
+      // Check if admin
+      if (session?.user?.email === 'talkco@outlook.com') {
+        setIsAdmin(true);
+      }
+      
       // Load profile
       const { data, error } = await supabase
         .from("profiles")
@@ -282,6 +292,38 @@ const [editing, setEditing] = useState({
             <MyPosts userId={userId} />
           </CardContent>
         </Card>
+
+        {isAdmin && (
+          <Card className="md:col-span-3">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Shield className="h-5 w-5" />
+                Admin Controls
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <Dialog open={showReports} onOpenChange={setShowReports}>
+                <DialogTrigger asChild>
+                  <Button variant="outline" className="flex items-center gap-2">
+                    <AlertTriangle className="h-4 w-4" />
+                    View User Reports
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden">
+                  <DialogHeader>
+                    <DialogTitle>User Reports Management</DialogTitle>
+                    <DialogDescription>
+                      Review and manage reports submitted by community members
+                    </DialogDescription>
+                  </DialogHeader>
+                  <div className="overflow-y-auto">
+                    <ReportsAdmin />
+                  </div>
+                </DialogContent>
+              </Dialog>
+            </CardContent>
+          </Card>
+        )}
       </section>
     </>
   );

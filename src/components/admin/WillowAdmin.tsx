@@ -7,7 +7,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
 import { Loader2, Save } from "lucide-react";
-import ReportsAdmin from "./ReportsAdmin";
 
 interface WillowConfig {
   id: string;
@@ -122,11 +121,10 @@ const WillowAdmin = () => {
       </div>
 
       <Tabs defaultValue="prompt" className="space-y-4">
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="prompt">System Prompt</TabsTrigger>
           <TabsTrigger value="knowledge">Custom Knowledge</TabsTrigger>
           <TabsTrigger value="instructions">Additional Instructions</TabsTrigger>
-          <TabsTrigger value="reports">User Reports</TabsTrigger>
         </TabsList>
 
         <TabsContent value="prompt">
@@ -199,10 +197,6 @@ const WillowAdmin = () => {
               </div>
             </CardContent>
           </Card>
-        </TabsContent>
-
-        <TabsContent value="reports">
-          <ReportsAdmin />
         </TabsContent>
       </Tabs>
     </div>
