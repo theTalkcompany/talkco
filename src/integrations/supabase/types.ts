@@ -184,6 +184,63 @@ export type Database = {
         }
         Relationships: []
       }
+      reports: {
+        Row: {
+          created_at: string
+          id: string
+          message_content: string | null
+          message_id: string | null
+          reason: string | null
+          reported_by_user_id: string
+          reported_user_id: string
+          resolved_at: string | null
+          resolved_by: string | null
+          room_id: string
+          status: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          message_content?: string | null
+          message_id?: string | null
+          reason?: string | null
+          reported_by_user_id: string
+          reported_user_id: string
+          resolved_at?: string | null
+          resolved_by?: string | null
+          room_id: string
+          status?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          message_content?: string | null
+          message_id?: string | null
+          reason?: string | null
+          reported_by_user_id?: string
+          reported_user_id?: string
+          resolved_at?: string | null
+          resolved_by?: string | null
+          room_id?: string
+          status?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reports_message_id_fkey"
+            columns: ["message_id"]
+            isOneToOne: false
+            referencedRelation: "room_messages"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reports_room_id_fkey"
+            columns: ["room_id"]
+            isOneToOne: false
+            referencedRelation: "rooms"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       room_messages: {
         Row: {
           content: string
@@ -251,6 +308,7 @@ export type Database = {
       rooms: {
         Row: {
           created_at: string
+          created_by: string | null
           description: string | null
           id: string
           name: string
@@ -258,6 +316,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          created_by?: string | null
           description?: string | null
           id?: string
           name: string
@@ -265,6 +324,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          created_by?: string | null
           description?: string | null
           id?: string
           name?: string
