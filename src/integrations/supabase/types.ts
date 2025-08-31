@@ -189,42 +189,48 @@ export type Database = {
       }
       reports: {
         Row: {
+          comment_id: string | null
           created_at: string
           id: string
           message_content: string | null
           message_id: string | null
+          post_id: string | null
           reason: string | null
           reported_by_user_id: string
           reported_user_id: string
           resolved_at: string | null
           resolved_by: string | null
-          room_id: string
+          room_id: string | null
           status: string | null
         }
         Insert: {
+          comment_id?: string | null
           created_at?: string
           id?: string
           message_content?: string | null
           message_id?: string | null
+          post_id?: string | null
           reason?: string | null
           reported_by_user_id: string
           reported_user_id: string
           resolved_at?: string | null
           resolved_by?: string | null
-          room_id: string
+          room_id?: string | null
           status?: string | null
         }
         Update: {
+          comment_id?: string | null
           created_at?: string
           id?: string
           message_content?: string | null
           message_id?: string | null
+          post_id?: string | null
           reason?: string | null
           reported_by_user_id?: string
           reported_user_id?: string
           resolved_at?: string | null
           resolved_by?: string | null
-          room_id?: string
+          room_id?: string | null
           status?: string | null
         }
         Relationships: [

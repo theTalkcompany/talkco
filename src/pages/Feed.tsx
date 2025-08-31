@@ -4,6 +4,8 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { ReportDialog } from "@/components/feed/ReportDialog";
+import { Flag } from "lucide-react";
 
 interface LikeRow { id: string; user_id: string }
 interface CommentRow { id: string; content: string; user_id: string; created_at: string }
@@ -27,6 +29,21 @@ const [newPost, setNewPost] = useState("");
 const [commentInputs, setCommentInputs] = useState<Record<string, string>>({});
 const [expanded, setExpanded] = useState<Record<string, boolean>>({});
 const [nameMap, setNameMap] = useState<Record<string, string>>({});
+const [reportDialog, setReportDialog] = useState<{
+  open: boolean;
+  postId?: string;
+  commentId?: string;
+  reportedUserId: string;
+  reportedContent: string;
+  contentType: "post" | "comment";
+}>({
+  open: false,
+  postId: undefined,
+  commentId: undefined,
+  reportedUserId: "",
+  reportedContent: "",
+  contentType: "post",
+});
 
   useEffect(() => {
     const init = async () => {
@@ -132,6 +149,17 @@ const loadPosts = async () => {
     setCommenting((s) => ({ ...s, [postId]: false }));
   };
 
+  const openReportDialog = (type: "post" | "comment", postId?: string, commentId?: string, reportedUserId?: string, content?: string) => {
+    setReportDialog({
+      open: true,
+      postId,
+      commentId,
+      reportedUserId: reportedUserId || "",
+      reportedContent: content || "",
+      contentType: type,
+    });
+  };
+
   return (
     <>
       <Helmet>
@@ -196,6 +224,16 @@ const loadPosts = async () => {
                       💬 <span>{comments.length}</span>
                       <span className="sr-only">comments</span>
                     </button>
+                    {sessionUserId && sessionUserId !== post.user_id && (
+                      <button
+                        className="inline-flex items-center gap-1 hover:text-orange-600 transition-colors"
+                        onClick={() => openReportDialog("post", post.id, undefined, post.user_id, post.content)}
+                        title="Report this post"
+                      >
+                        <Flag className="h-3 w-3" />
+                        <span className="sr-only">Report</span>
+                      </button>
+                    )}
                   </div>
 
                   {/* Comments */}
@@ -205,10 +243,23 @@ const loadPosts = async () => {
                         <p className="text-muted-foreground">No comments yet. Be the first to respond with support.</p>
                       ) : (
                         <ul className="space-y-3">
-                          {comments.map((c) => (
+                           {comments.map((c) => (
                             <li key={c.id} className="rounded bg-card p-2">
-                              <p className="text-sm">{c.content}</p>
-                              <div className="mt-1 text-xs text-muted-foreground">{nameMap[c.user_id] || "Anonymous"} • {new Date(c.created_at).toLocaleString()}</div>
+                              <div className="flex justify-between items-start gap-2">
+                                <div className="flex-1">
+                                  <p className="text-sm">{c.content}</p>
+                                  <div className="mt-1 text-xs text-muted-foreground">{nameMap[c.user_id] || "Anonymous"} • {new Date(c.created_at).toLocaleString()}</div>
+                                </div>
+                                {sessionUserId && sessionUserId !== c.user_id && (
+                                  <button
+                                    className="text-muted-foreground hover:text-orange-600 transition-colors flex-shrink-0"
+                                    onClick={() => openReportDialog("comment", post.id, c.id, c.user_id, c.content)}
+                                    title="Report this comment"
+                                  >
+                                    <Flag className="h-3 w-3" />
+                                  </button>
+                                )}
+                              </div>
                             </li>
                           ))}
                         </ul>
@@ -239,6 +290,16 @@ const loadPosts = async () => {
           )}
         </div>
       </section>
+
+      <ReportDialog
+        open={reportDialog.open}
+        onOpenChange={(open) => setReportDialog((prev) => ({ ...prev, open }))}
+        postId={reportDialog.postId}
+        commentId={reportDialog.commentId}
+        reportedUserId={reportDialog.reportedUserId}
+        reportedContent={reportDialog.reportedContent}
+        contentType={reportDialog.contentType}
+      />
     </>
   );
 };

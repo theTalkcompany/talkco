@@ -12,8 +12,10 @@ interface Report {
   id: string;
   reported_user_id: string;
   reported_by_user_id: string;
-  room_id: string;
+  room_id?: string;
   message_id?: string;
+  post_id?: string;
+  comment_id?: string;
   message_content?: string;
   reason: string;
   status: 'pending' | 'resolved' | 'dismissed';
@@ -162,7 +164,12 @@ const ReportsAdmin = () => {
                 <CardHeader>
                   <div className="flex items-center justify-between">
                     <CardTitle className="text-lg">
-                      Report in #{report.rooms?.name || 'Unknown Room'}
+                      {report.room_id 
+                        ? `Report in #${report.rooms?.name || 'Unknown Room'}`
+                        : report.post_id 
+                          ? 'Report on Feed Post'
+                          : 'Report on Comment'
+                      }
                     </CardTitle>
                     <div className="flex items-center gap-2">
                       <span className={`text-sm font-medium ${getReasonColor(report.reason)}`}>
@@ -178,7 +185,9 @@ const ReportsAdmin = () => {
                 <CardContent className="space-y-4">
                   {report.message_content && (
                     <div>
-                      <h4 className="font-medium mb-2">Reported Message:</h4>
+                      <h4 className="font-medium mb-2">
+                        Reported {report.room_id ? 'Message' : report.post_id ? 'Post' : 'Comment'}:
+                      </h4>
                       <div className="bg-muted p-3 rounded-md text-sm">
                         "{report.message_content}"
                       </div>
@@ -229,7 +238,12 @@ const ReportsAdmin = () => {
                 <CardHeader>
                   <div className="flex items-center justify-between">
                     <CardTitle className="text-lg">
-                      Report in #{report.rooms?.name || 'Unknown Room'}
+                      {report.room_id 
+                        ? `Report in #${report.rooms?.name || 'Unknown Room'}`
+                        : report.post_id 
+                          ? 'Report on Feed Post'
+                          : 'Report on Comment'
+                      }
                     </CardTitle>
                     <div className="flex items-center gap-2">
                       <span className={`text-sm font-medium ${getReasonColor(report.reason)}`}>
