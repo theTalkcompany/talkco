@@ -125,8 +125,13 @@
     box-shadow: var(--shadow-glow);
   }
   .surface-card {
-    @apply bg-card border rounded-lg; 
+    @apply bg-card border rounded-xl border-border/50; 
     box-shadow: var(--shadow-elev);
+    transition: all 200ms ease;
+  }
+  .surface-card:hover {
+    border-color: hsl(var(--border));
+    box-shadow: var(--shadow-glow);
   }
   .btn-hero {
     background-image: var(--gradient-primary);
@@ -145,6 +150,38 @@
   .hover-tilt:hover {
     transform: perspective(1000px) rotateX(2deg) rotateY(-2deg) translateY(-2px);
   }
+  
+  /* Enhanced UI Components */
+  .loading-skeleton {
+    @apply bg-muted animate-pulse rounded;
+    background: linear-gradient(90deg, hsl(var(--muted)) 25%, hsl(var(--muted-foreground) / 0.1) 50%, hsl(var(--muted)) 75%);
+    background-size: 200% 100%;
+    animation: loading-shimmer 2s infinite;
+  }
+  
+  .glass-card {
+    @apply bg-background/60 backdrop-blur-sm border border-border/30;
+    box-shadow: 0 8px 32px hsl(var(--foreground) / 0.08);
+  }
+  
+  .interactive-card {
+    @apply surface-card cursor-pointer transition-all duration-200;
+  }
+  .interactive-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-glow);
+  }
+  
+  .focus-ring {
+    @apply focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-background;
+  }
+  
+  .text-gradient {
+    background: var(--gradient-primary);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
 
   /* Signature: animated glow following cursor */
   .glow-field {
@@ -161,8 +198,14 @@
     pointer-events: none;
     transition: opacity 200ms ease;
   }
+  @keyframes loading-shimmer {
+    0% { background-position: -200% 0; }
+    100% { background-position: 200% 0; }
+  }
+  
   @media (prefers-reduced-motion: reduce) {
-    .hover-tilt, .btn-hero { transition: none; }
+    .hover-tilt, .btn-hero, .surface-card, .interactive-card { transition: none; }
     .glow-field::before { display: none; }
+    .loading-skeleton { animation: none; }
   }
 }
