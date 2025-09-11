@@ -44,16 +44,22 @@ serve(async (req) => {
       throw new Error("Failed to load Willow configuration");
     }
 
-    // Build the complete system prompt
-    let systemPrompt = config.system_prompt;
+    // Build the complete system prompt with all configuration sections
+    let systemPrompt = config.system_prompt || "You are Willow, a compassionate AI mental health companion.";
+    
+    console.log("Base system prompt loaded:", systemPrompt.substring(0, 100) + "...");
     
     if (config.custom_knowledge && config.custom_knowledge.trim()) {
-      systemPrompt += `\n\nAdditional Knowledge:\n${config.custom_knowledge}`;
+      systemPrompt += `\n\n=== CUSTOM KNOWLEDGE BASE ===\n${config.custom_knowledge.trim()}\n=== END CUSTOM KNOWLEDGE ===`;
+      console.log("Custom knowledge added:", config.custom_knowledge.trim().substring(0, 100) + "...");
     }
     
     if (config.additional_instructions && config.additional_instructions.trim()) {
-      systemPrompt += `\n\nAdditional Instructions:\n${config.additional_instructions}`;
+      systemPrompt += `\n\n=== ADDITIONAL INSTRUCTIONS ===\n${config.additional_instructions.trim()}\n=== END ADDITIONAL INSTRUCTIONS ===`;
+      console.log("Additional instructions added:", config.additional_instructions.trim().substring(0, 100) + "...");
     }
+    
+    console.log("Final system prompt length:", systemPrompt.length, "characters");
 
     // Build OpenAI messages, prepend system prompt
     const messages = [
