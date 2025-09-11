@@ -56,7 +56,7 @@ const Index = () => {
         <div className="max-w-4xl">
           <h1 className="text-4xl md:text-6xl font-extrabold leading-tight mb-6 text-white">
             A safe, anonymous space to 
-            <span className="block text-gradient bg-white/90 [-webkit-background-clip:text] [-webkit-text-fill-color:transparent]">
+            <span className="block text-white">
               talk and heal
             </span>
           </h1>
