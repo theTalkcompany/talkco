@@ -13,6 +13,7 @@ import { Shield, AlertTriangle } from "lucide-react";
 import AvatarPicker from "@/components/profile/AvatarPicker";
 import MyPosts from "@/components/profile/MyPosts";
 import ReportsAdmin from "@/components/admin/ReportsAdmin";
+import WillowAdmin from "@/components/admin/WillowAdmin";
 import { useUserRole } from "@/hooks/useUserRole";
 
 interface ProfileRow {
@@ -39,6 +40,7 @@ export default function Profile() {
   const [userId, setUserId] = useState<string | null>(null);
   const [profile, setProfile] = useState<ProfileRow | null>(null);
   const [showReports, setShowReports] = useState(false);
+  const [showSystemSettings, setShowSystemSettings] = useState(false);
 const [editing, setEditing] = useState({
   full_name: "",
   display_name: "",
@@ -294,29 +296,51 @@ const [editing, setEditing] = useState({
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Shield className="h-5 w-5" />
-                Admin Controls
+                System Settings
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <Dialog open={showReports} onOpenChange={setShowReports}>
-                <DialogTrigger asChild>
-                  <Button variant="outline" className="flex items-center gap-2">
-                    <AlertTriangle className="h-4 w-4" />
-                    View User Reports
-                  </Button>
-                </DialogTrigger>
-                <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden">
-                  <DialogHeader>
-                    <DialogTitle>User Reports Management</DialogTitle>
-                    <DialogDescription>
-                      Review and manage reports submitted by community members
-                    </DialogDescription>
-                  </DialogHeader>
-                  <div className="overflow-y-auto">
-                    <ReportsAdmin />
-                  </div>
-                </DialogContent>
-              </Dialog>
+              <div className="flex gap-4">
+                <Dialog open={showSystemSettings} onOpenChange={setShowSystemSettings}>
+                  <DialogTrigger asChild>
+                    <Button variant="outline" className="flex items-center gap-2">
+                      <Shield className="h-4 w-4" />
+                      System Settings
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent className="max-w-6xl max-h-[90vh] overflow-hidden">
+                    <DialogHeader>
+                      <DialogTitle>System Settings</DialogTitle>
+                      <DialogDescription>
+                        Manage system configuration, privacy policy, and user roles
+                      </DialogDescription>
+                    </DialogHeader>
+                    <div className="overflow-y-auto">
+                      <WillowAdmin />
+                    </div>
+                  </DialogContent>
+                </Dialog>
+                
+                <Dialog open={showReports} onOpenChange={setShowReports}>
+                  <DialogTrigger asChild>
+                    <Button variant="outline" className="flex items-center gap-2">
+                      <AlertTriangle className="h-4 w-4" />
+                      View User Reports
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden">
+                    <DialogHeader>
+                      <DialogTitle>User Reports Management</DialogTitle>
+                      <DialogDescription>
+                        Review and manage reports submitted by community members
+                      </DialogDescription>
+                    </DialogHeader>
+                    <div className="overflow-y-auto">
+                      <ReportsAdmin />
+                    </div>
+                  </DialogContent>
+                </Dialog>
+              </div>
             </CardContent>
           </Card>
         )}
