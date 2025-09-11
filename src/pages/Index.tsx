@@ -53,8 +53,8 @@ const Index = () => {
 
       {/* Hero Section */}
       <section className="rounded-2xl bg-gradient-primary p-8 md:p-12 shadow-glow hover-tilt mb-8">
-        <div className="max-w-4xl text-primary-foreground">
-          <h1 className="text-4xl md:text-6xl font-extrabold leading-tight mb-6">
+        <div className="max-w-4xl">
+          <h1 className="text-4xl md:text-6xl font-extrabold leading-tight mb-6 text-white">
             A safe, anonymous space to 
             <span className="block text-gradient bg-white/90 [-webkit-background-clip:text] [-webkit-text-fill-color:transparent]">
               talk and heal
