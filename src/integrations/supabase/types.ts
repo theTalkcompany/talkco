@@ -124,6 +124,30 @@ export type Database = {
           },
         ]
       }
+      privacy_policy: {
+        Row: {
+          content: string
+          created_at: string
+          id: string
+          last_updated: string
+          updated_by: string | null
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          id?: string
+          last_updated?: string
+          updated_by?: string | null
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          id?: string
+          last_updated?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           address: string | null

@@ -9,6 +9,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { Loader2, Save } from "lucide-react";
 import ModerationSettings from "./ModerationSettings";
 import { UserRoleManager } from "./UserRoleManager";
+import PrivacyPolicyAdmin from "./PrivacyPolicyAdmin";
 
 interface WillowConfig {
   id: string;
@@ -122,14 +123,15 @@ const WillowAdmin = () => {
         </Button>
       </div>
 
-      <Tabs defaultValue="prompt" className="space-y-4">
-        <TabsList className="grid w-full grid-cols-5">
-          <TabsTrigger value="prompt">System Prompt</TabsTrigger>
-          <TabsTrigger value="knowledge">Custom Knowledge</TabsTrigger>
-          <TabsTrigger value="instructions">Additional Instructions</TabsTrigger>
-          <TabsTrigger value="moderation">Content Moderation</TabsTrigger>
-          <TabsTrigger value="users">User Management</TabsTrigger>
-        </TabsList>
+        <Tabs defaultValue="prompt" className="space-y-4">
+          <TabsList className="grid w-full grid-cols-6">
+            <TabsTrigger value="prompt">System Prompt</TabsTrigger>
+            <TabsTrigger value="knowledge">Custom Knowledge</TabsTrigger>
+            <TabsTrigger value="instructions">Additional Instructions</TabsTrigger>
+            <TabsTrigger value="moderation">Content Moderation</TabsTrigger>
+            <TabsTrigger value="users">User Management</TabsTrigger>
+            <TabsTrigger value="privacy">Privacy Policy</TabsTrigger>
+          </TabsList>
 
         <TabsContent value="prompt">
           <Card>
@@ -207,10 +209,14 @@ const WillowAdmin = () => {
           <ModerationSettings />
         </TabsContent>
         
-        <TabsContent value="users">
-          <UserRoleManager />
-        </TabsContent>
-      </Tabs>
+          <TabsContent value="users">
+            <UserRoleManager />
+          </TabsContent>
+
+          <TabsContent value="privacy">
+            <PrivacyPolicyAdmin />
+          </TabsContent>
+        </Tabs>
     </div>
   );
 };
