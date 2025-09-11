@@ -7,6 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { ArrowLeft, Send, Users, Flag, UserX, Shield } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
+import { useContentModeration } from "@/hooks/useContentModeration";
 import { format } from "date-fns";
 
 interface Room {
@@ -45,6 +46,7 @@ const RoomChat = ({ room, onLeaveRoom }: RoomChatProps) => {
   const [submittingReport, setSubmittingReport] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
+  const { moderateContent, isChecking } = useContentModeration();
 
   const isRoomAdmin = currentUser && room.created_by === currentUser.id;
 
@@ -188,15 +190,22 @@ const RoomChat = ({ room, onLeaveRoom }: RoomChatProps) => {
 
     setSending(true);
     try {
-      const { error } = await supabase
+      // Create the message first
+      const { data: messageData, error } = await supabase
         .from('room_messages')
         .insert({
           room_id: room.id,
           user_id: currentUser.id,
           content: newMessage.trim(),
-        });
+        })
+        .select()
+        .single();
 
       if (error) throw error;
+      
+      // Then moderate the content
+      await moderateContent(newMessage.trim(), currentUser.id, 'chat_message', messageData.id, room.id);
+      
       setNewMessage("");
     } catch (error) {
       console.error('Error sending message:', error);
@@ -413,7 +422,7 @@ const RoomChat = ({ room, onLeaveRoom }: RoomChatProps) => {
           />
           <Button
             onClick={sendMessage}
-            disabled={!newMessage.trim() || sending}
+            disabled={!newMessage.trim() || sending || isChecking}
             size="icon"
             className="shrink-0"
           >

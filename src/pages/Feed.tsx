@@ -5,6 +5,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { ReportDialog } from "@/components/feed/ReportDialog";
+import { useContentModeration } from "@/hooks/useContentModeration";
 import { Flag } from "lucide-react";
 
 interface LikeRow { id: string; user_id: string }
@@ -20,6 +21,7 @@ interface PostRow {
 
 const Feed = () => {
   const { toast } = useToast();
+  const { moderateContent, isChecking } = useContentModeration();
   const [sessionUserId, setSessionUserId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [posting, setPosting] = useState(false);
@@ -67,7 +69,7 @@ const loadPosts = async () => {
 
   if (error) {
     console.error(error);
-    toast({ title: "Couldn’t load feed", description: error.message, variant: "destructive" });
+    toast({ title: "Couldn't load feed", description: error.message, variant: "destructive" });
     return;
   }
   const postsData = data as unknown as PostRow[];
@@ -103,15 +105,28 @@ const loadPosts = async () => {
     }
     const content = newPost.trim();
     if (!content) return;
+    
     setPosting(true);
-    const { error } = await supabase.from("posts").insert({ content, user_id: sessionUserId });
+    
+    // Create the post first
+    const { data: newPostData, error } = await supabase
+      .from("posts")
+      .insert({ content, user_id: sessionUserId })
+      .select()
+      .single();
+      
     if (error) {
-      toast({ title: "Couldn’t post", description: error.message, variant: "destructive" });
-    } else {
-      setNewPost("");
-      toast({ title: "Posted", description: "Your post is now live." });
-      await loadPosts();
+      toast({ title: "Couldn't post", description: error.message, variant: "destructive" });
+      setPosting(false);
+      return;
     }
+    
+    // Then moderate the content
+    await moderateContent(content, sessionUserId, 'post', newPostData.id);
+    
+    setNewPost("");
+    toast({ title: "Posted", description: "Your post is now live." });
+    await loadPosts();
     setPosting(false);
   };
 
@@ -123,10 +138,10 @@ const loadPosts = async () => {
     const liked = post.likes?.some((l) => l.user_id === sessionUserId);
     if (liked) {
       const { error } = await supabase.from("likes").delete().match({ post_id: post.id, user_id: sessionUserId });
-      if (error) return toast({ title: "Couldn’t unlike", description: error.message, variant: "destructive" });
+      if (error) return toast({ title: "Couldn't unlike", description: error.message, variant: "destructive" });
     } else {
       const { error } = await supabase.from("likes").insert({ post_id: post.id, user_id: sessionUserId });
-      if (error) return toast({ title: "Couldn’t like", description: error.message, variant: "destructive" });
+      if (error) return toast({ title: "Couldn't like", description: error.message, variant: "destructive" });
     }
     await loadPosts();
   };
@@ -138,14 +153,27 @@ const loadPosts = async () => {
     }
     const text = (commentInputs[postId] || "").trim();
     if (!text) return;
+    
     setCommenting((s) => ({ ...s, [postId]: true }));
-    const { error } = await supabase.from("comments").insert({ post_id: postId, content: text, user_id: sessionUserId });
+    
+    // Create the comment first
+    const { data: newCommentData, error } = await supabase
+      .from("comments")
+      .insert({ post_id: postId, content: text, user_id: sessionUserId })
+      .select()
+      .single();
+      
     if (error) {
-      toast({ title: "Couldn’t comment", description: error.message, variant: "destructive" });
-    } else {
-      setCommentInputs((s) => ({ ...s, [postId]: "" }));
-      await loadPosts();
+      toast({ title: "Couldn't comment", description: error.message, variant: "destructive" });
+      setCommenting((s) => ({ ...s, [postId]: false }));
+      return;
     }
+    
+    // Then moderate the content
+    await moderateContent(text, sessionUserId, 'comment', newCommentData.id);
+    
+    setCommentInputs((s) => ({ ...s, [postId]: "" }));
+    await loadPosts();
     setCommenting((s) => ({ ...s, [postId]: false }));
   };
 
@@ -184,8 +212,8 @@ const loadPosts = async () => {
             className="mt-2"
           />
           <div className="mt-3 flex justify-end">
-            <Button variant="hero" onClick={handleCreatePost} disabled={!canPost} aria-label="Publish post">
-              {posting ? "Posting..." : "Post"}
+            <Button variant="hero" onClick={handleCreatePost} disabled={!canPost || isChecking} aria-label="Publish post">
+              {posting || isChecking ? "Posting..." : "Post"}
             </Button>
           </div>
         </div>
@@ -275,10 +303,10 @@ const loadPosts = async () => {
                           <Button
                             variant="secondary"
                             onClick={() => handleAddComment(post.id)}
-                            disabled={commenting[post.id] || !(commentInputs[post.id] || "").trim()}
+                            disabled={commenting[post.id] || !(commentInputs[post.id] || "").trim() || isChecking}
                             aria-label="Add comment"
                           >
-                            {commenting[post.id] ? "Sending…" : "Reply"}
+                            {commenting[post.id] || isChecking ? "Sending…" : "Reply"}
                           </Button>
                         </div>
                       </div>

@@ -3,7 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { AlertTriangle, CheckCircle, XCircle, Clock } from "lucide-react";
+import { AlertTriangle, CheckCircle, XCircle, Clock, Bot, Shield } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
 import { format } from "date-fns";
@@ -22,6 +22,7 @@ interface Report {
   created_at: string;
   resolved_at?: string;
   resolved_by?: string;
+  is_ai_flagged?: boolean;
   rooms?: {
     name: string;
   };
@@ -113,9 +114,17 @@ const ReportsAdmin = () => {
         return 'text-yellow-600';
       case 'harmful':
         return 'text-red-700';
+      case 'Automated content moderation flag':
+        return 'text-purple-600';
       default:
         return 'text-gray-600';
     }
+  };
+
+  const isAIFlagged = (report: Report) => {
+    return report.reported_by_user_id === report.reported_user_id || 
+           report.reason === 'Automated content moderation flag' ||
+           report.reason.toLowerCase().includes('automated');
   };
 
   const pendingReports = reports.filter(r => r.status === 'pending');
@@ -160,26 +169,35 @@ const ReportsAdmin = () => {
             </Card>
           ) : (
             pendingReports.map((report) => (
-              <Card key={report.id} className="border-l-4 border-l-orange-500">
+              <Card key={report.id} className={`border-l-4 ${isAIFlagged(report) ? 'border-l-purple-500 bg-purple-50/50' : 'border-l-orange-500'}`}>
                 <CardHeader>
                   <div className="flex items-center justify-between">
-                    <CardTitle className="text-lg">
+                    <CardTitle className="text-lg flex items-center gap-2">
+                      {isAIFlagged(report) && (
+                        <Bot className="h-4 w-4 text-purple-600" />
+                      )}
                       {report.room_id 
                         ? `Report in #${report.rooms?.name || 'Unknown Room'}`
                         : report.post_id 
                           ? 'Report on Feed Post'
                           : 'Report on Comment'
                       }
+                      {isAIFlagged(report) && (
+                        <Badge variant="outline" className="text-purple-600 border-purple-300">
+                          <Shield className="h-3 w-3 mr-1" />
+                          AI Detected
+                        </Badge>
+                      )}
                     </CardTitle>
                     <div className="flex items-center gap-2">
                       <span className={`text-sm font-medium ${getReasonColor(report.reason)}`}>
-                        {report.reason.charAt(0).toUpperCase() + report.reason.slice(1)}
+                        {report.reason === 'Automated content moderation flag' ? 'AI Moderation' : report.reason.charAt(0).toUpperCase() + report.reason.slice(1)}
                       </span>
                       {getStatusBadge(report.status)}
                     </div>
                   </div>
                   <CardDescription>
-                    Reported {format(new Date(report.created_at), 'PPp')}
+                    {isAIFlagged(report) ? 'Automatically flagged by AI moderation system' : 'User report'} • {format(new Date(report.created_at), 'PPp')}
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
