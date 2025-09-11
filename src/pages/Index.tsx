@@ -4,11 +4,9 @@ import { Link } from "react-router-dom";
 import { getDailyQuote, type Quote } from "@/data/quotes";
 import { useState, useEffect } from "react";
 import { Heart, MessageCircle, Shield, Users, Zap, ArrowRight } from "lucide-react";
-
 const Index = () => {
   const [quote, setQuote] = useState<Quote | null>(null);
   const [loading, setLoading] = useState(true);
-  
   useEffect(() => {
     const loadQuote = async () => {
       try {
@@ -22,32 +20,24 @@ const Index = () => {
     };
     loadQuote();
   }, []);
-
-  const features = [
-    {
-      icon: Shield,
-      title: "Safe & Anonymous",
-      description: "Share your thoughts without revealing your identity. Your privacy is our priority."
-    },
-    {
-      icon: MessageCircle,
-      title: "AI Support 24/7",
-      description: "Chat with Willow, our empathetic AI assistant, available whenever you need support."
-    },
-    {
-      icon: Users,
-      title: "Community Chat",
-      description: "Connect with others in supportive group conversations and community rooms."
-    },
-    {
-      icon: Heart,
-      title: "Daily Inspiration",
-      description: "Receive uplifting quotes and encouragement to brighten your day."
-    }
-  ];
-  
-  return (
-    <>
+  const features = [{
+    icon: Shield,
+    title: "Safe & Anonymous",
+    description: "Share your thoughts without revealing your identity. Your privacy is our priority."
+  }, {
+    icon: MessageCircle,
+    title: "AI Support 24/7",
+    description: "Chat with Willow, our empathetic AI assistant, available whenever you need support."
+  }, {
+    icon: Users,
+    title: "Community Chat",
+    description: "Connect with others in supportive group conversations and community rooms."
+  }, {
+    icon: Heart,
+    title: "Daily Inspiration",
+    description: "Receive uplifting quotes and encouragement to brighten your day."
+  }];
+  return <>
       <Helmet>
         <title>Talk — Anonymous Mental Health Support</title>
         <meta name="description" content="Find anonymous support, share openly, chat with others, and receive a daily uplifting quote on Talk." />
@@ -84,23 +74,19 @@ const Index = () => {
               <Link to="/feed" className="focus-ring">Explore the Feed</Link>
             </Button>
           </div>
-          <p className="text-sm opacity-80">
-            Already have an account? <Link to="/auth" className="underline hover:no-underline focus-ring">Log in here</Link>
-          </p>
+          
         </div>
       </section>
 
       {/* Features Grid */}
       <section className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        {features.map((feature, index) => (
-          <article key={index} className="surface-card p-6 text-center group">
+        {features.map((feature, index) => <article key={index} className="surface-card p-6 text-center group">
             <div className="inline-flex items-center justify-center w-12 h-12 mb-4 rounded-full bg-gradient-primary">
               <feature.icon className="h-6 w-6 text-primary-foreground" />
             </div>
             <h3 className="text-lg font-semibold mb-2">{feature.title}</h3>
             <p className="text-muted-foreground text-sm leading-relaxed">{feature.description}</p>
-          </article>
-        ))}
+          </article>)}
       </section>
 
       {/* Main Content Cards */}
@@ -116,22 +102,16 @@ const Index = () => {
             </div>
           </div>
           
-          {loading ? (
-            <div className="space-y-3">
+          {loading ? <div className="space-y-3">
               <div className="loading-skeleton h-4 w-full"></div>
               <div className="loading-skeleton h-4 w-3/4"></div>
               <div className="loading-skeleton h-3 w-1/2"></div>
-            </div>
-          ) : quote ? (
-            <>
+            </div> : quote ? <>
               <blockquote className="text-lg leading-relaxed mb-4 italic border-l-4 border-primary pl-4">
                 "{quote.text}"
               </blockquote>
               <cite className="block text-sm text-muted-foreground font-medium">— {quote.author}</cite>
-            </>
-          ) : (
-            <p className="text-muted-foreground">Unable to load today's quote. Please try again later.</p>
-          )}
+            </> : <p className="text-muted-foreground">Unable to load today's quote. Please try again later.</p>}
           
           <div className="mt-8">
             <Button variant="soft" asChild className="group">
@@ -214,12 +194,7 @@ const Index = () => {
               <p className="text-sm text-muted-foreground mb-3">
                 Search for licensed therapists and counselors in your area.
               </p>
-              <a 
-                className="inline-flex items-center gap-2 text-primary hover:underline text-sm font-medium focus-ring rounded-md" 
-                href="https://www.psychologytoday.com/" 
-                target="_blank" 
-                rel="noreferrer"
-              >
+              <a className="inline-flex items-center gap-2 text-primary hover:underline text-sm font-medium focus-ring rounded-md" href="https://www.psychologytoday.com/" target="_blank" rel="noreferrer">
                 Psychology Today directory
                 <ArrowRight className="h-3 w-3" />
               </a>
@@ -230,8 +205,6 @@ const Index = () => {
           </Button>
         </div>
       </section>
-    </>
-  );
+    </>;
 };
-
 export default Index;
