@@ -57,11 +57,13 @@ serve(async (req) => {
 
     // Build OpenAI messages, prepend system prompt
     const messages = [
-      { role: "system", content: systemPrompt },
+      { role: "system", content: systemPrompt + `\n\nIMPORTANT: Always remember what the user has told you in this conversation. Reference previous parts of our conversation when appropriate. Avoid repeating the same advice or questions you've already given. Build upon what has been discussed.` },
       ...incomingMessages
         .filter(m => (m.role === "user" || m.role === "assistant"))
         .map(m => ({ role: m.role, content: m.content }))
     ];
+
+    console.log(`Sending ${messages.length} messages to OpenAI, conversation length: ${incomingMessages.length}`);
 
     const response = await fetch("https://api.openai.com/v1/chat/completions", {
       method: "POST",
@@ -70,8 +72,9 @@ serve(async (req) => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "gpt-4o-mini",
-        temperature: 0.8,
+        model: "gpt-4.1-mini-2025-04-14",
+        max_tokens: 500,
+        temperature: 0.4,
         messages,
       }),
     });
