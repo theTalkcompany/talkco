@@ -1,28 +1,25 @@
 import { useState, useEffect } from "react";
 import { Helmet } from "react-helmet-async";
-import { getDailyQuote, isAdmin, type Quote } from "@/data/quotes";
+import { getDailyQuote, type Quote } from "@/data/quotes";
 import { supabase } from "@/integrations/supabase/client";
 import AdminQuotes from "@/components/admin/AdminQuotes";
 import { Button } from "@/components/ui/button";
 import { Settings } from "lucide-react";
+import { useUserRole } from "@/hooks/useUserRole";
 
 const Quotes = () => {
   const [quote, setQuote] = useState<Quote | null>(null);
   const [loading, setLoading] = useState(true);
   const [showAdmin, setShowAdmin] = useState(false);
-  const [userIsAdmin, setUserIsAdmin] = useState(false);
+  const { isAdmin: userIsAdmin } = useUserRole();
 
   useEffect(() => {
-    const loadQuoteAndCheckAdmin = async () => {
+    const loadQuote = async () => {
       setLoading(true);
       
       // Get current user
       const { data: { user } } = await supabase.auth.getUser();
       const userId = user?.id;
-      
-      // Check if user is admin
-      const adminStatus = await isAdmin();
-      setUserIsAdmin(adminStatus);
       
       // Get personalized daily quote
       const dailyQuote = await getDailyQuote(userId);
@@ -31,7 +28,7 @@ const Quotes = () => {
       setLoading(false);
     };
 
-    loadQuoteAndCheckAdmin();
+    loadQuote();
   }, []);
 
   if (loading) {

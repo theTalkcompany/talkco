@@ -4,7 +4,16 @@ export type Quote = { text: string; author: string };
 
 export async function isAdmin(): Promise<boolean> {
   const { data: { user } } = await supabase.auth.getUser();
-  return user?.email === 'talkco@outlook.com';
+  if (!user) return false;
+  
+  const { data } = await supabase
+    .from('user_roles')
+    .select('role')
+    .eq('user_id', user.id)
+    .eq('role', 'admin')
+    .single();
+    
+  return !!data;
 }
 
 function todayKey() {

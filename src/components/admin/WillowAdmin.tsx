@@ -7,6 +7,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
 import { Loader2, Save } from "lucide-react";
+import ModerationSettings from "./ModerationSettings";
+import { UserRoleManager } from "./UserRoleManager";
 
 interface WillowConfig {
   id: string;
@@ -121,10 +123,12 @@ const WillowAdmin = () => {
       </div>
 
       <Tabs defaultValue="prompt" className="space-y-4">
-        <TabsList className="grid w-full grid-cols-3">
+        <TabsList className="grid w-full grid-cols-5">
           <TabsTrigger value="prompt">System Prompt</TabsTrigger>
           <TabsTrigger value="knowledge">Custom Knowledge</TabsTrigger>
           <TabsTrigger value="instructions">Additional Instructions</TabsTrigger>
+          <TabsTrigger value="moderation">Content Moderation</TabsTrigger>
+          <TabsTrigger value="users">User Management</TabsTrigger>
         </TabsList>
 
         <TabsContent value="prompt">
@@ -197,6 +201,14 @@ const WillowAdmin = () => {
               </div>
             </CardContent>
           </Card>
+        </TabsContent>
+        
+        <TabsContent value="moderation">
+          <ModerationSettings />
+        </TabsContent>
+        
+        <TabsContent value="users">
+          <UserRoleManager />
         </TabsContent>
       </Tabs>
     </div>
