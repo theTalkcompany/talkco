@@ -62,14 +62,31 @@ serve(async (req) => {
     console.log("Final system prompt length:", systemPrompt.length, "characters");
 
     // Build OpenAI messages, prepend system prompt
+    const conversationLength = incomingMessages.length;
+    const recentMessages = conversationLength > 20 ? incomingMessages.slice(-20) : incomingMessages;
+    
+    // Create enhanced system prompt with anti-repetition instructions
+    const antiRepetitionPrompt = `
+CRITICAL CONVERSATION RULES:
+- NEVER repeat advice, questions, or suggestions you've already given in this conversation
+- ALWAYS acknowledge and build upon what the user has shared previously  
+- If the user has already answered a question, don't ask it again
+- Reference specific details from earlier in our conversation
+- Vary your language and approach - avoid using the same phrases repeatedly
+- Listen carefully to what the user is actually saying right now
+- If you're unsure what to say, ask the user what would be most helpful right now
+
+CONVERSATION MEMORY: This conversation has ${conversationLength} messages. Pay close attention to the flow and avoid circular conversations.`;
+
     const messages = [
-      { role: "system", content: systemPrompt + `\n\nIMPORTANT: Always remember what the user has told you in this conversation. Reference previous parts of our conversation when appropriate. Avoid repeating the same advice or questions you've already given. Build upon what has been discussed.` },
-      ...incomingMessages
+      { role: "system", content: systemPrompt + antiRepetitionPrompt },
+      ...recentMessages
         .filter(m => (m.role === "user" || m.role === "assistant"))
         .map(m => ({ role: m.role, content: m.content }))
     ];
 
-    console.log(`Sending ${messages.length} messages to OpenAI, conversation length: ${incomingMessages.length}`);
+    console.log(`Conversation length: ${conversationLength}, using last ${recentMessages.length} messages`);
+    console.log("Recent conversation context:", recentMessages.slice(-4).map(m => `${m.role}: ${m.content.substring(0, 50)}...`));
 
     const response = await fetch("https://api.openai.com/v1/chat/completions", {
       method: "POST",
