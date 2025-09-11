@@ -65,6 +65,23 @@ serve(async (req) => {
     const conversationLength = incomingMessages.length;
     const recentMessages = conversationLength > 20 ? incomingMessages.slice(-20) : incomingMessages;
     
+    // Analyze conversation for crisis patterns
+    const crisisKeywords = ['kill myself', 'end my life', 'want to die', 'suicide', 'kill me'];
+    const hasCrisisHistory = recentMessages.some(msg => 
+      msg.role === 'user' && crisisKeywords.some(keyword => 
+        msg.content.toLowerCase().includes(keyword)
+      )
+    );
+    const hasProvidedCrisisInfo = recentMessages.some(msg => 
+      msg.role === 'assistant' && (
+        msg.content.toLowerCase().includes('professional help') ||
+        msg.content.toLowerCase().includes('crisis hotline') ||
+        msg.content.toLowerCase().includes('emergency') ||
+        msg.content.toLowerCase().includes('988') ||
+        msg.content.toLowerCase().includes('therapist')
+      )
+    );
+
     // Create enhanced system prompt with anti-repetition instructions
     const antiRepetitionPrompt = `
 CRITICAL CONVERSATION RULES:
@@ -76,7 +93,17 @@ CRITICAL CONVERSATION RULES:
 - Listen carefully to what the user is actually saying right now
 - If you're unsure what to say, ask the user what would be most helpful right now
 
+${hasCrisisHistory && hasProvidedCrisisInfo ? `
+CRITICAL CRISIS RESPONSE RULE:
+- You have ALREADY provided crisis/professional help information in this conversation
+- DO NOT repeat crisis hotlines, emergency numbers, or "seek professional help" advice
+- Focus on emotional support, validation, and exploring what the user needs right now
+- Ask what specific support would be most helpful instead of repeating crisis resources
+` : ''}
+
 CONVERSATION MEMORY: This conversation has ${conversationLength} messages. Pay close attention to the flow and avoid circular conversations.`;
+
+    console.log(`Crisis analysis: hasCrisisHistory=${hasCrisisHistory}, hasProvidedCrisisInfo=${hasProvidedCrisisInfo}`);
 
     const messages = [
       { role: "system", content: systemPrompt + antiRepetitionPrompt },
