@@ -10,6 +10,7 @@ import { Loader2, Save } from "lucide-react";
 import ModerationSettings from "./ModerationSettings";
 import { UserRoleManager } from "./UserRoleManager";
 import PrivacyPolicyAdmin from "./PrivacyPolicyAdmin";
+import TermsOfServiceAdmin from "./TermsOfServiceAdmin";
 
 interface WillowConfig {
   id: string;
@@ -124,13 +125,14 @@ const WillowAdmin = () => {
       </div>
 
         <Tabs defaultValue="prompt" className="space-y-4">
-          <TabsList className="grid w-full grid-cols-6">
+          <TabsList className="grid w-full grid-cols-7">
             <TabsTrigger value="prompt">System Prompt</TabsTrigger>
             <TabsTrigger value="knowledge">Custom Knowledge</TabsTrigger>
             <TabsTrigger value="instructions">Additional Instructions</TabsTrigger>
             <TabsTrigger value="moderation">Content Moderation</TabsTrigger>
             <TabsTrigger value="users">User Management</TabsTrigger>
             <TabsTrigger value="privacy">Privacy Policy</TabsTrigger>
+            <TabsTrigger value="terms">Terms of Service</TabsTrigger>
           </TabsList>
 
         <TabsContent value="prompt">
@@ -215,6 +217,10 @@ const WillowAdmin = () => {
 
           <TabsContent value="privacy">
             <PrivacyPolicyAdmin />
+          </TabsContent>
+
+          <TabsContent value="terms">
+            <TermsOfServiceAdmin />
           </TabsContent>
         </Tabs>
     </div>

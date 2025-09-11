@@ -236,6 +236,9 @@ const Help = () => {
             <Button variant="ghost" asChild>
               <Link to="/privacy-policy" className="focus-ring">Privacy Policy</Link>
             </Button>
+            <Button variant="ghost" asChild>
+              <Link to="/terms-of-service" className="focus-ring">Terms of Service</Link>
+            </Button>
           </div>
         </section>
       </div>
