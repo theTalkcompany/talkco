@@ -37,7 +37,9 @@ const Index = () => {
   useEffect(() => {
     const loadQuote = async () => {
       try {
-        const dailyQuote = await getDailyQuote();
+        // Get current user to ensure same quote as quotes page
+        const { data: { user } } = await supabase.auth.getUser();
+        const dailyQuote = await getDailyQuote(user?.id);
         setQuote(dailyQuote);
       } catch (error) {
         console.error("Failed to load quote:", error);
