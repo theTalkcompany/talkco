@@ -22,6 +22,8 @@ const Auth = () => {
   const [address, setAddress] = useState("");
   const [dateOfBirth, setDateOfBirth] = useState("");
   const [loading, setLoading] = useState(false);
+  const [termsAccepted, setTermsAccepted] = useState(false);
+  const [privacyAccepted, setPrivacyAccepted] = useState(false);
 
   // Keep session listener and create profile on first auth
   useEffect(() => {
@@ -76,6 +78,17 @@ const Auth = () => {
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
     if (loading) return;
+    
+    // Check if terms and privacy policy are accepted
+    if (!termsAccepted) {
+      toast({ title: "Terms of Service required", description: "Please accept the Terms of Service to continue.", variant: "destructive" });
+      return;
+    }
+    
+    if (!privacyAccepted) {
+      toast({ title: "Privacy Policy required", description: "Please accept the Privacy Policy to continue.", variant: "destructive" });
+      return;
+    }
     
     // Validate date of birth
     if (!dateOfBirth) {
@@ -156,6 +169,8 @@ const Auth = () => {
                   setPhone("");
                   setAddress("");
                   setDateOfBirth("");
+                  setTermsAccepted(false);
+                  setPrivacyAccepted(false);
                 }}
                 style={{ width: '200px' }}
               >
@@ -279,7 +294,45 @@ const Auth = () => {
                     onChange={(e) => setAddress(e.target.value)}
                   />
                 </div>
-                <button type="submit" className="auth-btn" disabled={loading}>
+                
+                {/* Terms and Privacy Agreement */}
+                <div className="auth-input-box" style={{ marginBottom: '16px' }}>
+                  <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px', marginBottom: '8px' }}>
+                    <input
+                      type="checkbox"
+                      id="terms-checkbox"
+                      checked={termsAccepted}
+                      onChange={(e) => setTermsAccepted(e.target.checked)}
+                      style={{ marginTop: '2px', cursor: 'pointer' }}
+                      required
+                    />
+                    <label htmlFor="terms-checkbox" style={{ fontSize: '13px', color: '#666', cursor: 'pointer', lineHeight: '1.4' }}>
+                      I agree to the{' '}
+                      <Link to="/terms-of-service" target="_blank" style={{ color: '#7494ec', textDecoration: 'underline' }}>
+                        Terms of Service
+                      </Link>
+                    </label>
+                  </div>
+                  
+                  <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px' }}>
+                    <input
+                      type="checkbox"
+                      id="privacy-checkbox"
+                      checked={privacyAccepted}
+                      onChange={(e) => setPrivacyAccepted(e.target.checked)}
+                      style={{ marginTop: '2px', cursor: 'pointer' }}
+                      required
+                    />
+                    <label htmlFor="privacy-checkbox" style={{ fontSize: '13px', color: '#666', cursor: 'pointer', lineHeight: '1.4' }}>
+                      I agree to the{' '}
+                      <Link to="/privacy-policy" target="_blank" style={{ color: '#7494ec', textDecoration: 'underline' }}>
+                        Privacy Policy
+                      </Link>
+                    </label>
+                  </div>
+                </div>
+                
+                <button type="submit" className="auth-btn" disabled={loading || !termsAccepted || !privacyAccepted}>
                   {loading ? "Creating…" : "Create account"}
                 </button>
                 <p style={{ marginTop: 16, fontSize: 13 }}>
