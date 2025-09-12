@@ -125,14 +125,14 @@ const WillowAdmin = () => {
       </div>
 
         <Tabs defaultValue="prompt" className="space-y-4">
-          <TabsList className="grid w-full grid-cols-7">
-            <TabsTrigger value="prompt">System Prompt</TabsTrigger>
-            <TabsTrigger value="knowledge">Custom Knowledge</TabsTrigger>
-            <TabsTrigger value="instructions">Additional Instructions</TabsTrigger>
-            <TabsTrigger value="moderation">Content Moderation</TabsTrigger>
-            <TabsTrigger value="users">User Management</TabsTrigger>
-            <TabsTrigger value="privacy">Privacy Policy</TabsTrigger>
-            <TabsTrigger value="terms">Terms of Service</TabsTrigger>
+          <TabsList className="grid w-full grid-cols-3 lg:grid-cols-4 gap-1 h-auto p-2">
+            <TabsTrigger value="prompt" className="text-xs px-2 py-2">System Prompt</TabsTrigger>
+            <TabsTrigger value="knowledge" className="text-xs px-2 py-2">Custom Knowledge</TabsTrigger>
+            <TabsTrigger value="instructions" className="text-xs px-2 py-2">Additional Instructions</TabsTrigger>
+            <TabsTrigger value="moderation" className="text-xs px-2 py-2">Content Moderation</TabsTrigger>
+            <TabsTrigger value="users" className="text-xs px-2 py-2">User Management</TabsTrigger>
+            <TabsTrigger value="privacy" className="text-xs px-2 py-2">Privacy Policy</TabsTrigger>
+            <TabsTrigger value="terms" className="text-xs px-2 py-2">Terms of Service</TabsTrigger>
           </TabsList>
 
         <TabsContent value="prompt">
