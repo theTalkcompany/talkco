@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { UserRole } from "@/hooks/useUserRole";
+import { UserRole, useUserRole } from "@/hooks/useUserRole";
 
 interface UserWithRole {
   user_id: string;
@@ -18,6 +18,7 @@ export const UserRoleManager = () => {
   const [users, setUsers] = useState<UserWithRole[]>([]);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
+  const { isAdmin, loading: roleLoading } = useUserRole();
 
   const loadUsersWithRoles = async () => {
     try {
@@ -55,13 +56,34 @@ export const UserRoleManager = () => {
   };
 
   const updateUserRole = async (userId: string, newRole: UserRole) => {
+    // CLIENT-SIDE: Verify admin status before attempting update
+    if (!isAdmin) {
+      toast({
+        title: "Access Denied",
+        description: "Only administrators can modify user roles",
+        variant: "destructive"
+      });
+      return;
+    }
+
     try {
       const { error } = await supabase
         .from('user_roles')
         .update({ role: newRole })
         .eq('user_id', userId);
 
-      if (error) throw error;
+      if (error) {
+        // Handle specific RLS policy violation
+        if (error.message?.includes('row-level security')) {
+          toast({
+            title: "Access Denied", 
+            description: "Insufficient permissions to modify user roles",
+            variant: "destructive"
+          });
+          return;
+        }
+        throw error;
+      }
 
       toast({
         title: "Success",
@@ -73,18 +95,32 @@ export const UserRoleManager = () => {
       console.error('Error updating role:', error);
       toast({
         title: "Error",
-        description: "Failed to update user role",
+        description: "Failed to update user role. Please check your permissions.",
         variant: "destructive"
       });
     }
   };
 
   useEffect(() => {
-    loadUsersWithRoles();
-  }, []);
+    if (!roleLoading && isAdmin) {
+      loadUsersWithRoles();
+    }
+  }, [isAdmin, roleLoading]);
 
-  if (loading) {
-    return <div className="p-4">Loading users...</div>;
+  if (roleLoading || loading) {
+    return <div className="p-4">Loading...</div>;
+  }
+
+  if (!isAdmin) {
+    return (
+      <Card>
+        <CardContent className="p-6 text-center">
+          <div className="text-muted-foreground">
+            Access restricted to administrators only.
+          </div>
+        </CardContent>
+      </Card>
+    );
   }
 
   return (
@@ -108,6 +144,7 @@ export const UserRoleManager = () => {
               <Select
                 value={user.role}
                 onValueChange={(newRole: UserRole) => updateUserRole(user.user_id, newRole)}
+                disabled={!isAdmin}
               >
                 <SelectTrigger className="w-32">
                   <SelectValue />
