@@ -4,9 +4,36 @@ import { Link } from "react-router-dom";
 import { getDailyQuote, type Quote } from "@/data/quotes";
 import { useState, useEffect } from "react";
 import { Heart, MessageCircle, Shield, Users, Zap, ArrowRight } from "lucide-react";
+import { DailyQuoteModal } from "@/components/DailyQuoteModal";
+import { supabase } from "@/integrations/supabase/client";
 const Index = () => {
   const [quote, setQuote] = useState<Quote | null>(null);
   const [loading, setLoading] = useState(true);
+  const [showDailyModal, setShowDailyModal] = useState(false);
+
+  const getTodayKey = () => {
+    const d = new Date();
+    return `${d.getFullYear()}-${d.getMonth()+1}-${d.getDate()}`;
+  };
+
+  const checkIfShouldShowModal = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return; // Only show for authenticated users
+      
+      const todayKey = getTodayKey();
+      const storageKey = `daily_quote_seen_${user.id}_${todayKey}`;
+      const hasSeenToday = localStorage.getItem(storageKey);
+      
+      if (!hasSeenToday) {
+        setShowDailyModal(true);
+        localStorage.setItem(storageKey, 'true');
+      }
+    } catch (error) {
+      console.error("Error checking daily modal status:", error);
+    }
+  };
+
   useEffect(() => {
     const loadQuote = async () => {
       try {
@@ -18,7 +45,10 @@ const Index = () => {
         setLoading(false);
       }
     };
+
+    // Load quote and check if we should show the daily modal
     loadQuote();
+    checkIfShouldShowModal();
   }, []);
   const features = [{
     icon: Shield,
@@ -205,6 +235,11 @@ const Index = () => {
           </Button>
         </div>
       </section>
+      
+      <DailyQuoteModal 
+        open={showDailyModal} 
+        onOpenChange={setShowDailyModal}
+      />
     </>;
 };
 export default Index;
