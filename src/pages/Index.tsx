@@ -4,13 +4,42 @@ import { Link } from "react-router-dom";
 import { getDailyQuote, type Quote } from "@/data/quotes";
 import { useState, useEffect } from "react";
 import { Heart, MessageCircle, Shield, Users, Zap, ArrowRight } from "lucide-react";
+import { DailyQuoteModal } from "@/components/DailyQuoteModal";
+import { supabase } from "@/integrations/supabase/client";
 const Index = () => {
   const [quote, setQuote] = useState<Quote | null>(null);
   const [loading, setLoading] = useState(true);
+  const [showDailyModal, setShowDailyModal] = useState(false);
+
+  const getTodayKey = () => {
+    const d = new Date();
+    return `${d.getFullYear()}-${d.getMonth()+1}-${d.getDate()}`;
+  };
+
+  const checkIfShouldShowModal = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return; // Only show for authenticated users
+      
+      const todayKey = getTodayKey();
+      const storageKey = `daily_quote_seen_${user.id}_${todayKey}`;
+      const hasSeenToday = localStorage.getItem(storageKey);
+      
+      if (!hasSeenToday) {
+        setShowDailyModal(true);
+        localStorage.setItem(storageKey, 'true');
+      }
+    } catch (error) {
+      console.error("Error checking daily modal status:", error);
+    }
+  };
+
   useEffect(() => {
     const loadQuote = async () => {
       try {
-        const dailyQuote = await getDailyQuote();
+        // Get current user to ensure same quote as quotes page
+        const { data: { user } } = await supabase.auth.getUser();
+        const dailyQuote = await getDailyQuote(user?.id);
         setQuote(dailyQuote);
       } catch (error) {
         console.error("Failed to load quote:", error);
@@ -18,7 +47,10 @@ const Index = () => {
         setLoading(false);
       }
     };
+
+    // Load quote and check if we should show the daily modal
     loadQuote();
+    checkIfShouldShowModal();
   }, []);
   const features = [{
     icon: Shield,
@@ -145,9 +177,12 @@ const Index = () => {
             </li>
             <li className="flex items-start gap-3">
               <Shield className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
-              
+              <span className="text-foreground/90">Talk to Willow, our friendly AI for immediate support</span>
             </li>
-            
+            <li className="flex items-start gap-3">
+              <Heart className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
+              <span className="text-foreground/90">Access professional resources when you need them</span>
+            </li>
           </ul>
           
           <div className="flex flex-wrap gap-3">
@@ -202,6 +237,11 @@ const Index = () => {
           </Button>
         </div>
       </section>
+      
+      <DailyQuoteModal 
+        open={showDailyModal} 
+        onOpenChange={setShowDailyModal}
+      />
     </>;
 };
 export default Index;
