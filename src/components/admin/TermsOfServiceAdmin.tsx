@@ -81,17 +81,14 @@ const TermsOfServiceAdmin = () => {
         return;
       }
 
-      const updateData = {
-        content,
-        updated_by: user.id,
-        last_updated: new Date().toISOString(),
-      };
-
       if (termsOfService) {
         // Update existing terms of service
         const { error } = await supabase
           .from("terms_of_service")
-          .update(updateData)
+          .update({
+            content,
+            updated_by: user.id,
+          })
           .eq("id", termsOfService.id);
 
         if (error) throw error;
@@ -100,8 +97,8 @@ const TermsOfServiceAdmin = () => {
         const { data, error } = await supabase
           .from("terms_of_service")
           .insert({
-            ...updateData,
-            created_at: new Date().toISOString(),
+            content,
+            updated_by: user.id,
           })
           .select()
           .single();

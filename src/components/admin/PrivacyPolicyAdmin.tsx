@@ -82,17 +82,14 @@ const PrivacyPolicyAdmin = () => {
         return;
       }
 
-      const updateData = {
-        content,
-        updated_by: user.id,
-        last_updated: new Date().toISOString(),
-      };
-
       if (privacyPolicy) {
         // Update existing privacy policy
         const { error } = await supabase
           .from("privacy_policy")
-          .update(updateData)
+          .update({
+            content,
+            updated_by: user.id,
+          })
           .eq("id", privacyPolicy.id);
 
         if (error) throw error;
@@ -101,8 +98,8 @@ const PrivacyPolicyAdmin = () => {
         const { data, error } = await supabase
           .from("privacy_policy")
           .insert({
-            ...updateData,
-            created_at: new Date().toISOString(),
+            content,
+            updated_by: user.id,
           })
           .select()
           .single();
