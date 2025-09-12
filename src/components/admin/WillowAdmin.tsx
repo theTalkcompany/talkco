@@ -4,6 +4,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
 import { Loader2, Save } from "lucide-react";
@@ -124,8 +125,8 @@ const WillowAdmin = () => {
         </Button>
       </div>
 
-        <Tabs defaultValue="prompt" className="space-y-4">
-          <TabsList className="grid w-full grid-cols-3 lg:grid-cols-4 gap-1 h-auto p-2">
+        <Tabs defaultValue="prompt" className="space-y-4 h-[calc(100vh-200px)]">
+          <TabsList className="grid w-full grid-cols-4 lg:grid-cols-7 gap-1 h-auto p-2">
             <TabsTrigger value="prompt" className="text-xs px-2 py-2">System Prompt</TabsTrigger>
             <TabsTrigger value="knowledge" className="text-xs px-2 py-2">Custom Knowledge</TabsTrigger>
             <TabsTrigger value="instructions" className="text-xs px-2 py-2">Additional Instructions</TabsTrigger>
@@ -134,6 +135,8 @@ const WillowAdmin = () => {
             <TabsTrigger value="privacy" className="text-xs px-2 py-2">Privacy Policy</TabsTrigger>
             <TabsTrigger value="terms" className="text-xs px-2 py-2">Terms of Service</TabsTrigger>
           </TabsList>
+          
+          <ScrollArea className="h-[calc(100%-60px)] pr-4">
 
         <TabsContent value="prompt">
           <Card>
@@ -222,6 +225,7 @@ const WillowAdmin = () => {
           <TabsContent value="terms">
             <TermsOfServiceAdmin />
           </TabsContent>
+          </ScrollArea>
         </Tabs>
     </div>
   );

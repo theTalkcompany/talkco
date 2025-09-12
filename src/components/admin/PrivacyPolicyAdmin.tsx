@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -177,12 +178,14 @@ const PrivacyPolicyAdmin = () => {
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
-        <Textarea
-          value={content}
-          onChange={(e) => setContent(e.target.value)}
-          placeholder="Enter privacy policy content (Markdown supported)..."
-          className="min-h-[400px] font-mono text-sm"
-        />
+        <ScrollArea className="h-[500px] w-full">
+          <Textarea
+            value={content}
+            onChange={(e) => setContent(e.target.value)}
+            placeholder="Enter privacy policy content (Markdown supported)..."
+            className="min-h-[480px] font-mono text-sm resize-none"
+          />
+        </ScrollArea>
         
         <div className="flex items-center gap-3">
           <Button onClick={handleSave} disabled={saving}>
