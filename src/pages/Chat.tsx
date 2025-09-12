@@ -66,9 +66,9 @@ const Chat = () => {
       </div>
       
       <Tabs defaultValue="ai">
-        <TabsList className="grid w-full max-w-md mx-auto grid-cols-2 h-12">
-          <TabsTrigger value="ai" className="text-lg font-semibold py-3 px-6">Willow</TabsTrigger>
-          <TabsTrigger value="community" className="text-lg font-semibold py-3 px-6">Community Rooms</TabsTrigger>
+        <TabsList className="grid w-full max-w-md mx-auto grid-cols-2 h-12 bg-background p-1">
+          <TabsTrigger value="ai" className="bg-primary text-primary-foreground hover:bg-primary/90 text-lg font-semibold py-3 px-6 rounded-md data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">Willow</TabsTrigger>
+          <TabsTrigger value="community" className="bg-primary text-primary-foreground hover:bg-primary/90 text-lg font-semibold py-3 px-6 rounded-md data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">Community Rooms</TabsTrigger>
         </TabsList>
         <TabsContent value="ai" className="mt-4">
           <article className="surface-card p-6">
