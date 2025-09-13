@@ -50,12 +50,13 @@
   height: 100%;
   background: hsl(0 0% 100%);
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   color: hsl(222.2 84% 4.9%);
   text-align: center;
-  padding: 40px;
+  padding: 20px 40px;
   z-index: 1;
   transition: 0.6s ease-in-out 1.2s, visibility 0s 1s;
+  overflow-y: auto;
 }
 
 .auth-container.active .auth-form-box {

@@ -433,116 +433,125 @@ const Auth = () => {
             <div style={{ width: "100%" }}>
               <h1>Create account</h1>
               <p>Join Talk and keep your info private.</p>
-              <form className="auth-form" onSubmit={handleSignUp} style={{ overflowY: 'auto', maxHeight: '100%' }}>
-                <div className="auth-input-box" style={{ margin: '12px 0' }}>
-                  <input
-                    type="email"
-                    placeholder="Email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    required
-                    autoComplete="email"
-                  />
-                </div>
-                <div className="auth-input-box" style={{ margin: '12px 0' }}>
-                  <input
-                    type="password"
-                    placeholder="Password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    required
-                    autoComplete="new-password"
-                  />
-                </div>
-                <div className="auth-input-box" style={{ margin: '12px 0' }}>
-                  <input
-                    placeholder="Full Name"
-                    value={fullName}
-                    onChange={(e) => setFullName(e.target.value)}
-                    required
-                  />
-                </div>
-                <div className="auth-input-box" style={{ margin: '12px 0' }}>
-                  <input
-                    type="date"
-                    placeholder="Date of Birth"
-                    value={dateOfBirth}
-                    onChange={(e) => setDateOfBirth(e.target.value)}
-                    required
-                    max={new Date().toISOString().split('T')[0]}
-                  />
-                  <label style={{ fontSize: '11px', color: 'hsl(215.4 16.3% 46.9%)', marginTop: '2px', display: 'block' }}>
-                    Date of Birth (Required)
-                  </label>
-                </div>
-                <div className="auth-input-box" style={{ margin: '12px 0' }}>
-                  <input
-                    placeholder="Phone Number"
-                    value={phone}
-                    onChange={(e) => setPhone(e.target.value)}
-                    required
-                  />
-                </div>
-                <div className="auth-input-box" style={{ margin: '12px 0' }}>
-                  <input
-                    placeholder="Address"
-                    value={address}
-                    onChange={(e) => setAddress(e.target.value)}
-                    required
-                  />
-                </div>
-                
-                {/* Terms and Privacy Agreement */}
-                <div style={{ margin: '16px 0 20px 0' }}>
-                  <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px', marginBottom: '8px' }}>
+              <form className="auth-form" onSubmit={handleSignUp} style={{ width: '100%', height: 'auto' }}>
+                <div style={{ paddingTop: '20px' }}>
+                  <div className="auth-input-box" style={{ margin: '12px 0' }}>
                     <input
-                      type="checkbox"
-                      id="terms-checkbox"
-                      checked={termsAccepted}
-                      onChange={(e) => setTermsAccepted(e.target.checked)}
-                      className="auth-checkbox"
+                      type="email"
+                      placeholder="Email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      required
+                      autoComplete="email"
+                    />
+                  </div>
+                  <div className="auth-input-box" style={{ margin: '12px 0' }}>
+                    <input
+                      type="password"
+                      placeholder="Password"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      required
+                      autoComplete="new-password"
+                    />
+                  </div>
+                  <div className="auth-input-box" style={{ margin: '12px 0' }}>
+                    <input
+                      placeholder="Full Name"
+                      value={fullName}
+                      onChange={(e) => setFullName(e.target.value)}
                       required
                     />
-                    <label htmlFor="terms-checkbox" style={{ fontSize: '13px', color: 'hsl(215.4 16.3% 46.9%)', cursor: 'pointer', lineHeight: '1.3' }}>
-                      I agree to the{' '}
-                      <Link to="/terms-of-service" target="_blank" style={{ color: 'hsl(262 83% 58%)', textDecoration: 'underline' }}>
-                        Terms of Service
-                      </Link>
+                  </div>
+                  <div className="auth-input-box" style={{ margin: '12px 0' }}>
+                    <input
+                      type="date"
+                      placeholder="Date of Birth"
+                      value={dateOfBirth}
+                      onChange={(e) => setDateOfBirth(e.target.value)}
+                      required
+                      max={new Date().toISOString().split('T')[0]}
+                    />
+                    <label style={{ fontSize: '11px', color: 'hsl(215.4 16.3% 46.9%)', marginTop: '2px', display: 'block' }}>
+                      Date of Birth (Required)
                     </label>
+                  </div>
+                  <div className="auth-input-box" style={{ margin: '12px 0' }}>
+                    <input
+                      placeholder="Phone Number"
+                      value={phone}
+                      onChange={(e) => setPhone(e.target.value)}
+                      required
+                    />
+                  </div>
+                  <div className="auth-input-box" style={{ margin: '12px 0' }}>
+                    <input
+                      placeholder="Address"
+                      value={address}
+                      onChange={(e) => setAddress(e.target.value)}
+                      required
+                    />
                   </div>
                   
-                  <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px' }}>
-                    <input
-                      type="checkbox"
-                      id="privacy-checkbox"
-                      checked={privacyAccepted}
-                      onChange={(e) => setPrivacyAccepted(e.target.checked)}
-                      className="auth-checkbox"
-                      required
-                    />
-                    <label htmlFor="privacy-checkbox" style={{ fontSize: '13px', color: 'hsl(215.4 16.3% 46.9%)', cursor: 'pointer', lineHeight: '1.3' }}>
-                      I agree to the{' '}
-                      <Link to="/privacy-policy" target="_blank" style={{ color: 'hsl(262 83% 58%)', textDecoration: 'underline' }}>
-                        Privacy Policy
-                      </Link>
-                    </label>
+                  {/* Terms and Privacy Agreement */}
+                  <div style={{ margin: '16px 0 20px 0' }}>
+                    <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px', marginBottom: '8px' }}>
+                      <input
+                        type="checkbox"
+                        id="terms-checkbox"
+                        checked={termsAccepted}
+                        onChange={(e) => setTermsAccepted(e.target.checked)}
+                        className="auth-checkbox"
+                        required
+                      />
+                      <label htmlFor="terms-checkbox" style={{ fontSize: '13px', color: 'hsl(215.4 16.3% 46.9%)', cursor: 'pointer', lineHeight: '1.3' }}>
+                        I agree to the{' '}
+                        <Link to="/terms-of-service" target="_blank" style={{ color: 'hsl(262 83% 58%)', textDecoration: 'underline' }}>
+                          Terms of Service
+                        </Link>
+                      </label>
+                    </div>
+                    
+                    <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px' }}>
+                      <input
+                        type="checkbox"
+                        id="privacy-checkbox"
+                        checked={privacyAccepted}
+                        onChange={(e) => setPrivacyAccepted(e.target.checked)}
+                        className="auth-checkbox"
+                        required
+                      />
+                      <label htmlFor="privacy-checkbox" style={{ fontSize: '13px', color: 'hsl(215.4 16.3% 46.9%)', cursor: 'pointer', lineHeight: '1.3' }}>
+                        I agree to the{' '}
+                        <Link to="/privacy-policy" target="_blank" style={{ color: 'hsl(262 83% 58%)', textDecoration: 'underline' }}>
+                          Privacy Policy
+                        </Link>
+                      </label>
+                    </div>
                   </div>
+                  
+                  <button 
+                    type="submit" 
+                    className="auth-btn" 
+                    disabled={loading || !termsAccepted || !privacyAccepted}
+                    style={{ 
+                      marginTop: '16px', 
+                      marginBottom: '16px',
+                      fontSize: '16px',
+                      fontWeight: '600',
+                      height: '50px'
+                    }}
+                  >
+                    {loading ? "Creating Account…" : "Create Account"}
+                  </button>
+                  
+                  <p style={{ marginTop: 12, fontSize: 13, textAlign: 'center' }}>
+                    Already have an account? <button type="button" onClick={() => setActive(false)} style={{ color: "hsl(262 83% 58%)", background: "transparent", border: 0, cursor: "pointer", textDecoration: 'underline' }}>Log in</button>
+                  </p>
+                  <p style={{ marginTop: 6, fontSize: 12, textAlign: 'center', paddingBottom: '20px' }}>
+                    <Link to="/" style={{ color: "hsl(222.2 84% 4.9%)" }}>Back Home</Link>
+                  </p>
                 </div>
-                
-                <button 
-                  type="submit" 
-                  className="auth-btn" 
-                  disabled={loading || !termsAccepted || !privacyAccepted}
-                  style={{ 
-                    marginTop: '16px', 
-                    marginBottom: '16px',
-                    fontSize: '16px',
-                    fontWeight: '600',
-                    height: '50px'
-                  }}
-                >
-                  {loading ? "Creating Account…" : "Create Account"}
-                </button>
                 <p style={{ marginTop: 12, fontSize: 13, textAlign: 'center' }}>
                   Already have an account? <button type="button" onClick={() => setActive(false)} style={{ color: "hsl(262 83% 58%)", background: "transparent", border: 0, cursor: "pointer", textDecoration: 'underline' }}>Log in</button>
                 </p>
