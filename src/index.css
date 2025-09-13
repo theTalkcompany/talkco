@@ -105,12 +105,6 @@
     @apply border-border;
   }
 
-  html, body {
-    height: 100%;
-    margin: 0;
-    padding: 0;
-  }
-
   body {
     @apply bg-background text-foreground antialiased;
     font-family: var(--font-sans);
