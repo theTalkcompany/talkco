@@ -42,7 +42,7 @@ const MainLayout = ({ children }: { children: ReactNode }) => {
   return (
     <div className="min-h-screen flex flex-col glow-field" onMouseMove={onMouseMove}>
       <Navbar />
-      <main className="flex-grow container mx-auto px-4 py-8">{children}</main>
+      <main className="flex-1 container mx-auto px-4 py-8">{children}</main>
       {showFooter && <Footer />}
     </div>
   );
