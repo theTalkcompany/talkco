@@ -110,6 +110,8 @@
     font-family: var(--font-sans);
     background-image: var(--gradient-soft);
     background-attachment: fixed;
+    margin: 0;
+    padding: 0;
   }
 }
 

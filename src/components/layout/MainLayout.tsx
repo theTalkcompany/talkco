@@ -40,9 +40,9 @@ const MainLayout = ({ children }: { children: ReactNode }) => {
   const showFooter = location.pathname !== "/feed";
 
   return (
-    <div className="h-screen flex flex-col glow-field" onMouseMove={onMouseMove}>
+    <div className="min-h-screen flex flex-col glow-field" onMouseMove={onMouseMove}>
       <Navbar />
-      <main className="flex-1 overflow-auto container mx-auto px-4 py-8">{children}</main>
+      <main className="flex-grow container mx-auto px-4 py-8">{children}</main>
       {showFooter && <Footer />}
     </div>
   );
