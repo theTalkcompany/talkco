@@ -1,0 +1,64 @@
+{
+  "name": "Talk - Mental Health Support",
+  "short_name": "Talk",
+  "description": "Your compassionate mental health support companion. Chat with Willow AI, connect with community, and access crisis resources.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#3b82f6",
+  "orientation": "portrait",
+  "categories": ["health", "medical", "lifestyle"],
+  "lang": "en-GB",
+  "icons": [
+    {
+      "src": "/lovable-uploads/08826e54-6a87-4ce3-b5bb-626bfd13e791.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/lovable-uploads/08826e54-6a87-4ce3-b5bb-626bfd13e791.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "/lovable-uploads/08826e54-6a87-4ce3-b5bb-626bfd13e791.png",
+      "sizes": "540x720",
+      "type": "image/png",
+      "form_factor": "narrow"
+    }
+  ],
+  "scope": "/",
+  "id": "app.lovable.talkco",
+  "prefer_related_applications": false,
+  "related_applications": [],
+  "shortcuts": [
+    {
+      "name": "Chat with Willow",
+      "short_name": "Chat",
+      "description": "Start a conversation with your AI mental health companion",
+      "url": "/chat",
+      "icons": [
+        {
+          "src": "/lovable-uploads/08826e54-6a87-4ce3-b5bb-626bfd13e791.png",
+          "sizes": "96x96"
+        }
+      ]
+    },
+    {
+      "name": "Crisis Support",
+      "short_name": "Crisis",
+      "description": "Access immediate crisis support and resources",
+      "url": "/help",
+      "icons": [
+        {
+          "src": "/lovable-uploads/08826e54-6a87-4ce3-b5bb-626bfd13e791.png",
+          "sizes": "96x96"
+        }
+      ]
+    }
+  ]
+}
