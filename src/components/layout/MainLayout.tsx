@@ -2,6 +2,7 @@ import { ReactNode, useCallback, useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import Navbar from "./Navbar";
+import Footer from "./Footer";
 
 const MainLayout = ({ children }: { children: ReactNode }) => {
   const location = useLocation();
@@ -36,10 +37,13 @@ const MainLayout = ({ children }: { children: ReactNode }) => {
     }
   }, [sessionExists, location.pathname, navigate]);
 
+  const showFooter = location.pathname !== "/feed";
+
   return (
     <div className="min-h-screen glow-field" onMouseMove={onMouseMove}>
       <Navbar />
       <main className="container mx-auto px-4 py-8">{children}</main>
+      {showFooter && <Footer />}
     </div>
   );
 };
