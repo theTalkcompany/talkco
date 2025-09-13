@@ -170,8 +170,8 @@ const Auth = () => {
     }
     
     // Enhanced input validation
-    if (!email.trim() || !password.trim() || !phone.trim()) {
-      toast({ title: "Validation error", description: "Email, password, and phone number are required", variant: "destructive" });
+    if (!email.trim() || !password.trim() || !phone.trim() || !fullName.trim() || !address.trim()) {
+      toast({ title: "Validation error", description: "All fields are required", variant: "destructive" });
       return;
     }
     
@@ -456,9 +456,10 @@ const Auth = () => {
                 </div>
                 <div className="auth-input-box">
                   <input
-                    placeholder="Full name (optional)"
+                    placeholder="Full Name"
                     value={fullName}
                     onChange={(e) => setFullName(e.target.value)}
+                    required
                   />
                 </div>
                 <div className="auth-input-box">
@@ -484,15 +485,16 @@ const Auth = () => {
                 </div>
                 <div className="auth-input-box">
                   <input
-                    placeholder="Address (optional)"
+                    placeholder="Address"
                     value={address}
                     onChange={(e) => setAddress(e.target.value)}
+                    required
                   />
                 </div>
                 
                 {/* Terms and Privacy Agreement */}
-                <div className="auth-input-box" style={{ marginBottom: '16px' }}>
-                  <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px', marginBottom: '8px' }}>
+                <div className="auth-input-box" style={{ marginBottom: '20px', marginTop: '16px' }}>
+                  <div style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', marginBottom: '12px' }}>
                     <input
                       type="checkbox"
                       id="terms-checkbox"
@@ -501,15 +503,15 @@ const Auth = () => {
                       className="auth-checkbox"
                       required
                     />
-                    <label htmlFor="terms-checkbox" style={{ fontSize: '13px', color: '#666', cursor: 'pointer', lineHeight: '1.4' }}>
+                    <label htmlFor="terms-checkbox" style={{ fontSize: '14px', color: 'hsl(215.4 16.3% 46.9%)', cursor: 'pointer', lineHeight: '1.4' }}>
                       I agree to the{' '}
-                      <Link to="/terms-of-service" target="_blank" style={{ color: '#7494ec', textDecoration: 'underline' }}>
+                      <Link to="/terms-of-service" target="_blank" style={{ color: 'hsl(262 83% 58%)', textDecoration: 'underline' }}>
                         Terms of Service
                       </Link>
                     </label>
                   </div>
                   
-                  <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px' }}>
+                  <div style={{ display: 'flex', alignItems: 'flex-start', gap: '10px' }}>
                     <input
                       type="checkbox"
                       id="privacy-checkbox"
@@ -518,17 +520,17 @@ const Auth = () => {
                       className="auth-checkbox"
                       required
                     />
-                    <label htmlFor="privacy-checkbox" style={{ fontSize: '13px', color: '#666', cursor: 'pointer', lineHeight: '1.4' }}>
+                    <label htmlFor="privacy-checkbox" style={{ fontSize: '14px', color: 'hsl(215.4 16.3% 46.9%)', cursor: 'pointer', lineHeight: '1.4' }}>
                       I agree to the{' '}
-                      <Link to="/privacy-policy" target="_blank" style={{ color: '#7494ec', textDecoration: 'underline' }}>
+                      <Link to="/privacy-policy" target="_blank" style={{ color: 'hsl(262 83% 58%)', textDecoration: 'underline' }}>
                         Privacy Policy
                       </Link>
                     </label>
                   </div>
                 </div>
                 
-                <button type="submit" className="auth-btn" disabled={loading || !termsAccepted || !privacyAccepted}>
-                  {loading ? "Creating…" : "Create account"}
+                <button type="submit" className="auth-btn" disabled={loading || !termsAccepted || !privacyAccepted} style={{ marginTop: '8px' }}>
+                  {loading ? "Creating Account…" : "Create Account"}
                 </button>
                 <p style={{ marginTop: 16, fontSize: 13 }}>
                   Already have an account? <button type="button" onClick={() => setActive(false)} style={{ color: "#7494ec", background: "transparent", border: 0, cursor: "pointer" }}>Log in</button>
