@@ -170,8 +170,8 @@ const Auth = () => {
     }
     
     // Enhanced input validation
-    if (!email.trim() || !password.trim()) {
-      toast({ title: "Validation error", description: "Email and password are required", variant: "destructive" });
+    if (!email.trim() || !password.trim() || !phone.trim()) {
+      toast({ title: "Validation error", description: "Email, password, and phone number are required", variant: "destructive" });
       return;
     }
     
@@ -476,9 +476,10 @@ const Auth = () => {
                 </div>
                 <div className="auth-input-box">
                   <input
-                    placeholder="Phone (optional)"
+                    placeholder="Phone Number"
                     value={phone}
                     onChange={(e) => setPhone(e.target.value)}
+                    required
                   />
                 </div>
                 <div className="auth-input-box">
@@ -497,7 +498,7 @@ const Auth = () => {
                       id="terms-checkbox"
                       checked={termsAccepted}
                       onChange={(e) => setTermsAccepted(e.target.checked)}
-                      style={{ marginTop: '2px', cursor: 'pointer' }}
+                      className="auth-checkbox"
                       required
                     />
                     <label htmlFor="terms-checkbox" style={{ fontSize: '13px', color: '#666', cursor: 'pointer', lineHeight: '1.4' }}>
@@ -514,7 +515,7 @@ const Auth = () => {
                       id="privacy-checkbox"
                       checked={privacyAccepted}
                       onChange={(e) => setPrivacyAccepted(e.target.checked)}
-                      style={{ marginTop: '2px', cursor: 'pointer' }}
+                      className="auth-checkbox"
                       required
                     />
                     <label htmlFor="privacy-checkbox" style={{ fontSize: '13px', color: '#666', cursor: 'pointer', lineHeight: '1.4' }}>
