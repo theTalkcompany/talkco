@@ -1,6 +1,8 @@
 import { ReactNode, useCallback, useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { useSessionSecurity } from "@/hooks/useSessionSecurity";
+import { SecurityMonitor } from "@/components/security/SecurityMonitor";
 import Navbar from "./Navbar";
 import Footer from "./Footer";
 
@@ -8,6 +10,9 @@ const MainLayout = ({ children }: { children: ReactNode }) => {
   const location = useLocation();
   const navigate = useNavigate();
   const [sessionExists, setSessionExists] = useState<boolean | null>(null);
+  
+  // Initialize session security monitoring
+  useSessionSecurity();
 
   const onMouseMove = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
     const target = e.currentTarget;
@@ -41,6 +46,7 @@ const MainLayout = ({ children }: { children: ReactNode }) => {
 
   return (
     <div className="min-h-screen flex flex-col glow-field" onMouseMove={onMouseMove}>
+      <SecurityMonitor />
       <Navbar />
       <main className="flex-grow container mx-auto px-4 py-8">{children}</main>
       {showFooter && <Footer />}

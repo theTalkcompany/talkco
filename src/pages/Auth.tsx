@@ -4,11 +4,16 @@ import { Helmet } from "react-helmet-async";
 import { Link, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
+import { sanitizeEmail, sanitizeText, sanitizePhone, validatePassword, validateEmail, createRateLimiter } from "@/utils/inputSanitizer";
 import "./auth-styles.css";
 
 const Auth = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
+  
+  // Rate limiting for auth attempts
+  const loginRateLimiter = useMemo(() => createRateLimiter(5, 15 * 60 * 1000), []); // 5 attempts per 15 minutes
+  const signupRateLimiter = useMemo(() => createRateLimiter(3, 60 * 60 * 1000), []); // 3 attempts per hour
 
   // UI state for toggle animation
   const [active, setActive] = useState(false); // false = login, true = signup
@@ -65,19 +70,127 @@ const Auth = () => {
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
     if (loading) return;
-    setLoading(true);
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
-    setLoading(false);
-    if (error) {
-      toast({ title: "Login failed", description: error.message, variant: "destructive" });
+    
+    // Rate limiting check
+    const clientId = `login_${email.trim().toLowerCase()}`;
+    if (!loginRateLimiter(clientId)) {
+      toast({ 
+        title: "Too many attempts", 
+        description: "Please wait 15 minutes before trying again", 
+        variant: "destructive" 
+      });
       return;
     }
-    toast({ title: "Logged in", description: "Welcome back." });
+    
+    // Input validation
+    if (!email.trim() || !password.trim()) {
+      toast({ title: "Login failed", description: "Email and password are required", variant: "destructive" });
+      return;
+    }
+    
+    if (!validateEmail(email.trim())) {
+      toast({ title: "Login failed", description: "Please enter a valid email address", variant: "destructive" });
+      return;
+    }
+    
+    setLoading(true);
+    
+    try {
+      const { error, data } = await supabase.auth.signInWithPassword({ 
+        email: sanitizeEmail(email), 
+        password 
+      });
+      
+      if (error) {
+        // Log security event for failed login
+        try {
+          await supabase.from('security_events').insert({
+            event_type: 'failed_login',
+            user_id: null,
+            ip_address: null, // Could be enhanced with IP detection
+            user_agent: navigator.userAgent,
+            details: {
+              email: sanitizeEmail(email),
+              error_message: error.message,
+              timestamp: new Date().toISOString()
+            }
+          });
+        } catch (logError) {
+          console.error('Failed to log security event:', logError);
+        }
+        
+        // Generic error message to prevent user enumeration
+        let errorMessage = "Invalid email or password";
+        if (error.message.includes("too many requests")) {
+          errorMessage = "Too many login attempts. Please try again later.";
+        }
+        
+        toast({ title: "Login failed", description: errorMessage, variant: "destructive" });
+        return;
+      }
+      
+      // Log successful login
+      if (data.user) {
+        try {
+          await supabase.from('security_events').insert({
+            event_type: 'successful_login',
+            user_id: data.user.id,
+            ip_address: null,
+            user_agent: navigator.userAgent,
+            details: {
+              timestamp: new Date().toISOString()
+            }
+          });
+        } catch (logError) {
+          console.error('Failed to log security event:', logError);
+        }
+      }
+      
+      toast({ title: "Logged in", description: "Welcome back." });
+    } catch (error) {
+      toast({ title: "Login failed", description: "An unexpected error occurred", variant: "destructive" });
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
     if (loading) return;
+    
+    // Rate limiting check
+    const signupClientId = `signup_${email.trim().toLowerCase()}`;
+    if (!signupRateLimiter(signupClientId)) {
+      toast({ 
+        title: "Too many attempts", 
+        description: "Please wait 1 hour before trying again", 
+        variant: "destructive" 
+      });
+      return;
+    }
+    
+    // Enhanced input validation
+    if (!email.trim() || !password.trim()) {
+      toast({ title: "Validation error", description: "Email and password are required", variant: "destructive" });
+      return;
+    }
+    
+    // Email format validation
+    if (!validateEmail(email.trim())) {
+      toast({ title: "Invalid email", description: "Please enter a valid email address", variant: "destructive" });
+      return;
+    }
+    
+    // Password strength validation
+    const passwordValidation = validatePassword(password);
+    if (!passwordValidation.isValid) {
+      toast({ 
+        title: "Weak password", 
+        description: passwordValidation.errors[0], 
+        variant: "destructive" 
+      });
+      return;
+    }
     
     // Check if terms and privacy policy are accepted
     if (!termsAccepted) {
@@ -110,16 +223,97 @@ const Auth = () => {
       return;
     }
     
+    // Sanitize inputs
+    const sanitizedEmail = sanitizeEmail(email);
+    const sanitizedFullName = sanitizeText(fullName, 100);
+    const sanitizedPhone = sanitizePhone(phone);
+    const sanitizedAddress = sanitizeText(address, 200);
+    
     setLoading(true);
-    const { error, data } = await supabase.auth.signUp({
-      email,
-      password,
-      options: { emailRedirectTo: redirectUrl },
-    });
-    setLoading(false);
-    if (error) {
-      toast({ title: "Sign up failed", description: error.message, variant: "destructive" });
+    
+    let data: any = null;
+    
+    try {
+      const result = await supabase.auth.signUp({
+        email: sanitizedEmail,
+        password,
+        options: { emailRedirectTo: redirectUrl },
+      });
+      
+      data = result.data;
+      const error = result.error;
+      
+      if (error) {
+        // Log failed signup attempt
+        try {
+          await supabase.from('security_events').insert({
+            event_type: 'failed_signup',
+            user_id: null,
+            ip_address: null,
+            user_agent: navigator.userAgent,
+            details: {
+              email: sanitizedEmail,
+              error_message: error.message,
+              timestamp: new Date().toISOString()
+            }
+          });
+        } catch (logError) {
+          console.error('Failed to log security event:', logError);
+        }
+        
+        // Handle specific error types
+        let errorMessage = error.message;
+        if (error.message.includes("already registered")) {
+          errorMessage = "An account with this email already exists. Please try logging in instead.";
+        }
+        
+        toast({ title: "Sign up failed", description: errorMessage, variant: "destructive" });
+        return;
+      }
+      
+      // Store sanitized form data for profile creation
+      if (data.user) {
+        setFullName(sanitizedFullName);
+        setPhone(sanitizedPhone);
+        setAddress(sanitizedAddress);
+        
+        // Log successful signup
+        try {
+          await supabase.from('security_events').insert({
+            event_type: 'successful_signup',
+            user_id: data.user.id,
+            ip_address: null,
+            user_agent: navigator.userAgent,
+            details: {
+              timestamp: new Date().toISOString()
+            }
+          });
+        } catch (logError) {
+          console.error('Failed to log security event:', logError);
+        }
+      }
+
+      try {
+        await supabase.functions.invoke("send-welcome-email", {
+          body: { email: sanitizedEmail, name: sanitizedFullName || undefined },
+        });
+      } catch (err) {
+        console.error("Failed to send welcome email", err);
+      }
+
+      // Show success message regardless of whether email confirmation is required
+      setShowSuccess(true);
+      
+      if (!data.session) {
+        toast({ title: "Account created!", description: "You can now log in with your credentials." });
+      } else {
+        toast({ title: "Welcome!", description: "Your account has been created and you're logged in." });
+      }
+    } catch (error) {
+      toast({ title: "Sign up failed", description: "An unexpected error occurred", variant: "destructive" });
       return;
+    } finally {
+      setLoading(false);
     }
 
     try {

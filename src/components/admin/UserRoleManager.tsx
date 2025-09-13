@@ -66,13 +66,51 @@ export const UserRoleManager = () => {
       return;
     }
 
+    // Prevent self-role modification
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user?.id === userId) {
+      toast({
+        title: "Access Denied",
+        description: "You cannot modify your own role",
+        variant: "destructive"
+      });
+      return;
+    }
+
     try {
+      // Log the attempted role change before executing
+      await supabase.from('security_events').insert({
+        event_type: 'role_change_attempt',
+        user_id: user?.id,
+        ip_address: null,
+        user_agent: navigator.userAgent,
+        details: {
+          target_user_id: userId,
+          new_role: newRole,
+          timestamp: new Date().toISOString()
+        }
+      });
+
       const { error } = await supabase
         .from('user_roles')
         .update({ role: newRole })
         .eq('user_id', userId);
 
       if (error) {
+        // Log failed role change
+        await supabase.from('security_events').insert({
+          event_type: 'role_change_failed',
+          user_id: user?.id,
+          ip_address: null,
+          user_agent: navigator.userAgent,
+          details: {
+            target_user_id: userId,
+            new_role: newRole,
+            error_message: error.message,
+            timestamp: new Date().toISOString()
+          }
+        });
+
         // Handle specific RLS policy violation
         if (error.message?.includes('row-level security')) {
           toast({
@@ -84,6 +122,19 @@ export const UserRoleManager = () => {
         }
         throw error;
       }
+
+      // Log successful role change
+      await supabase.from('security_events').insert({
+        event_type: 'role_change_success',
+        user_id: user?.id,
+        ip_address: null,
+        user_agent: navigator.userAgent,
+        details: {
+          target_user_id: userId,
+          new_role: newRole,
+          timestamp: new Date().toISOString()
+        }
+      });
 
       toast({
         title: "Success",
