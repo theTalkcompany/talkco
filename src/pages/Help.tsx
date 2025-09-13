@@ -6,18 +6,18 @@ import { Link } from "react-router-dom";
 const Help = () => {
   const crisisResources = [
     {
-      country: "United States",
-      name: "988 Suicide & Crisis Lifeline",
-      phone: "988",
-      description: "24/7 crisis support. Call or text from anywhere in the US.",
-      website: "https://988lifeline.org/"
-    },
-    {
       country: "United Kingdom & Ireland",
       name: "Samaritans",
       phone: "116 123",
       description: "Free emotional support 24/7 for anyone in distress.",
       website: "https://www.samaritans.org/"
+    },
+    {
+      country: "United States",
+      name: "988 Suicide & Crisis Lifeline", 
+      phone: "988",
+      description: "24/7 crisis support. Call or text from anywhere in the US.",
+      website: "https://988lifeline.org/"
     },
     {
       country: "Australia",
@@ -49,9 +49,9 @@ const Help = () => {
       icon: MessageSquare
     },
     {
-      name: "Crisis Text Line",
-      description: "Text HOME to 741741 for free, 24/7 crisis support",
-      url: "https://www.crisistextline.org/",
+      name: "Crisis Text Line UK",
+      description: "Text SHOUT to 85258 for free, 24/7 crisis support",
+      url: "https://giveusashout.org/",
       icon: MessageSquare
     },
     {

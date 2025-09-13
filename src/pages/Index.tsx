@@ -209,7 +209,7 @@ const Index = () => {
               <ul className="space-y-2 text-sm">
                 <li className="flex items-center gap-2">
                   <span className="w-2 h-2 bg-primary rounded-full flex-shrink-0"></span>
-                  <span>US: 988 Suicide & Crisis Lifeline — Call or text 988</span>
+                  <span>UK: Samaritans — Call 116 123 (free, 24/7)</span>
                 </li>
                 <li className="flex items-center gap-2">
                   <span className="w-2 h-2 bg-primary rounded-full flex-shrink-0"></span>

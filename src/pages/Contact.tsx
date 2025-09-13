@@ -217,13 +217,13 @@ const Contact = () => {
                   </p>
                   <div className="space-y-2">
                     <p className="text-sm">
-                      <strong>US Crisis Text Line:</strong> Text HOME to 741741
+                      <strong>Samaritans:</strong> Call 116 123 (free, 24/7)
                     </p>
                     <p className="text-sm">
-                      <strong>US Suicide & Crisis Lifeline:</strong> Call or text 988
+                      <strong>Crisis Text Line UK:</strong> Text SHOUT to 85258
                     </p>
                     <p className="text-sm">
-                      <strong>Emergency:</strong> Call 911 or go to your nearest emergency room
+                      <strong>Emergency:</strong> Call 999 or go to your nearest A&E
                     </p>
                   </div>
                 </CardContent>

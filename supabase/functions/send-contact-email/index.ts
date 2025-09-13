@@ -68,9 +68,9 @@ const handler = async (req: Request): Promise<Response> => {
         
         <p>If you need immediate support, remember:</p>
         <ul>
-          <li><strong>Crisis Text Line:</strong> Text HOME to 741741</li>
-          <li><strong>Suicide & Crisis Lifeline:</strong> Call or text 988</li>
-          <li><strong>Emergency:</strong> Call 911</li>
+          <li><strong>Samaritans:</strong> Call 116 123 (free, 24/7)</li>
+          <li><strong>Crisis Text Line UK:</strong> Text SHOUT to 85258</li>
+          <li><strong>Emergency:</strong> Call 999</li>
         </ul>
         
         <p>Best regards,<br>The Talk Team</p>

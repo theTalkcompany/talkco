@@ -173,7 +173,7 @@ const Footer = () => {
                 </Link>
               </li>
               <li>
-                <span className="text-sm text-muted-foreground">Crisis Hotline: 988</span>
+                <span className="text-sm text-muted-foreground">Crisis Hotline: 116 123</span>
               </li>
             </ul>
           </div>
@@ -186,7 +186,7 @@ const Footer = () => {
               © {new Date().getFullYear()} Talk. All rights reserved. Not a substitute for professional medical advice.
             </p>
             <p className="text-xs text-muted-foreground">
-              If you're in crisis, call emergency services or text 988 (US)
+              If you're in crisis, call 116 123 (Samaritans) or text SHOUT to 85258
             </p>
           </div>
         </div>
