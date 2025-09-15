@@ -46,7 +46,7 @@ const Navbar = () => {
       });
     }
   };
-  const loggedInNavItems = [{
+  const navItems = [{
     to: "/feed",
     label: "Feed"
   }, {
@@ -63,13 +63,6 @@ const Navbar = () => {
     label: "Profile"
   }];
 
-  const publicNavItems = [{
-    to: "/help",
-    label: "Get Help"
-  }];
-
-  const navItems = loggedIn ? loggedInNavItems : publicNavItems;
-
   const footerLinks = [
     { to: "/terms-of-service", label: "Terms of Service" },
     { to: "/privacy-policy", label: "Privacy Policy" },
@@ -85,7 +78,7 @@ const Navbar = () => {
         
         {/* Desktop Navigation */}
         <div className="hidden md:flex items-center gap-8">
-          {navItems.length > 0 && navItems.map(item => <NavLink key={item.to} to={item.to} className={({
+          {navItems.map(item => <NavLink key={item.to} to={item.to} className={({
           isActive
         }) => `text-sm font-medium transition-colors focus-ring rounded-md px-3 py-2 ${isActive ? "text-primary bg-primary/10" : "text-foreground/70 hover:text-foreground hover:bg-accent/50"}`}>
               {item.label}
@@ -138,7 +131,7 @@ const Navbar = () => {
               
               <nav className="flex flex-col gap-2">
                 {/* Main Navigation */}
-                {navItems.length > 0 && navItems.map(item => <NavLink key={item.to} to={item.to} onClick={() => setIsMenuOpen(false)} className={({
+                {navItems.map(item => <NavLink key={item.to} to={item.to} onClick={() => setIsMenuOpen(false)} className={({
                 isActive
               }) => `text-left px-4 py-3 rounded-lg font-medium transition-colors focus-ring ${isActive ? "text-primary bg-primary/10" : "text-foreground/70 hover:text-foreground hover:bg-accent/50"}`}>
                     {item.label}
