@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { getIPInfo } from '@/utils/ipUtils';
 
 /**
  * Security Monitor Component
@@ -17,14 +18,17 @@ export const SecurityMonitor = () => {
         if ([401, 403].includes(response.status) && args[0]?.toString().includes('/rest/v1/')) {
           try {
             const { data: { user } } = await supabase.auth.getUser();
+            const ipInfo = await getIPInfo();
+            
             await supabase.from('security_events').insert({
               event_type: 'unauthorized_api_access',
               user_id: user?.id || null,
-              ip_address: null,
+              ip_address: ipInfo.ip,
               user_agent: navigator.userAgent,
               details: {
                 url: args[0]?.toString(),
                 status: response.status,
+                location: ipInfo.location,
                 timestamp: new Date().toISOString()
               }
             });
@@ -48,13 +52,16 @@ export const SecurityMonitor = () => {
             if (element.tagName === 'SCRIPT' && !element.hasAttribute('data-allowed')) {
               // Potential XSS attempt detected
               try {
+                const ipInfo = await getIPInfo();
+                
                 supabase.from('security_events').insert({
                   event_type: 'potential_xss_attempt',
                   user_id: null,
-                  ip_address: null,
+                  ip_address: ipInfo.ip,
                   user_agent: navigator.userAgent,
                   details: {
                     script_content: element.textContent?.substring(0, 500),
+                    location: ipInfo.location,
                     timestamp: new Date().toISOString()
                   }
                 });

@@ -1,6 +1,7 @@
 import { useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/components/ui/use-toast';
+import { getIPInfo } from '@/utils/ipUtils';
 
 export const useSessionSecurity = () => {
   const { toast } = useToast();
@@ -13,14 +14,16 @@ export const useSessionSecurity = () => {
   const logSecurityEvent = useCallback(async (eventType: string, details?: any) => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
+      const ipInfo = await getIPInfo();
       
       await supabase.from('security_events').insert({
         event_type: eventType,
         user_id: user?.id || null,
-        ip_address: null,
+        ip_address: ipInfo.ip,
         user_agent: navigator.userAgent,
         details: {
           timestamp: new Date().toISOString(),
+          location: ipInfo.location,
           ...details
         }
       });

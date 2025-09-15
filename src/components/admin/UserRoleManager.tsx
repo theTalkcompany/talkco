@@ -6,6 +6,8 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { UserRole, useUserRole } from "@/hooks/useUserRole";
+import { useAdminAudit } from "@/hooks/useAdminAudit";
+import { getIPInfo } from "@/utils/ipUtils";
 
 interface UserWithRole {
   user_id: string;
@@ -19,9 +21,15 @@ export const UserRoleManager = () => {
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
   const { isAdmin, loading: roleLoading } = useUserRole();
+  const { logAdminAction, logProfileAccess } = useAdminAudit();
 
   const loadUsersWithRoles = async () => {
     try {
+      // Log admin accessing user list
+      await logAdminAction('user_list_access', undefined, {
+        access_type: 'user_roles_list'
+      });
+      
       // Get all user roles with profile information
       const { data: rolesData, error } = await supabase
         .from('user_roles')
@@ -41,6 +49,11 @@ export const UserRoleManager = () => {
         role: item.role as UserRole,
         created_at: item.created_at
       })) || [];
+
+      // Log profile access for each user viewed
+      for (const user of usersWithRoles) {
+        await logProfileAccess(user.user_id);
+      }
 
       setUsers(usersWithRoles);
     } catch (error) {
@@ -79,14 +92,16 @@ export const UserRoleManager = () => {
 
     try {
       // Log the attempted role change before executing
+      const ipInfo = await getIPInfo();
       await supabase.from('security_events').insert({
         event_type: 'role_change_attempt',
         user_id: user?.id,
-        ip_address: null,
+        ip_address: ipInfo.ip,
         user_agent: navigator.userAgent,
         details: {
           target_user_id: userId,
           new_role: newRole,
+          location: ipInfo.location,
           timestamp: new Date().toISOString()
         }
       });
@@ -101,12 +116,13 @@ export const UserRoleManager = () => {
         await supabase.from('security_events').insert({
           event_type: 'role_change_failed',
           user_id: user?.id,
-          ip_address: null,
+          ip_address: ipInfo.ip,
           user_agent: navigator.userAgent,
           details: {
             target_user_id: userId,
             new_role: newRole,
             error_message: error.message,
+            location: ipInfo.location,
             timestamp: new Date().toISOString()
           }
         });
@@ -127,11 +143,12 @@ export const UserRoleManager = () => {
       await supabase.from('security_events').insert({
         event_type: 'role_change_success',
         user_id: user?.id,
-        ip_address: null,
+        ip_address: ipInfo.ip,
         user_agent: navigator.userAgent,
         details: {
           target_user_id: userId,
           new_role: newRole,
+          location: ipInfo.location,
           timestamp: new Date().toISOString()
         }
       });

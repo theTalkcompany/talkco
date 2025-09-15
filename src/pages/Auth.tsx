@@ -367,30 +367,6 @@ const Auth = () => {
     } finally {
       setLoading(false);
     }
-    try {
-      await supabase.functions.invoke("send-welcome-email", {
-        body: {
-          email,
-          name: fullName || undefined
-        }
-      });
-    } catch (err) {
-      console.error("Failed to send welcome email", err);
-    }
-
-    // Show success message regardless of whether email confirmation is required
-    setShowSuccess(true);
-    if (!data.session) {
-      toast({
-        title: "Account created!",
-        description: "You can now log in with your credentials."
-      });
-    } else {
-      toast({
-        title: "Welcome!",
-        description: "Your account has been created and you're logged in."
-      });
-    }
   };
 
   // Success screen component
