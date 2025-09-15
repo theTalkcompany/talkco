@@ -5,13 +5,15 @@ import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import Logo from "@/components/branding/Logo";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { Menu, X } from "lucide-react";
+import { Menu, X, Shield, MessageSquare } from "lucide-react";
+import { useIsMobile } from "@/hooks/use-mobile";
 const Navbar = () => {
   const {
     toast
   } = useToast();
   const [loggedIn, setLoggedIn] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const isMobile = useIsMobile();
   useEffect(() => {
     const {
       data: {
@@ -60,6 +62,12 @@ const Navbar = () => {
     to: "/profile",
     label: "Profile"
   }];
+
+  const footerLinks = [
+    { to: "/terms-of-service", label: "Terms of Service" },
+    { to: "/privacy-policy", label: "Privacy Policy" },
+    { to: "/contact", label: "Contact" },
+  ];
   return <header className="sticky top-0 z-40 border-b bg-background/80 backdrop-blur-md shadow-sm">
       <nav className="container mx-auto flex items-center justify-between py-4 px-4">
         <Link to="/" aria-label="Talk home" className="flex items-center gap-2 focus-ring rounded-md">
@@ -122,11 +130,41 @@ const Navbar = () => {
               </div>
               
               <nav className="flex flex-col gap-2">
+                {/* Main Navigation */}
                 {navItems.map(item => <NavLink key={item.to} to={item.to} onClick={() => setIsMenuOpen(false)} className={({
                 isActive
               }) => `text-left px-4 py-3 rounded-lg font-medium transition-colors focus-ring ${isActive ? "text-primary bg-primary/10" : "text-foreground/70 hover:text-foreground hover:bg-accent/50"}`}>
                     {item.label}
                   </NavLink>)}
+                
+                {/* Footer Links - Mobile Only */}
+                {isMobile && (
+                  <>
+                    <div className="border-t pt-4 mt-4">
+                      <div className="px-4 py-2 text-sm font-semibold text-muted-foreground">Support & Legal</div>
+                      {footerLinks.map(item => (
+                        <NavLink 
+                          key={item.to} 
+                          to={item.to} 
+                          onClick={() => setIsMenuOpen(false)} 
+                          className="text-left px-4 py-3 rounded-lg font-medium transition-colors focus-ring text-foreground/70 hover:text-foreground hover:bg-accent/50 block"
+                        >
+                          {item.label}
+                        </NavLink>
+                      ))}
+                      
+                      <div className="px-4 py-3 text-sm text-muted-foreground">
+                        <div className="flex items-center gap-2 mb-2">
+                          <Shield className="h-4 w-4" />
+                          <span className="font-semibold">Crisis Support</span>
+                        </div>
+                        <p className="mb-2">If you're in crisis, please reach out:</p>
+                        <p className="text-primary font-medium">Call 988 (Suicide & Crisis Lifeline)</p>
+                        <p className="text-sm mt-1">Available 24/7</p>
+                      </div>
+                    </div>
+                  </>
+                )}
                 
                 <div className="border-t pt-4 mt-4 space-y-2">
                   {loggedIn ? <>

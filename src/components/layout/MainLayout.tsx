@@ -3,13 +3,16 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useSessionSecurity } from "@/hooks/useSessionSecurity";
 import { SecurityMonitor } from "@/components/security/SecurityMonitor";
+import { useIsMobile } from "@/hooks/use-mobile";
 import Navbar from "./Navbar";
 import Footer from "./Footer";
+import MobileBottomNav from "./MobileBottomNav";
 
 const MainLayout = ({ children }: { children: ReactNode }) => {
   const location = useLocation();
   const navigate = useNavigate();
   const [sessionExists, setSessionExists] = useState<boolean | null>(null);
+  const isMobile = useIsMobile();
   
   // Initialize session security monitoring
   useSessionSecurity();
@@ -42,14 +45,17 @@ const MainLayout = ({ children }: { children: ReactNode }) => {
     }
   }, [sessionExists, location.pathname, navigate]);
 
-  const showFooter = location.pathname !== "/feed";
+  const showFooter = location.pathname !== "/feed" && !isMobile;
 
   return (
     <div className="min-h-screen flex flex-col glow-field" onMouseMove={onMouseMove}>
       <SecurityMonitor />
       <Navbar />
-      <main className="flex-grow container mx-auto px-4 py-8">{children}</main>
+      <main className={`flex-grow container mx-auto px-4 py-8 ${isMobile ? 'pb-20' : ''}`}>
+        {children}
+      </main>
       {showFooter && <Footer />}
+      <MobileBottomNav />
     </div>
   );
 };
