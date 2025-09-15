@@ -36,26 +36,25 @@ const MainLayout = ({ children }: { children: ReactNode }) => {
 
   useEffect(() => {
     if (sessionExists === null) return; // not ready yet
-    // Protect all routes except /auth
-    if (!sessionExists && location.pathname !== "/auth") {
-      navigate("/auth");
-    }
+    
+    // Only redirect to auth if user is on /auth and already authenticated
     if (sessionExists && location.pathname === "/auth") {
       navigate("/");
     }
   }, [sessionExists, location.pathname, navigate]);
 
   const showFooter = location.pathname !== "/feed" && !isMobile;
+  const showMobileNav = sessionExists && isMobile;
 
   return (
     <div className="min-h-screen flex flex-col glow-field" onMouseMove={onMouseMove}>
       <SecurityMonitor />
       <Navbar />
-      <main className={`flex-grow container mx-auto px-4 py-8 ${isMobile ? 'pb-20' : ''}`}>
+      <main className={`flex-grow container mx-auto px-4 py-8 ${showMobileNav ? 'pb-20' : ''}`}>
         {children}
       </main>
       {showFooter && <Footer />}
-      <MobileBottomNav />
+      {showMobileNav && <MobileBottomNav />}
     </div>
   );
 };
