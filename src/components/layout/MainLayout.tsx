@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useSessionSecurity } from "@/hooks/useSessionSecurity";
 import { SecurityMonitor } from "@/components/security/SecurityMonitor";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { WelcomePopup } from "@/components/WelcomePopup";
 import Navbar from "./Navbar";
 import Footer from "./Footer";
 import MobileBottomNav from "./MobileBottomNav";
@@ -59,6 +60,7 @@ const MainLayout = ({ children }: { children: ReactNode }) => {
   return (
     <div className="min-h-screen flex flex-col glow-field overflow-x-hidden" onMouseMove={onMouseMove}>
       <SecurityMonitor />
+      <WelcomePopup />
       <Navbar />
       <main className={`flex-grow container mx-auto px-4 py-8 ${isMobile ? 'pb-20' : ''} w-full`}>
         {children}
