@@ -55,9 +55,9 @@ const RoomChat = ({ room, onLeaveRoom }: RoomChatProps) => {
     fetchMessages();
     fetchParticipants();
     
-    // Subscribe to new messages
+    // Subscribe to new messages with unique channel per room
     const messagesChannel = supabase
-      .channel(`room-messages-${room.id}`)
+      .channel(`messages_${room.id}_${Date.now()}`)
       .on(
         'postgres_changes',
         {
@@ -66,18 +66,23 @@ const RoomChat = ({ room, onLeaveRoom }: RoomChatProps) => {
           table: 'room_messages',
           filter: `room_id=eq.${room.id}`,
         },
-        (payload) => {
+        async (payload) => {
           console.log('New message received:', payload);
           const newMessage = payload.new as Message;
+          
           // Fetch profile for the new message
-          supabase
+          const { data: profile } = await supabase
             .from('profiles')
             .select('display_name, full_name, email')
             .eq('user_id', newMessage.user_id)
-            .maybeSingle()
-            .then(({ data: profile }) => {
-              setMessages(prev => [...prev, { ...newMessage, profiles: profile }]);
-            });
+            .maybeSingle();
+            
+          setMessages(prev => {
+            // Prevent duplicate messages
+            const exists = prev.find(m => m.id === newMessage.id);
+            if (exists) return prev;
+            return [...prev, { ...newMessage, profiles: profile }];
+          });
         }
       )
       .subscribe((status) => {
@@ -86,7 +91,7 @@ const RoomChat = ({ room, onLeaveRoom }: RoomChatProps) => {
 
     // Subscribe to participants changes  
     const participantsChannel = supabase
-      .channel(`room-participants-${room.id}`)
+      .channel(`participants_${room.id}_${Date.now()}`)
       .on(
         'postgres_changes',
         {
@@ -111,8 +116,14 @@ const RoomChat = ({ room, onLeaveRoom }: RoomChatProps) => {
   }, [room.id]);
 
   useEffect(() => {
-    scrollToBottom();
-  }, [messages]);
+    // Only auto-scroll when current user sends a message
+    if (messages.length > 0) {
+      const lastMessage = messages[messages.length - 1];
+      if (lastMessage.user_id === currentUser?.id) {
+        scrollToBottom();
+      }
+    }
+  }, [messages, currentUser]);
 
   const getCurrentUser = async () => {
     const { data: { user } } = await supabase.auth.getUser();
