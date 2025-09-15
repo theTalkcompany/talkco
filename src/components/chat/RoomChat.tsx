@@ -57,7 +57,7 @@ const RoomChat = ({ room, onLeaveRoom }: RoomChatProps) => {
     
     // Subscribe to new messages
     const messagesChannel = supabase
-      .channel('room-messages')
+      .channel(`room-messages-${room.id}`)
       .on(
         'postgres_changes',
         {
@@ -67,6 +67,7 @@ const RoomChat = ({ room, onLeaveRoom }: RoomChatProps) => {
           filter: `room_id=eq.${room.id}`,
         },
         (payload) => {
+          console.log('New message received:', payload);
           const newMessage = payload.new as Message;
           // Fetch profile for the new message
           supabase
@@ -79,11 +80,13 @@ const RoomChat = ({ room, onLeaveRoom }: RoomChatProps) => {
             });
         }
       )
-      .subscribe();
+      .subscribe((status) => {
+        console.log('Messages subscription status:', status);
+      });
 
     // Subscribe to participants changes  
     const participantsChannel = supabase
-      .channel('room-participants')
+      .channel(`room-participants-${room.id}`)
       .on(
         'postgres_changes',
         {
@@ -92,11 +95,14 @@ const RoomChat = ({ room, onLeaveRoom }: RoomChatProps) => {
           table: 'room_participants',
           filter: `room_id=eq.${room.id}`,
         },
-        () => {
+        (payload) => {
+          console.log('Participants change:', payload);
           fetchParticipants();
         }
       )
-      .subscribe();
+      .subscribe((status) => {
+        console.log('Participants subscription status:', status);
+      });
 
     return () => {
       supabase.removeChannel(messagesChannel);
