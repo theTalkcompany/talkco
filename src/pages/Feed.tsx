@@ -62,37 +62,33 @@ const [reportDialog, setReportDialog] = useState<{
   }, []);
 
 const loadPosts = async () => {
-  const { data, error } = await supabase
-    .from("posts")
-    .select("id, content, user_id, created_at, likes(id, user_id), comments(id, content, user_id, created_at)")
-    .order("created_at", { ascending: false });
-
-  if (error) {
-    console.error(error);
-    toast({ title: "Couldn't load feed", description: error.message, variant: "destructive" });
-    return;
-  }
-  const postsData = data as unknown as PostRow[];
-  setPosts(postsData);
-
-  // Build list of unique user IDs from posts and comments
-  const userIds = new Set<string>();
-  postsData.forEach((p) => {
-    userIds.add(p.user_id);
-    p.comments?.forEach((c) => userIds.add(c.user_id));
-  });
-  if (userIds.size > 0) {
-    const { data: profiles, error: pErr } = await supabase
+  // Fetch posts and profiles in parallel for better performance
+  const [postsResult, profilesResult] = await Promise.all([
+    supabase
+      .from("posts")
+      .select("id, content, user_id, created_at, likes(id, user_id), comments(id, content, user_id, created_at)")
+      .order("created_at", { ascending: false }),
+    supabase
       .from("profiles")
       .select("user_id, display_name")
-      .in("user_id", Array.from(userIds));
-    if (!pErr && profiles) {
-      const map: Record<string, string> = {};
-      (profiles as any[]).forEach((pr) => {
-        if (pr.display_name) map[pr.user_id] = pr.display_name as string;
-      });
-      setNameMap(map);
-    }
+  ]);
+
+  if (postsResult.error) {
+    console.error(postsResult.error);
+    toast({ title: "Couldn't load feed", description: postsResult.error.message, variant: "destructive" });
+    return;
+  }
+  
+  const postsData = postsResult.data as unknown as PostRow[];
+  setPosts(postsData);
+
+  // Build name map from profiles
+  if (!profilesResult.error && profilesResult.data) {
+    const map: Record<string, string> = {};
+    profilesResult.data.forEach((pr: any) => {
+      if (pr.display_name) map[pr.user_id] = pr.display_name as string;
+    });
+    setNameMap(map);
   }
 };
 
