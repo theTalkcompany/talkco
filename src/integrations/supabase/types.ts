@@ -521,6 +521,19 @@ export type Database = {
         Args: { birth_date: string }
         Returns: number
       }
+      cleanup_old_security_events: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
+      detect_suspicious_ips: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          event_count: number
+          event_types: string[]
+          ip_address: unknown
+          unique_users: number
+        }[]
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]

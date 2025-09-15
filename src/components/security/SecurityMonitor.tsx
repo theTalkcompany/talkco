@@ -52,19 +52,26 @@ export const SecurityMonitor = () => {
             if (element.tagName === 'SCRIPT' && !element.hasAttribute('data-allowed')) {
               // Potential XSS attempt detected
               try {
-                const ipInfo = await getIPInfo();
-                
-                supabase.from('security_events').insert({
-                  event_type: 'potential_xss_attempt',
-                  user_id: null,
-                  ip_address: ipInfo.ip,
-                  user_agent: navigator.userAgent,
-                  details: {
-                    script_content: element.textContent?.substring(0, 500),
-                    location: ipInfo.location,
-                    timestamp: new Date().toISOString()
+                // Use setTimeout to avoid blocking and handle async operations
+                setTimeout(async () => {
+                  try {
+                    const ipInfo = await getIPInfo();
+                    
+                    await supabase.from('security_events').insert({
+                      event_type: 'potential_xss_attempt',
+                      user_id: null,
+                      ip_address: ipInfo.ip,
+                      user_agent: navigator.userAgent,
+                      details: {
+                        script_content: element.textContent?.substring(0, 500),
+                        location: ipInfo.location,
+                        timestamp: new Date().toISOString()
+                      }
+                    });
+                  } catch (logError) {
+                    console.error('Failed to log security event:', logError);
                   }
-                });
+                }, 0);
               } catch (logError) {
                 console.error('Failed to log security event:', logError);
               }

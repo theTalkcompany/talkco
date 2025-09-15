@@ -25,10 +25,17 @@ export const getClientIP = async (): Promise<string | null> => {
 
     for (const service of services) {
       try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 3000);
+        
         const response = await fetch(service, { 
-          timeout: 3000,
-          signal: AbortSignal.timeout(3000)
+          signal: controller.signal
         });
+        
+        clearTimeout(timeoutId);
+        
+        if (!response.ok) continue;
+        
         const data = await response.json();
         
         // Different services return IP in different fields
@@ -54,10 +61,14 @@ export const getClientIP = async (): Promise<string | null> => {
  */
 export const getIPInfo = async (): Promise<IPInfo> => {
   try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 5000);
+    
     const response = await fetch('https://ipapi.co/json/', {
-      timeout: 5000,
-      signal: AbortSignal.timeout(5000)
+      signal: controller.signal
     });
+    
+    clearTimeout(timeoutId);
     
     if (!response.ok) {
       const ip = await getClientIP();
