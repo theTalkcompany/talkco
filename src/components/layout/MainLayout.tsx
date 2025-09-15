@@ -49,13 +49,18 @@ const MainLayout = ({ children }: { children: ReactNode }) => {
     }
   }, [sessionExists, location.pathname, navigate]);
 
-  const showFooter = location.pathname !== "/feed" && !isMobile;
+  // Scroll to top on route change
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [location.pathname]);
+
+  const showFooter = location.pathname !== "/feed";
 
   return (
-    <div className="min-h-screen flex flex-col glow-field" onMouseMove={onMouseMove}>
+    <div className="min-h-screen flex flex-col glow-field overflow-x-hidden" onMouseMove={onMouseMove}>
       <SecurityMonitor />
       <Navbar />
-      <main className={`flex-grow container mx-auto px-4 py-8 ${isMobile ? 'pb-20' : ''}`}>
+      <main className={`flex-grow container mx-auto px-4 py-8 ${isMobile ? 'pb-20' : ''} w-full`}>
         {children}
       </main>
       {showFooter && <Footer />}
