@@ -8,6 +8,7 @@ import { ArrowLeft, Send, Users, Flag, UserX, Shield } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
 import { useContentModeration } from "@/hooks/useContentModeration";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { format } from "date-fns";
 
 interface Room {
@@ -47,6 +48,7 @@ const RoomChat = ({ room, onLeaveRoom }: RoomChatProps) => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
   const { moderateContent, isChecking } = useContentModeration();
+  const isMobile = useIsMobile();
 
   const isRoomAdmin = currentUser && room.created_by === currentUser.id;
 
@@ -55,9 +57,9 @@ const RoomChat = ({ room, onLeaveRoom }: RoomChatProps) => {
     fetchMessages();
     fetchParticipants();
     
-    // Subscribe to new messages with unique channel per room
+    // Subscribe to new messages with truly unique channel names
     const messagesChannel = supabase
-      .channel(`messages_${room.id}_${Date.now()}`)
+      .channel(`room_messages_${room.id}_${Math.random().toString(36).substr(2, 9)}`)
       .on(
         'postgres_changes',
         {
@@ -91,7 +93,7 @@ const RoomChat = ({ room, onLeaveRoom }: RoomChatProps) => {
 
     // Subscribe to participants changes  
     const participantsChannel = supabase
-      .channel(`participants_${room.id}_${Date.now()}`)
+      .channel(`room_participants_${room.id}_${Math.random().toString(36).substr(2, 9)}`)
       .on(
         'postgres_changes',
         {
@@ -116,10 +118,13 @@ const RoomChat = ({ room, onLeaveRoom }: RoomChatProps) => {
   }, [room.id]);
 
   useEffect(() => {
-    // Only auto-scroll when current user sends a message
+    // Auto-scroll to bottom when first loading messages or when current user sends a message
     if (messages.length > 0) {
+      const isInitialLoad = messages.length === 1 || messages.length <= 10;
       const lastMessage = messages[messages.length - 1];
-      if (lastMessage.user_id === currentUser?.id) {
+      const isCurrentUserMessage = lastMessage.user_id === currentUser?.id;
+      
+      if (isInitialLoad || isCurrentUserMessage) {
         scrollToBottom();
       }
     }
@@ -166,6 +171,11 @@ const RoomChat = ({ room, onLeaveRoom }: RoomChatProps) => {
       );
 
       setMessages(messagesWithProfiles);
+      
+      // Auto-scroll to bottom after initial messages load
+      setTimeout(() => {
+        scrollToBottom();
+      }, 100);
     } catch (error) {
       console.error('Error fetching messages:', error);
     }
@@ -341,9 +351,9 @@ const RoomChat = ({ room, onLeaveRoom }: RoomChatProps) => {
   };
 
   return (
-    <div className="flex flex-col h-[600px]">
+    <div className={`flex flex-col ${isMobile ? 'fixed inset-0 z-50 bg-background' : 'h-[600px]'}`}>
       {/* Header */}
-      <div className="flex items-center justify-between p-4 border-b">
+      <div className="flex items-center justify-between p-4 border-b bg-background">
         <div className="flex items-center gap-3">
           <Button variant="ghost" size="sm" onClick={handleLeaveRoom}>
             <ArrowLeft className="h-4 w-4" />
@@ -427,7 +437,7 @@ const RoomChat = ({ room, onLeaveRoom }: RoomChatProps) => {
       </div>
 
       {/* Input */}
-      <div className="p-4 border-t">
+      <div className={`p-4 border-t bg-background ${isMobile ? 'pb-safe' : ''}`}>
         <div className="flex gap-2">
           <Textarea
             value={newMessage}
@@ -435,6 +445,7 @@ const RoomChat = ({ room, onLeaveRoom }: RoomChatProps) => {
             onKeyDown={handleKeyDown}
             placeholder="Type your message..."
             className="min-h-[60px] resize-none"
+            style={{ fontSize: '16px' }}
             disabled={sending}
           />
           <Button
