@@ -286,18 +286,32 @@ const Auth = () => {
       // Create profile immediately after successful signup
       if (data.user) {
         try {
-          await supabase.from("profiles").upsert({
+          const { error: profileError } = await supabase.from("profiles").upsert({
             user_id: data.user.id,
-            email: data.user.email ?? undefined,
-            full_name: sanitizedFullName || undefined,
-            phone: sanitizedPhone || undefined,
-            address: sanitizedAddress || undefined,
-            date_of_birth: dateOfBirth || undefined
+            email: data.user.email ?? sanitizedEmail,
+            full_name: sanitizedFullName,
+            phone: sanitizedPhone,
+            address: sanitizedAddress,
+            date_of_birth: dateOfBirth
           }, {
             onConflict: "user_id"
           });
+          
+          if (profileError) {
+            console.error('Profile creation error:', profileError);
+            toast({
+              title: "Profile creation failed",
+              description: "Your account was created but profile setup failed. You can update your profile later.",
+              variant: "destructive"
+            });
+          }
         } catch (profileError) {
           console.error('Failed to create profile:', profileError);
+          toast({
+            title: "Profile creation failed", 
+            description: "Your account was created but profile setup failed. You can update your profile later.",
+            variant: "destructive"
+          });
         }
 
         // Log successful signup
