@@ -3,10 +3,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { AlertTriangle, CheckCircle, XCircle, Clock, Bot, Shield } from "lucide-react";
+import { AlertTriangle, CheckCircle, XCircle, Clock, Bot, Shield, UserX, AlertOctagon, Mail, Phone, User } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
 import { format } from "date-fns";
+import { Separator } from "@/components/ui/separator";
 
 interface Report {
   id: string;
@@ -25,6 +26,18 @@ interface Report {
   is_ai_flagged?: boolean;
   rooms?: {
     name: string;
+  };
+  reported_user_profile?: {
+    full_name?: string;
+    email?: string;
+    phone?: string;
+    display_name?: string;
+  };
+  reporter_profile?: {
+    full_name?: string;
+    email?: string;
+    phone?: string;
+    display_name?: string;
   };
 }
 
@@ -45,6 +58,18 @@ const ReportsAdmin = () => {
           *,
           rooms (
             name
+          ),
+          reported_user_profile:profiles!reports_reported_user_id_fkey (
+            full_name,
+            email,
+            phone,
+            display_name
+          ),
+          reporter_profile:profiles!reports_reported_by_user_id_fkey (
+            full_name,
+            email,
+            phone,
+            display_name
           )
         `)
         .order('created_at', { ascending: false });
@@ -86,6 +111,70 @@ const ReportsAdmin = () => {
       toast({
         title: "Error",
         description: "Failed to update report",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const banUser = async (userId: string, reportId: string, reason: string) => {
+    try {
+      const { error } = await supabase
+        .from('user_moderation')
+        .insert({
+          user_id: userId,
+          action_type: 'ban',
+          reason: reason,
+          created_by: (await supabase.auth.getUser()).data.user?.id,
+          notes: `Banned due to report ${reportId}`
+        });
+
+      if (error) throw error;
+
+      // Also resolve the report
+      await updateReportStatus(reportId, 'resolved');
+
+      toast({
+        title: "User banned",
+        description: "User has been permanently banned from the platform",
+      });
+    } catch (error) {
+      console.error('Error banning user:', error);
+      toast({
+        title: "Error",
+        description: "Failed to ban user",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const warnUser = async (userId: string, reportId: string, reason: string) => {
+    try {
+      const { error } = await supabase
+        .from('user_moderation')
+        .insert({
+          user_id: userId,
+          action_type: 'warning',
+          reason: reason,
+          created_by: (await supabase.auth.getUser()).data.user?.id,
+          notes: `Warning issued due to report ${reportId}`,
+          duration_hours: 168, // 7 days
+          expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString()
+        });
+
+      if (error) throw error;
+
+      // Also resolve the report
+      await updateReportStatus(reportId, 'resolved');
+
+      toast({
+        title: "Warning issued",
+        description: "User has been warned for their behavior",
+      });
+    } catch (error) {
+      console.error('Error warning user:', error);
+      toast({
+        title: "Error",
+        description: "Failed to warn user",
         variant: "destructive",
       });
     }
@@ -200,38 +289,121 @@ const ReportsAdmin = () => {
                     {isAIFlagged(report) ? 'Automatically flagged by AI moderation system' : 'User report'} • {format(new Date(report.created_at), 'PPp')}
                   </CardDescription>
                 </CardHeader>
-                <CardContent className="space-y-4">
+                <CardContent className="space-y-6">
+                  {/* User Information Section */}
+                  <div className="grid md:grid-cols-2 gap-4">
+                    {/* Reported User */}
+                    <div className="space-y-3">
+                      <div className="flex items-center gap-2 text-sm font-medium text-red-700">
+                        <UserX className="h-4 w-4" />
+                        Reported User
+                      </div>
+                      <div className="bg-red-50 border border-red-200 rounded-lg p-4 space-y-2">
+                        <div className="flex items-center gap-2">
+                          <User className="h-4 w-4 text-muted-foreground" />
+                          <span className="font-medium">
+                            {report.reported_user_profile?.full_name || report.reported_user_profile?.display_name || 'Unknown User'}
+                          </span>
+                        </div>
+                        {report.reported_user_profile?.email && (
+                          <div className="flex items-center gap-2 text-sm">
+                            <Mail className="h-4 w-4 text-muted-foreground" />
+                            <span>{report.reported_user_profile.email}</span>
+                          </div>
+                        )}
+                        {report.reported_user_profile?.phone && (
+                          <div className="flex items-center gap-2 text-sm">
+                            <Phone className="h-4 w-4 text-muted-foreground" />
+                            <span>{report.reported_user_profile.phone}</span>
+                          </div>
+                        )}
+                        <div className="text-xs text-muted-foreground mt-2">
+                          ID: <code className="bg-white px-1 rounded">{report.reported_user_id}</code>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Reporter Information */}
+                    {!isAIFlagged(report) && (
+                      <div className="space-y-3">
+                        <div className="flex items-center gap-2 text-sm font-medium text-blue-700">
+                          <Shield className="h-4 w-4" />
+                          Reported By
+                        </div>
+                        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 space-y-2">
+                          <div className="flex items-center gap-2">
+                            <User className="h-4 w-4 text-muted-foreground" />
+                            <span className="font-medium">
+                              {report.reporter_profile?.full_name || report.reporter_profile?.display_name || 'Unknown User'}
+                            </span>
+                          </div>
+                          {report.reporter_profile?.email && (
+                            <div className="flex items-center gap-2 text-sm">
+                              <Mail className="h-4 w-4 text-muted-foreground" />
+                              <span>{report.reporter_profile.email}</span>
+                            </div>
+                          )}
+                          <div className="text-xs text-muted-foreground mt-2">
+                            ID: <code className="bg-white px-1 rounded">{report.reported_by_user_id}</code>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  <Separator />
+
+                  {/* Reported Content */}
                   {report.message_content && (
                     <div>
-                      <h4 className="font-medium mb-2">
+                      <h4 className="font-medium mb-2 flex items-center gap-2">
+                        <AlertTriangle className="h-4 w-4 text-orange-600" />
                         Reported {report.room_id ? 'Message' : report.post_id ? 'Post' : 'Comment'}:
                       </h4>
-                      <div className="bg-muted p-3 rounded-md text-sm">
+                      <div className="bg-muted p-4 rounded-md text-sm border-l-4 border-orange-500">
                         "{report.message_content}"
                       </div>
                     </div>
                   )}
-                  
-                  <div className="text-sm text-muted-foreground">
-                    <p>Reported User ID: <code className="bg-muted px-1 rounded">{report.reported_user_id}</code></p>
-                    <p>Reported By: <code className="bg-muted px-1 rounded">{report.reported_by_user_id}</code></p>
-                  </div>
 
-                  <div className="flex gap-2 pt-2">
+                  <Separator />
+
+                  {/* Action Buttons */}
+                  <div className="flex flex-wrap gap-2 pt-2">
+                    <Button 
+                      onClick={() => banUser(report.reported_user_id, report.id, report.reason)}
+                      variant="destructive"
+                      size="sm"
+                      className="flex items-center gap-2"
+                    >
+                      <UserX className="h-4 w-4" />
+                      Ban User
+                    </Button>
+                    <Button 
+                      onClick={() => warnUser(report.reported_user_id, report.id, report.reason)}
+                      variant="outline"
+                      size="sm"
+                      className="flex items-center gap-2 border-orange-500 text-orange-600 hover:bg-orange-50"
+                    >
+                      <AlertOctagon className="h-4 w-4" />
+                      Warn User
+                    </Button>
                     <Button 
                       onClick={() => updateReportStatus(report.id, 'resolved')}
                       variant="default"
                       size="sm"
+                      className="flex items-center gap-2"
                     >
-                      <CheckCircle className="h-4 w-4 mr-2" />
+                      <CheckCircle className="h-4 w-4" />
                       Resolve
                     </Button>
                     <Button 
                       onClick={() => updateReportStatus(report.id, 'dismissed')}
                       variant="outline"
                       size="sm"
+                      className="flex items-center gap-2"
                     >
-                      <XCircle className="h-4 w-4 mr-2" />
+                      <XCircle className="h-4 w-4" />
                       Dismiss
                     </Button>
                   </div>

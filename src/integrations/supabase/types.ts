@@ -461,6 +461,45 @@ export type Database = {
         }
         Relationships: []
       }
+      user_moderation: {
+        Row: {
+          action_type: string
+          created_at: string
+          created_by: string
+          duration_hours: number | null
+          expires_at: string | null
+          id: string
+          is_active: boolean
+          notes: string | null
+          reason: string | null
+          user_id: string
+        }
+        Insert: {
+          action_type: string
+          created_at?: string
+          created_by: string
+          duration_hours?: number | null
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean
+          notes?: string | null
+          reason?: string | null
+          user_id: string
+        }
+        Update: {
+          action_type?: string
+          created_at?: string
+          created_by?: string
+          duration_hours?: number | null
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean
+          notes?: string | null
+          reason?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string
@@ -537,6 +576,10 @@ export type Database = {
           unique_users: number
         }[]
       }
+      get_user_warnings_count: {
+        Args: { user_id: string }
+        Returns: number
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -546,6 +589,10 @@ export type Database = {
       }
       is_admin: {
         Args: { _user_id: string }
+        Returns: boolean
+      }
+      is_user_banned: {
+        Args: { user_id: string }
         Returns: boolean
       }
     }
