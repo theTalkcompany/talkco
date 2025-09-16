@@ -437,7 +437,7 @@ const RoomChat = ({ room, onLeaveRoom }: RoomChatProps) => {
       </div>
 
       {/* Input */}
-      <div className={`p-4 border-t bg-background ${isMobile ? 'pb-safe' : ''}`}>
+      <div className={`p-4 border-t bg-background ${isMobile ? 'pb-20' : ''}`}>
         <div className="flex gap-2">
           <Textarea
             value={newMessage}
