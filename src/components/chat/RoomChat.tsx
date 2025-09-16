@@ -118,17 +118,11 @@ const RoomChat = ({ room, onLeaveRoom }: RoomChatProps) => {
   }, [room.id]);
 
   useEffect(() => {
-    // Auto-scroll to bottom when first loading messages or when current user sends a message
+    // Auto-scroll to bottom for all new messages
     if (messages.length > 0) {
-      const isInitialLoad = messages.length === 1 || messages.length <= 10;
-      const lastMessage = messages[messages.length - 1];
-      const isCurrentUserMessage = lastMessage.user_id === currentUser?.id;
-      
-      if (isInitialLoad || isCurrentUserMessage) {
-        scrollToBottom();
-      }
+      scrollToBottom();
     }
-  }, [messages, currentUser]);
+  }, [messages]);
 
   const getCurrentUser = async () => {
     const { data: { user } } = await supabase.auth.getUser();
@@ -351,9 +345,9 @@ const RoomChat = ({ room, onLeaveRoom }: RoomChatProps) => {
   };
 
   return (
-    <div className={`flex flex-col ${isMobile ? 'fixed inset-0 z-50 bg-background' : 'h-[600px]'}`}>
+    <div className="flex flex-col fixed inset-0 z-50 bg-background">
       {/* Header */}
-      <div className="flex items-center justify-between p-4 border-b bg-background">
+      <div className="flex items-center justify-between p-4 border-b bg-background shrink-0">
         <div className="flex items-center gap-3">
           <Button variant="ghost" size="sm" onClick={handleLeaveRoom}>
             <ArrowLeft className="h-4 w-4" />
@@ -437,7 +431,7 @@ const RoomChat = ({ room, onLeaveRoom }: RoomChatProps) => {
       </div>
 
       {/* Input */}
-      <div className={`p-4 border-t bg-background ${isMobile ? 'pb-20' : ''}`}>
+      <div className={`p-4 border-t bg-background shrink-0 ${isMobile ? 'pb-20' : 'pb-4'}`}>
         <div className="flex gap-2">
           <Textarea
             value={newMessage}
@@ -445,11 +439,13 @@ const RoomChat = ({ room, onLeaveRoom }: RoomChatProps) => {
             onKeyDown={handleKeyDown}
             placeholder="Type your message..."
             className="min-h-[60px] resize-none"
-            style={{ fontSize: '16px' }}
             disabled={sending}
           />
           <Button
-            onClick={sendMessage}
+            onClick={(e) => {
+              e.preventDefault();
+              sendMessage();
+            }}
             disabled={!newMessage.trim() || sending || isChecking}
             size="icon"
             className="shrink-0"
