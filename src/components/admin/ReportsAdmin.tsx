@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -52,30 +52,55 @@ const ReportsAdmin = () => {
 
   const fetchReports = async () => {
     try {
-      const { data, error } = await supabase
+      // First fetch reports with rooms
+      const { data: reportsData, error: reportsError } = await supabase
         .from('reports')
         .select(`
           *,
           rooms (
             name
-          ),
-          reported_user_profile:profiles!reports_reported_user_id_fkey (
-            full_name,
-            email,
-            phone,
-            display_name
-          ),
-          reporter_profile:profiles!reports_reported_by_user_id_fkey (
-            full_name,
-            email,
-            phone,
-            display_name
           )
         `)
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
-      setReports((data || []) as Report[]);
+      if (reportsError) throw reportsError;
+
+      if (!reportsData || reportsData.length === 0) {
+        setReports([]);
+        return;
+      }
+
+      // Get unique user IDs from reports
+      const reportedUserIds = [...new Set(reportsData.map(r => r.reported_user_id))];
+      const reporterUserIds = [...new Set(reportsData.map(r => r.reported_by_user_id))];
+      const allUserIds = [...new Set([...reportedUserIds, ...reporterUserIds])];
+
+      // Fetch profiles for all users involved
+      const { data: profilesData, error: profilesError } = await supabase
+        .from('profiles')
+        .select('user_id, full_name, email, phone, display_name')
+        .in('user_id', allUserIds);
+
+      if (profilesError) {
+        console.warn('Error fetching profiles:', profilesError);
+      }
+
+      // Create a map of user profiles for quick lookup
+      const profilesMap = new Map();
+      if (profilesData) {
+        profilesData.forEach(profile => {
+          profilesMap.set(profile.user_id, profile);
+        });
+      }
+
+      // Combine reports with profile data
+      const reportsWithProfiles = reportsData.map(report => ({
+        ...report,
+        reported_user_profile: profilesMap.get(report.reported_user_id),
+        reporter_profile: profilesMap.get(report.reported_by_user_id)
+      }));
+
+      setReports(reportsWithProfiles as Report[]);
     } catch (error) {
       console.error('Error fetching reports:', error);
       toast({
@@ -216,13 +241,16 @@ const ReportsAdmin = () => {
            report.reason.toLowerCase().includes('automated');
   };
 
-  const pendingReports = reports.filter(r => r.status === 'pending');
-  const resolvedReports = reports.filter(r => r.status !== 'pending');
+  const pendingReports = useMemo(() => reports.filter(r => r.status === 'pending'), [reports]);
+  const resolvedReports = useMemo(() => reports.filter(r => r.status !== 'pending'), [reports]);
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center py-8">
-        <div className="text-muted-foreground">Loading reports...</div>
+      <div className="flex items-center justify-center py-12">
+        <div className="flex flex-col items-center gap-3">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+          <div className="text-muted-foreground">Loading reports...</div>
+        </div>
       </div>
     );
   }
