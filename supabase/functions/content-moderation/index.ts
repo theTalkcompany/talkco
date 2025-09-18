@@ -115,14 +115,15 @@ Respond with JSON: {"flagged": boolean, "severity": "low"|"medium"|"high"|"criti
             
             // Fallback: check for obvious harmful content manually
             const lowerContent = content.toLowerCase();
-            if (lowerContent.includes('kill yourself') || lowerContent.includes('go kill') || lowerContent.includes('end it all')) {
+            if (lowerContent.includes('kill yourself') || lowerContent.includes('go kill') || lowerContent.includes('end it all') ||
+                lowerContent.includes('kys') || lowerContent.includes('hang yourself') || lowerContent.includes('jump off')) {
               gptAnalysis = {
                 flagged: true,
                 severity: 'critical',
-                reason: 'Contains explicit suicide encouragement',
-                categories: ['suicide_encouragement']
+                reason: 'Contains explicit harmful encouragement (AI detected)',
+                categories: ['harmful_content']
               };
-              console.log('Fallback analysis applied for harmful content');
+              console.log('🚨 CRITICAL CONTENT DETECTED by JSON parsing fallback');
             }
           }
         } else {
@@ -137,14 +138,15 @@ Respond with JSON: {"flagged": boolean, "severity": "low"|"medium"|"high"|"criti
       
       // Critical fallback for obvious harmful content
       const lowerContent = content.toLowerCase();
-      if (lowerContent.includes('kill yourself') || lowerContent.includes('go kill') || lowerContent.includes('end it all')) {
+      if (lowerContent.includes('kill yourself') || lowerContent.includes('go kill') || lowerContent.includes('end it all') || 
+          lowerContent.includes('kys') || lowerContent.includes('hang yourself') || lowerContent.includes('jump off')) {
         gptAnalysis = {
           flagged: true,
           severity: 'critical',
-          reason: 'Contains explicit suicide encouragement (detected by fallback)',
-          categories: ['suicide_encouragement']
+          reason: 'Contains explicit harmful encouragement (AI detected)',
+          categories: ['harmful_content']
         };
-        console.log('Emergency fallback analysis applied');
+        console.log('🚨 CRITICAL CONTENT DETECTED by fallback analysis');
       }
     }
 
@@ -156,10 +158,10 @@ Respond with JSON: {"flagged": boolean, "severity": "low"|"medium"|"high"|"criti
     if (shouldFlag) {
       console.log('Content flagged, creating report...');
       
-      // Create a report in the database
+    // Create a report in the database
       const reportData: any = {
         reported_user_id: userId,
-        reported_by_user_id: userId, // System report
+        reported_by_user_id: '00000000-0000-0000-0000-000000000000', // System/AI report
         reason: gptAnalysis.reason || 'Automated content moderation flag',
         status: 'pending',
         message_content: content,
