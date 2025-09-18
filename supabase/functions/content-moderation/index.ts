@@ -31,46 +31,56 @@ serve(async (req) => {
 
     console.log('Moderating content:', { contentType, contentId, content: content.substring(0, 100) });
 
-    // First, use OpenAI's moderation endpoint
-    const moderationResponse = await fetch('https://api.openai.com/v1/moderations', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${openAIApiKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        input: content,
-      }),
-    });
-
-    const moderationData = await moderationResponse.json();
+    // Initialize moderation variables
+    let isFlagged = false;
+    let categories = {};
     
-    // Handle OpenAI API errors
-    if (!moderationResponse.ok || !moderationData.results || !Array.isArray(moderationData.results) || moderationData.results.length === 0) {
-      console.error('OpenAI moderation API error:', moderationData);
-      // Continue with GPT analysis even if moderation API fails
-      const isFlagged = false;
-      const categories = {};
-    } else {
-      var isFlagged = moderationData.results[0]?.flagged || false;
-      var categories = moderationData.results[0]?.categories || {};
+    // Try OpenAI's moderation endpoint, but don't rely on it completely
+    try {
+      const moderationResponse = await fetch('https://api.openai.com/v1/moderations', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${openAIApiKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          input: content,
+        }),
+      });
+
+      if (moderationResponse.ok) {
+        const moderationData = await moderationResponse.json();
+        if (moderationData.results && Array.isArray(moderationData.results) && moderationData.results.length > 0) {
+          isFlagged = moderationData.results[0]?.flagged || false;
+          categories = moderationData.results[0]?.categories || {};
+          console.log('OpenAI moderation result:', { isFlagged, categories });
+        }
+      } else {
+        const errorData = await moderationResponse.json();
+        console.log('OpenAI moderation API error (continuing with GPT analysis):', errorData);
+      }
+    } catch (error) {
+      console.log('OpenAI moderation API failed (continuing with GPT analysis):', error.message);
     }
 
     console.log('OpenAI moderation result:', { isFlagged, categories });
 
     // Enhanced detection using GPT for context-aware moderation
-    const gptResponse = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${openAIApiKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: 'gpt-4.1-2025-04-14',
-        messages: [
-          {
-            role: 'system',
-            content: `You are a content moderator for a mental health support platform. Analyze content for:
+    let gptAnalysis = { flagged: false, severity: 'low', reason: '', categories: [] };
+    
+    try {
+      const gptResponse = await fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${openAIApiKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          model: 'gpt-4.1-2025-04-14',
+          messages: [
+            {
+              role: 'system',
+              content: `You are a content moderator for a mental health support platform. Analyze content for:
 1. Suicide encouragement or harmful suggestions (including phrases like "kill yourself", "end it all", etc.)
 2. Bullying or harassment (including threats, insults, or intimidation)
 3. Self-harm promotion (encouraging cutting, substance abuse, etc.)
@@ -79,30 +89,69 @@ serve(async (req) => {
 
 Be especially strict with suicide-related content. ANY encouragement of self-harm or suicide should be flagged as critical.
 
-Respond with JSON: {"flagged": boolean, "severity": "low"|"medium"|"high"|"critical", "reason": "brief explanation", "categories": ["category1", "category2"]}`
-          },
-          {
-            role: 'user',
-            content: `Analyze this ${contentType} content: "${content}"`
-          }
-        ],
-        max_completion_tokens: 200,
-      }),
-    });
+CRITICAL: Content like "go kill yourself" or "kill yourself" MUST ALWAYS be flagged as critical.
 
-    const gptData = await gptResponse.json();
-    let gptAnalysis = { flagged: false, severity: 'low', reason: '', categories: [] };
-    
-    try {
-      gptAnalysis = JSON.parse(gptData.choices[0].message.content);
-    } catch (e) {
-      console.error('Error parsing GPT response:', e);
+Respond with JSON: {"flagged": boolean, "severity": "low"|"medium"|"high"|"critical", "reason": "brief explanation", "categories": ["category1", "category2"]}`
+            },
+            {
+              role: 'user',
+              content: `Analyze this ${contentType} content: "${content}"`
+            }
+          ],
+          max_completion_tokens: 200,
+        }),
+      });
+
+      if (gptResponse.ok) {
+        const gptData = await gptResponse.json();
+        
+        if (gptData.choices && gptData.choices.length > 0 && gptData.choices[0].message) {
+          try {
+            gptAnalysis = JSON.parse(gptData.choices[0].message.content);
+            console.log('GPT analysis successful:', gptAnalysis);
+          } catch (parseError) {
+            console.error('Error parsing GPT JSON response:', parseError);
+            console.log('GPT raw response:', gptData.choices[0].message.content);
+            
+            // Fallback: check for obvious harmful content manually
+            const lowerContent = content.toLowerCase();
+            if (lowerContent.includes('kill yourself') || lowerContent.includes('go kill') || lowerContent.includes('end it all')) {
+              gptAnalysis = {
+                flagged: true,
+                severity: 'critical',
+                reason: 'Contains explicit suicide encouragement',
+                categories: ['suicide_encouragement']
+              };
+              console.log('Fallback analysis applied for harmful content');
+            }
+          }
+        } else {
+          console.error('Invalid GPT response structure:', gptData);
+        }
+      } else {
+        const errorData = await gptResponse.json();
+        console.error('GPT API error:', errorData);
+      }
+    } catch (error) {
+      console.error('GPT moderation failed:', error);
+      
+      // Critical fallback for obvious harmful content
+      const lowerContent = content.toLowerCase();
+      if (lowerContent.includes('kill yourself') || lowerContent.includes('go kill') || lowerContent.includes('end it all')) {
+        gptAnalysis = {
+          flagged: true,
+          severity: 'critical',
+          reason: 'Contains explicit suicide encouragement (detected by fallback)',
+          categories: ['suicide_encouragement']
+        };
+        console.log('Emergency fallback analysis applied');
+      }
     }
 
-    console.log('GPT analysis result:', gptAnalysis);
+    console.log('Final analysis - OpenAI flagged:', isFlagged, 'GPT flagged:', gptAnalysis.flagged);
 
     // Determine if content should be flagged (either OpenAI moderation or GPT flagged it)
-    const shouldFlag = (typeof isFlagged !== 'undefined' ? isFlagged : false) || gptAnalysis.flagged;
+    const shouldFlag = isFlagged || gptAnalysis.flagged;
     
     if (shouldFlag) {
       console.log('Content flagged, creating report...');
