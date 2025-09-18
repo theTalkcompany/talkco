@@ -68,6 +68,32 @@ serve(async (req) => {
     // Enhanced detection using GPT for context-aware moderation
     let gptAnalysis = { flagged: false, severity: 'low', reason: '', categories: [] };
     
+    // CRITICAL: Check for harmful content first with improved fallback
+    const lowerContent = content.toLowerCase().trim();
+    console.log('🔍 Checking content for harmful phrases:', lowerContent);
+    
+    const harmfulPhrases = [
+      'kill yourself', 'go kill yourself', 'go kill', 'end it all', 'kys', 
+      'hang yourself', 'jump off', 'kill urself', 'off yourself', 'end your life',
+      'you should die', 'just die', 'go die', 'die already'
+    ];
+    
+    const foundHarmfulPhrase = harmfulPhrases.find(phrase => lowerContent.includes(phrase));
+    
+    if (foundHarmfulPhrase) {
+      console.log('🚨 HARMFUL CONTENT DETECTED by primary fallback:', foundHarmfulPhrase);
+      gptAnalysis = {
+        flagged: true,
+        severity: 'critical',
+        reason: `Contains harmful encouragement: "${foundHarmfulPhrase}"`,
+        categories: ['harmful_content', 'harassment']
+      };
+    }
+    
+    // Only try AI APIs if we haven't already flagged the content
+    if (!gptAnalysis.flagged) {
+      console.log('⚡ Content not flagged by fallback, trying AI APIs...');
+    
     try {
       const gptResponse = await fetch('https://api.openai.com/v1/chat/completions', {
         method: 'POST',
@@ -112,19 +138,6 @@ Respond with JSON: {"flagged": boolean, "severity": "low"|"medium"|"high"|"criti
           } catch (parseError) {
             console.error('Error parsing GPT JSON response:', parseError);
             console.log('GPT raw response:', gptData.choices[0].message.content);
-            
-            // Fallback: check for obvious harmful content manually
-            const lowerContent = content.toLowerCase();
-            if (lowerContent.includes('kill yourself') || lowerContent.includes('go kill') || lowerContent.includes('end it all') ||
-                lowerContent.includes('kys') || lowerContent.includes('hang yourself') || lowerContent.includes('jump off')) {
-              gptAnalysis = {
-                flagged: true,
-                severity: 'critical',
-                reason: 'Contains explicit harmful encouragement (AI detected)',
-                categories: ['harmful_content']
-              };
-              console.log('🚨 CRITICAL CONTENT DETECTED by JSON parsing fallback');
-            }
           }
         } else {
           console.error('Invalid GPT response structure:', gptData);
@@ -135,22 +148,17 @@ Respond with JSON: {"flagged": boolean, "severity": "low"|"medium"|"high"|"criti
       }
     } catch (error) {
       console.error('GPT moderation failed:', error);
-      
-      // Critical fallback for obvious harmful content
-      const lowerContent = content.toLowerCase();
-      if (lowerContent.includes('kill yourself') || lowerContent.includes('go kill') || lowerContent.includes('end it all') || 
-          lowerContent.includes('kys') || lowerContent.includes('hang yourself') || lowerContent.includes('jump off')) {
-        gptAnalysis = {
-          flagged: true,
-          severity: 'critical',
-          reason: 'Contains explicit harmful encouragement (AI detected)',
-          categories: ['harmful_content']
-        };
-        console.log('🚨 CRITICAL CONTENT DETECTED by fallback analysis');
-      }
     }
+    } // End of if (!gptAnalysis.flagged)
 
     console.log('Final analysis - OpenAI flagged:', isFlagged, 'GPT flagged:', gptAnalysis.flagged);
+    console.log('📊 Content analysis complete:', { 
+      content: content.substring(0, 50), 
+      isFlagged, 
+      gptFlagged: gptAnalysis.flagged, 
+      severity: gptAnalysis.severity,
+      reason: gptAnalysis.reason 
+    });
 
     // Determine if content should be flagged (either OpenAI moderation or GPT flagged it)
     const shouldFlag = isFlagged || gptAnalysis.flagged;
