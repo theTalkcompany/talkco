@@ -44,8 +44,17 @@ serve(async (req) => {
     });
 
     const moderationData = await moderationResponse.json();
-    const isFlagged = moderationData.results[0]?.flagged || false;
-    const categories = moderationData.results[0]?.categories || {};
+    
+    // Handle OpenAI API errors
+    if (!moderationResponse.ok || !moderationData.results || !Array.isArray(moderationData.results) || moderationData.results.length === 0) {
+      console.error('OpenAI moderation API error:', moderationData);
+      // Continue with GPT analysis even if moderation API fails
+      const isFlagged = false;
+      const categories = {};
+    } else {
+      var isFlagged = moderationData.results[0]?.flagged || false;
+      var categories = moderationData.results[0]?.categories || {};
+    }
 
     console.log('OpenAI moderation result:', { isFlagged, categories });
 
@@ -62,11 +71,13 @@ serve(async (req) => {
           {
             role: 'system',
             content: `You are a content moderator for a mental health support platform. Analyze content for:
-1. Suicide encouragement or harmful suggestions
-2. Bullying or harassment
-3. Self-harm promotion
-4. Inappropriate content for vulnerable users
+1. Suicide encouragement or harmful suggestions (including phrases like "kill yourself", "end it all", etc.)
+2. Bullying or harassment (including threats, insults, or intimidation)
+3. Self-harm promotion (encouraging cutting, substance abuse, etc.)
+4. Inappropriate content for vulnerable users (explicit content, triggers)
 5. Spam or malicious content
+
+Be especially strict with suicide-related content. ANY encouragement of self-harm or suicide should be flagged as critical.
 
 Respond with JSON: {"flagged": boolean, "severity": "low"|"medium"|"high"|"critical", "reason": "brief explanation", "categories": ["category1", "category2"]}`
           },
@@ -91,7 +102,7 @@ Respond with JSON: {"flagged": boolean, "severity": "low"|"medium"|"high"|"criti
     console.log('GPT analysis result:', gptAnalysis);
 
     // Determine if content should be flagged (either OpenAI moderation or GPT flagged it)
-    const shouldFlag = isFlagged || gptAnalysis.flagged;
+    const shouldFlag = (typeof isFlagged !== 'undefined' ? isFlagged : false) || gptAnalysis.flagged;
     
     if (shouldFlag) {
       console.log('Content flagged, creating report...');
@@ -139,7 +150,7 @@ Respond with JSON: {"flagged": boolean, "severity": "low"|"medium"|"high"|"criti
         severity: gptAnalysis.severity,
         reason: gptAnalysis.reason,
         reportId: report.id,
-        categories: [...Object.keys(categories).filter(k => categories[k]), ...gptAnalysis.categories]
+        categories: [...Object.keys(categories || {}).filter(k => categories && categories[k]), ...gptAnalysis.categories]
       }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
