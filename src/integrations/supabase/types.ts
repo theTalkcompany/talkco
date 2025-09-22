@@ -47,6 +47,30 @@ export type Database = {
         }
         Relationships: []
       }
+      backup_admins: {
+        Row: {
+          activated_at: string | null
+          created_at: string | null
+          created_by: string | null
+          email: string
+          id: string
+        }
+        Insert: {
+          activated_at?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          email: string
+          id?: string
+        }
+        Update: {
+          activated_at?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          email?: string
+          id?: string
+        }
+        Relationships: []
+      }
       comments: {
         Row: {
           content: string
@@ -88,6 +112,51 @@ export type Database = {
             referencedColumns: ["user_id"]
           },
         ]
+      }
+      content_moderation_logs: {
+        Row: {
+          action_taken: string | null
+          categories: string[] | null
+          content_id: string | null
+          content_preview: string
+          content_type: string
+          created_at: string | null
+          flagged_by: string
+          id: string
+          reason: string
+          reviewed_by: string | null
+          severity: string
+          updated_at: string | null
+        }
+        Insert: {
+          action_taken?: string | null
+          categories?: string[] | null
+          content_id?: string | null
+          content_preview: string
+          content_type: string
+          created_at?: string | null
+          flagged_by: string
+          id?: string
+          reason: string
+          reviewed_by?: string | null
+          severity: string
+          updated_at?: string | null
+        }
+        Update: {
+          action_taken?: string | null
+          categories?: string[] | null
+          content_id?: string | null
+          content_preview?: string
+          content_type?: string
+          created_at?: string | null
+          flagged_by?: string
+          id?: string
+          reason?: string
+          reviewed_by?: string | null
+          severity?: string
+          updated_at?: string | null
+        }
+        Relationships: []
       }
       likes: {
         Row: {
