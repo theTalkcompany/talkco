@@ -9,6 +9,10 @@
   "orientation": "portrait",
   "categories": ["health", "medical", "lifestyle"],
   "lang": "en-GB",
+  "scope": "/",
+  "edge_side_panel": {
+    "preferred_width": 400
+  },
   "icons": [
     {
       "src": "/lovable-uploads/08826e54-6a87-4ce3-b5bb-626bfd13e791.png",
