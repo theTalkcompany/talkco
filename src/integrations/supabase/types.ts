@@ -645,6 +645,10 @@ export type Database = {
           unique_users: number
         }[]
       }
+      get_masked_profile: {
+        Args: { target_user_id: string }
+        Returns: Json
+      }
       get_user_warnings_count: {
         Args: { user_id: string }
         Returns: number
