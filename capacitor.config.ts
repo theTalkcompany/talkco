@@ -5,10 +5,6 @@ const config: CapacitorConfig = {
   appName: 'Talk - Mental Health Support',
   webDir: 'dist',
   bundledWebRuntime: false,
-  server: {
-    url: 'https://a3b3903e-b0af-4757-9c15-bc69dfbc625d.lovableproject.com?forceHideBadge=true',
-    cleartext: true
-  },
   ios: {
     scheme: 'Talk',
     contentInset: 'automatic',
