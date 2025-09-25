@@ -69,7 +69,7 @@ const Navbar = () => {
     { to: "/contact", label: "Contact" },
   ];
   return <header className="sticky top-0 z-40 border-b bg-background/80 backdrop-blur-md shadow-sm">
-      <nav className="container mx-auto flex items-center justify-between py-4 px-4">
+      <nav className="container mx-auto flex items-center justify-between pt-8 pb-4 px-4 md:py-4">
         <Link to="/" aria-label="Talk home" className="flex items-center gap-2 focus-ring rounded-md">
           <Logo className="h-12 w-12" />
           <span className="font-bold text-xl text-primary">
