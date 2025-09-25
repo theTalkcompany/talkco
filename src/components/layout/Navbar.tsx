@@ -75,7 +75,6 @@ const Navbar = () => {
       <nav className="container mx-auto flex items-center justify-between pt-4 pb-4 px-4">
         <Link to="/" aria-label="Talk home" className="flex items-center gap-2 focus-ring rounded-md">
           <Logo className="h-12 w-12" />
-          <span className="font-bold text-xl text-primary">Talk</span>
           <span className="text-xs font-medium text-muted-foreground bg-muted px-2 py-1 rounded">Beta</span>
         </Link>
         
@@ -125,7 +124,6 @@ const Navbar = () => {
               <div className="flex items-center justify-between mb-8 flex-shrink-0">
                 <div className="flex items-center gap-2">
                   <Logo className="h-6 w-6" />
-                  <span className="font-bold text-lg text-primary">Talk</span>
                   <span className="text-xs font-medium text-muted-foreground bg-muted px-2 py-1 rounded">Beta</span>
                 </div>
                 <Button variant="ghost" size="icon" onClick={() => setIsMenuOpen(false)}>
