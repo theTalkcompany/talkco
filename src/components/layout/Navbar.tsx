@@ -76,7 +76,7 @@ const Navbar = () => {
         <Link to="/" aria-label="Talk home" className="flex items-center gap-2 focus-ring rounded-md">
           <Logo className="h-12 w-12" />
           <span className="font-bold text-xl text-primary">
-            {isNativeApp ? 'Talk Beta' : ''}
+            Talk Beta
           </span>
         </Link>
         
@@ -126,7 +126,7 @@ const Navbar = () => {
               <div className="flex items-center justify-between mb-8 flex-shrink-0">
                 <div className="flex items-center gap-2">
                   <Logo className="h-6 w-6" />
-                  <span className="font-bold text-lg text-primary">Talk</span>
+                  <span className="font-bold text-lg text-primary">Talk Beta</span>
                 </div>
                 <Button variant="ghost" size="icon" onClick={() => setIsMenuOpen(false)}>
                   <X className="h-4 w-4" />
