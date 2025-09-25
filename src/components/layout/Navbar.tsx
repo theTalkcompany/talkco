@@ -74,8 +74,8 @@ const Navbar = () => {
   return <header className="sticky top-0 z-40 border-b bg-background/80 backdrop-blur-md shadow-sm" style={isNativeApp ? { paddingTop: '100px' } : {}}>
       <nav className="container mx-auto flex items-center justify-between pt-4 pb-4 px-4">
         <Link to="/" aria-label="Talk home" className="flex items-center gap-2 focus-ring rounded-md">
-          <Logo className="h-12 w-12" />
-          <span className="text-xs font-medium text-muted-foreground bg-muted px-2 py-1 rounded">Beta</span>
+          <Logo className="h-8 w-8" />
+          <span className="text-sm font-semibold text-primary bg-primary/10 px-3 py-1 rounded-full">Beta</span>
         </Link>
         
         {/* Desktop Navigation */}
@@ -124,7 +124,7 @@ const Navbar = () => {
               <div className="flex items-center justify-between mb-8 flex-shrink-0">
                 <div className="flex items-center gap-2">
                   <Logo className="h-6 w-6" />
-                  <span className="text-xs font-medium text-muted-foreground bg-muted px-2 py-1 rounded">Beta</span>
+                  <span className="text-sm font-semibold text-primary bg-primary/10 px-3 py-1 rounded-full">Beta</span>
                 </div>
                 <Button variant="ghost" size="icon" onClick={() => setIsMenuOpen(false)}>
                   <X className="h-4 w-4" />
