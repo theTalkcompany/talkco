@@ -68,8 +68,8 @@ const Navbar = () => {
     { to: "/privacy-policy", label: "Privacy Policy" },
     { to: "/contact", label: "Contact" },
   ];
-  return <header className="sticky top-0 z-40 border-b bg-background/80 backdrop-blur-md shadow-sm" style={{ paddingTop: 'env(safe-area-inset-top)' }}>
-      <nav className="container mx-auto flex items-center justify-between pt-4 pb-4 px-4">
+  return <header className="sticky top-0 z-40 border-b bg-background/80 backdrop-blur-md shadow-sm" style={{ paddingTop: 'max(env(safe-area-inset-top), 44px)' }}>
+      <nav className="container mx-auto flex items-center justify-between pt-6 pb-4 px-4">
         <Link to="/" aria-label="Talk home" className="flex items-center gap-2 focus-ring rounded-md">
           <Logo className="h-12 w-12" />
           <span className="font-bold text-xl text-primary">
