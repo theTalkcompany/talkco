@@ -71,10 +71,10 @@ const Navbar = () => {
   ];
   const isNativeApp = Capacitor.isNativePlatform();
   
-  return <header className="sticky top-0 z-40 border-b bg-background/80 backdrop-blur-md shadow-sm" style={isNativeApp ? { paddingTop: '100px' } : {}}>
-      <nav className="container mx-auto flex items-center justify-between pt-4 pb-4 px-4">
+  return <header className="sticky top-0 z-40 border-b bg-background/80 backdrop-blur-md shadow-sm" style={isNativeApp ? { paddingTop: '60px' } : {}}>
+      <nav className="container mx-auto flex items-center justify-between px-4" style={isNativeApp ? { paddingTop: '20px', paddingBottom: '16px' } : { paddingTop: '16px', paddingBottom: '16px' }}>
         <Link to="/" aria-label="Talk home" className="flex items-center gap-2 focus-ring rounded-md">
-          <Logo className="h-8 w-8" />
+          <Logo className="h-12 w-12" />
           <span className="text-sm font-semibold text-primary bg-primary/10 px-3 py-1 rounded-full">Beta</span>
         </Link>
         
