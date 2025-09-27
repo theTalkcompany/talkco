@@ -116,6 +116,18 @@
     font-family: var(--font-sans);
     background-image: var(--gradient-soft);
     background-attachment: fixed;
+    
+    /* Mobile scroll optimizations */
+    -webkit-overflow-scrolling: touch;
+    scroll-behavior: smooth;
+    touch-action: manipulation;
+  }
+  
+  /* Fix background attachment on mobile for better performance */
+  @media (max-width: 768px) {
+    body {
+      background-attachment: scroll;
+    }
   }
 }
 
@@ -213,5 +225,12 @@
     .hover-tilt, .btn-hero, .surface-card, .interactive-card { transition: none; }
     .glow-field::before { display: none; }
     .loading-skeleton { animation: none; }
+  }
+  
+  /* Disable glow field on mobile for better scroll performance */
+  @media (max-width: 768px), (hover: none) {
+    .glow-field::before { 
+      display: none; 
+    }
   }
 }

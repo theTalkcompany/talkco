@@ -47,6 +47,30 @@ export type Database = {
         }
         Relationships: []
       }
+      backup_admins: {
+        Row: {
+          activated_at: string | null
+          created_at: string | null
+          created_by: string | null
+          email: string
+          id: string
+        }
+        Insert: {
+          activated_at?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          email: string
+          id?: string
+        }
+        Update: {
+          activated_at?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          email?: string
+          id?: string
+        }
+        Relationships: []
+      }
       comments: {
         Row: {
           content: string
@@ -88,6 +112,51 @@ export type Database = {
             referencedColumns: ["user_id"]
           },
         ]
+      }
+      content_moderation_logs: {
+        Row: {
+          action_taken: string | null
+          categories: string[] | null
+          content_id: string | null
+          content_preview: string
+          content_type: string
+          created_at: string | null
+          flagged_by: string
+          id: string
+          reason: string
+          reviewed_by: string | null
+          severity: string
+          updated_at: string | null
+        }
+        Insert: {
+          action_taken?: string | null
+          categories?: string[] | null
+          content_id?: string | null
+          content_preview: string
+          content_type: string
+          created_at?: string | null
+          flagged_by: string
+          id?: string
+          reason: string
+          reviewed_by?: string | null
+          severity: string
+          updated_at?: string | null
+        }
+        Update: {
+          action_taken?: string | null
+          categories?: string[] | null
+          content_id?: string | null
+          content_preview?: string
+          content_type?: string
+          created_at?: string | null
+          flagged_by?: string
+          id?: string
+          reason?: string
+          reviewed_by?: string | null
+          severity?: string
+          updated_at?: string | null
+        }
+        Relationships: []
       }
       likes: {
         Row: {
@@ -189,6 +258,7 @@ export type Database = {
           date_of_birth: string | null
           display_name: string | null
           email: string | null
+          first_login_completed: boolean | null
           full_name: string | null
           phone: string | null
           updated_at: string
@@ -201,6 +271,7 @@ export type Database = {
           date_of_birth?: string | null
           display_name?: string | null
           email?: string | null
+          first_login_completed?: boolean | null
           full_name?: string | null
           phone?: string | null
           updated_at?: string
@@ -213,6 +284,7 @@ export type Database = {
           date_of_birth?: string | null
           display_name?: string | null
           email?: string | null
+          first_login_completed?: boolean | null
           full_name?: string | null
           phone?: string | null
           updated_at?: string
@@ -458,6 +530,45 @@ export type Database = {
         }
         Relationships: []
       }
+      user_moderation: {
+        Row: {
+          action_type: string
+          created_at: string
+          created_by: string
+          duration_hours: number | null
+          expires_at: string | null
+          id: string
+          is_active: boolean
+          notes: string | null
+          reason: string | null
+          user_id: string
+        }
+        Insert: {
+          action_type: string
+          created_at?: string
+          created_by: string
+          duration_hours?: number | null
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean
+          notes?: string | null
+          reason?: string | null
+          user_id: string
+        }
+        Update: {
+          action_type?: string
+          created_at?: string
+          created_by?: string
+          duration_hours?: number | null
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean
+          notes?: string | null
+          reason?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string
@@ -534,6 +645,14 @@ export type Database = {
           unique_users: number
         }[]
       }
+      get_masked_profile: {
+        Args: { target_user_id: string }
+        Returns: Json
+      }
+      get_user_warnings_count: {
+        Args: { user_id: string }
+        Returns: number
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -543,6 +662,10 @@ export type Database = {
       }
       is_admin: {
         Args: { _user_id: string }
+        Returns: boolean
+      }
+      is_user_banned: {
+        Args: { user_id: string }
         Returns: boolean
       }
     }

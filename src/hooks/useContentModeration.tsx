@@ -21,9 +21,11 @@ export const useContentModeration = () => {
     contentId: string,
     roomId?: string
   ): Promise<ModerationResult> => {
+    console.log('🔍 Starting content moderation:', { content, contentType, contentId });
     setIsChecking(true);
     
     try {
+      console.log('📞 Calling content-moderation function...');
       const { data, error } = await supabase.functions.invoke('content-moderation', {
         body: {
           content,
@@ -34,24 +36,31 @@ export const useContentModeration = () => {
         },
       });
 
+      console.log('📥 Moderation response:', { data, error });
+
       if (error) {
-        console.error('Moderation error:', error);
+        console.error('❌ Moderation error:', error);
         throw error;
       }
 
       const result = data as ModerationResult;
       
+      console.log('🚨 Moderation result:', result);
+      
       if (result.flagged) {
+        console.log('🚨 CONTENT FLAGGED!', result);
         toast({
           title: "Content Flagged",
           description: "Your content has been flagged for review by our moderation system.",
           variant: "destructive",
         });
+      } else {
+        console.log('✅ Content passed moderation');
       }
 
       return result;
     } catch (error) {
-      console.error('Error moderating content:', error);
+      console.error('❌ Error moderating content:', error);
       // Don't block content creation if moderation fails
       return { flagged: false };
     } finally {

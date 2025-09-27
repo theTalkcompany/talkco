@@ -1,12 +1,30 @@
 import { CapacitorConfig } from '@capacitor/cli'
 
 const config: CapacitorConfig = {
-  appId: 'app.lovable.a3b3903eb0af47579c15bc69dfbc625d',
-  appName: 'talkco',
+  appId: 'com.talkco.app',
+  appName: 'Talk - Mental Health Support',
   webDir: 'dist',
-  server: {
-    url: 'https://a3b3903e-b0af-4757-9c15-bc69dfbc625d.lovableproject.com?forceHideBadge=true',
-    cleartext: true,
+  bundledWebRuntime: false,
+  ios: {
+    scheme: 'Talk',
+    contentInset: 'automatic',
+  },
+  android: {
+    allowMixedContent: true,
+    captureInput: true,
+  },
+  plugins: {
+    SplashScreen: {
+      launchShowDuration: 2000,
+      backgroundColor: '#ffffff',
+      androidSplashResourceName: 'splash',
+      androidScaleType: 'CENTER_CROP',
+      showSpinner: false,
+    },
+    StatusBar: {
+      style: 'LIGHT',
+      backgroundColor: '#3b82f6',
+    },
   },
 }
 

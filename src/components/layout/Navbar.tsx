@@ -118,8 +118,8 @@ const Navbar = () => {
                 <Menu className="h-5 w-5" />
               </Button>
             </SheetTrigger>
-            <SheetContent side="right" className="w-80">
-              <div className="flex items-center justify-between mb-8">
+            <SheetContent side="right" className="w-80 flex flex-col h-full">
+              <div className="flex items-center justify-between mb-8 flex-shrink-0">
                 <div className="flex items-center gap-2">
                   <Logo className="h-6 w-6" />
                   <span className="font-bold text-lg text-primary">Talk</span>
@@ -129,7 +129,7 @@ const Navbar = () => {
                 </Button>
               </div>
               
-              <nav className="flex flex-col gap-2">
+              <nav className="flex flex-col gap-2 overflow-y-auto flex-1 pr-2 -mr-2">
                 {/* Main Navigation */}
                 {navItems.map(item => <NavLink key={item.to} to={item.to} onClick={() => setIsMenuOpen(false)} className={({
                 isActive

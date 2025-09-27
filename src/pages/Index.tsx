@@ -6,10 +6,12 @@ import { useState, useEffect } from "react";
 import { Heart, MessageCircle, Shield, Users, Zap, ArrowRight } from "lucide-react";
 import { DailyQuoteModal } from "@/components/DailyQuoteModal";
 import { supabase } from "@/integrations/supabase/client";
+
 const Index = () => {
   const [quote, setQuote] = useState<Quote | null>(null);
   const [loading, setLoading] = useState(true);
   const [showDailyModal, setShowDailyModal] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
 
   const getTodayKey = () => {
     const d = new Date();
@@ -39,10 +41,12 @@ const Index = () => {
       try {
         // Get current user to ensure same quote as quotes page
         const { data: { user } } = await supabase.auth.getUser();
+        setIsAuthenticated(!!user);
         const dailyQuote = await getDailyQuote(user?.id);
         setQuote(dailyQuote);
       } catch (error) {
         console.error("Failed to load quote:", error);
+        setIsAuthenticated(false);
       } finally {
         setLoading(false);
       }
@@ -96,15 +100,31 @@ const Index = () => {
             Share your thoughts without showing your face. Connect with people, group chat, or talk to an AI. You matter here.
           </p>
           <div className="flex flex-wrap gap-4 mb-6">
-            <Button size="lg" variant="hero" asChild className="group">
-              <Link to="/chat" className="focus-ring">
-                Start a Talk 
-                <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
-              </Link>
-            </Button>
-            <Button size="lg" variant="outline" asChild className="bg-white/10 border-white/20 hover:bg-white/20 text-white">
-              <Link to="/feed" className="focus-ring">Explore the Feed</Link>
-            </Button>
+            {isAuthenticated ? (
+              <>
+                <Button size="lg" variant="hero" asChild className="group">
+                  <Link to="/chat" className="focus-ring">
+                    Start a Talk 
+                    <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
+                  </Link>
+                </Button>
+                <Button size="lg" variant="outline" asChild className="bg-white/10 border-white/20 hover:bg-white/20 text-white">
+                  <Link to="/feed" className="focus-ring">Explore the Feed</Link>
+                </Button>
+              </>
+            ) : (
+              <>
+                <Button size="lg" variant="hero" asChild className="group">
+                  <Link to="/auth" className="focus-ring">
+                    Get Started 
+                    <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
+                  </Link>
+                </Button>
+                <Button size="lg" variant="outline" asChild className="bg-white/10 border-white/20 hover:bg-white/20 text-white">
+                  <Link to="/auth" className="focus-ring">Sign Up Free</Link>
+                </Button>
+              </>
+            )}
           </div>
           
         </div>
@@ -147,8 +167,8 @@ const Index = () => {
           
           <div className="mt-8">
             <Button variant="soft" asChild className="group">
-              <Link to="/quotes" className="focus-ring">
-                View All Quotes 
+              <Link to={isAuthenticated ? "/quotes" : "/auth"} className="focus-ring">
+                {isAuthenticated ? "View All Quotes" : "Sign Up to View Quotes"}
                 <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
               </Link>
             </Button>
@@ -187,10 +207,14 @@ const Index = () => {
           
           <div className="flex flex-wrap gap-3">
             <Button variant="outline" asChild>
-              <Link to="/feed" className="focus-ring">Visit Feed</Link>
+              <Link to={isAuthenticated ? "/feed" : "/auth"} className="focus-ring">
+                {isAuthenticated ? "Visit Feed" : "Join Community"}
+              </Link>
             </Button>
             <Button variant="ghost" asChild>
-              <Link to="/help" className="focus-ring">Get Help</Link>
+              <Link to={isAuthenticated ? "/help" : "/auth"} className="focus-ring">
+                {isAuthenticated ? "Get Help" : "Sign Up"}
+              </Link>
             </Button>
           </div>
         </article>
@@ -233,7 +257,9 @@ const Index = () => {
             </div>
           </div>
           <Button variant="outline" asChild>
-            <Link to="/help" className="focus-ring">View All Resources</Link>
+            <Link to={isAuthenticated ? "/help" : "/auth"} className="focus-ring">
+              {isAuthenticated ? "View All Resources" : "Get Started"}
+            </Link>
           </Button>
         </div>
       </section>

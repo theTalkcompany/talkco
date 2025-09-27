@@ -308,14 +308,14 @@ const [editing, setEditing] = useState({
                       System Settings
                     </Button>
                   </DialogTrigger>
-                  <DialogContent className="max-w-6xl max-h-[90vh] overflow-hidden">
-                    <DialogHeader>
+                  <DialogContent className="max-w-6xl max-h-[90vh] flex flex-col">
+                    <DialogHeader className="flex-shrink-0">
                       <DialogTitle>System Settings</DialogTitle>
                       <DialogDescription>
                         Manage system configuration, privacy policy, and user roles
                       </DialogDescription>
                     </DialogHeader>
-                    <div className="overflow-y-auto">
+                    <div className="flex-1 overflow-y-auto min-h-0 pr-2">
                       <WillowAdmin />
                     </div>
                   </DialogContent>
@@ -328,14 +328,14 @@ const [editing, setEditing] = useState({
                       View User Reports
                     </Button>
                   </DialogTrigger>
-                  <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden">
-                    <DialogHeader>
+                  <DialogContent className="max-w-4xl max-h-[90vh] flex flex-col">
+                    <DialogHeader className="flex-shrink-0">
                       <DialogTitle>User Reports Management</DialogTitle>
                       <DialogDescription>
                         Review and manage reports submitted by community members
                       </DialogDescription>
                     </DialogHeader>
-                    <div className="overflow-y-auto">
+                    <div className="flex-1 overflow-y-auto min-h-0 pr-2">
                       <ReportsAdmin />
                     </div>
                   </DialogContent>
