@@ -133,6 +133,11 @@
 
 /* Components and utilities using tokens */
 @layer components {
+  /* iOS Safe Area Support */
+  .pt-safe {
+    padding-top: env(safe-area-inset-top);
+  }
+
   .bg-gradient-primary {
     background-image: var(--gradient-primary);
   }

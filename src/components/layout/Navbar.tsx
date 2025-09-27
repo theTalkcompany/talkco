@@ -71,7 +71,7 @@ const Navbar = () => {
   ];
   const isNativeApp = Capacitor.isNativePlatform();
   
-  return <header className="sticky top-0 z-40 border-b bg-background/80 backdrop-blur-md shadow-sm" style={isNativeApp ? { paddingTop: 'env(safe-area-inset-top)' } : {}}>
+  return <header className={`sticky top-0 z-40 border-b bg-background/80 backdrop-blur-md shadow-sm ${isNativeApp ? 'pt-safe' : ''}`}>
       <nav className="container mx-auto flex items-center justify-between px-4 py-4">
         <Link to="/" aria-label="Talk home" className="flex items-center gap-2 focus-ring rounded-md">
           <Logo className="h-12 w-12" />
