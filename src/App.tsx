@@ -27,9 +27,18 @@ const App = () => {
     // Add native-app class for mobile-only pink theme testing
     if (Capacitor.isNativePlatform()) {
       document.body.classList.add('native-app');
+      document.body.classList.add('capacitor-app');
+      document.body.style.backgroundColor = 'hotpink';
+      document.documentElement.style.backgroundColor = 'hotpink';
       console.log('🔥 NATIVE APP DETECTED - PINK THEME ACTIVATED FOR SYNC TEST 🔥');
+      
+      // Add alert to confirm it's running on native
+      setTimeout(() => {
+        alert('🔥 NATIVE APP DETECTED! If you see this alert but no pink, the CSS isn\'t loading!');
+      }, 2000);
     } else {
       document.body.classList.remove('native-app');
+      document.body.classList.remove('capacitor-app');
       console.log('🌐 Web browser - normal theme');
     }
   }, []);

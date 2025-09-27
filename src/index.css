@@ -118,6 +118,19 @@
   --sidebar-border: 330 13% 85% !important;
 }
 
+/* ALTERNATIVE - Force pink on ALL native devices */
+@media (max-width: 1024px) {
+  body {
+    background: hotpink !important;
+  }
+}
+
+/* NUCLEAR OPTION - Override everything with pink on mobile */
+.capacitor-app, .capacitor-app * {
+  background-color: hotpink !important;
+  border-color: deeppink !important;
+}
+
 @layer base {
   * {
     @apply border-border;
