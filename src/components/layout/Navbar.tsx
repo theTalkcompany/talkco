@@ -8,12 +8,14 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Menu, X, Shield, MessageSquare } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Capacitor } from "@capacitor/core";
+import { StatusBar } from "@capacitor/status-bar";
 const Navbar = () => {
   const {
     toast
   } = useToast();
   const [loggedIn, setLoggedIn] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [statusBarHeight, setStatusBarHeight] = useState(0);
   const isMobile = useIsMobile();
   useEffect(() => {
     const {
@@ -29,6 +31,24 @@ const Navbar = () => {
       }
     }) => setLoggedIn(!!session));
     return () => subscription.unsubscribe();
+  }, []);
+
+  useEffect(() => {
+    const getStatusBarHeight = async () => {
+      if (Capacitor.isNativePlatform()) {
+        try {
+          // For iOS devices, use standard status bar heights
+          // iPhone with notch: 44px, iPhone without notch: 20px
+          // We'll use 44px as it works for most modern iPhones
+          setStatusBarHeight(44);
+        } catch (error) {
+          console.log('StatusBar plugin not available, using fallback');
+          setStatusBarHeight(44);
+        }
+      }
+    };
+    
+    getStatusBarHeight();
   }, []);
   const handleLogout = async () => {
     const {
@@ -71,7 +91,10 @@ const Navbar = () => {
   ];
   const isNativeApp = Capacitor.isNativePlatform();
   
-  return <header className={`sticky top-0 z-40 border-b bg-background/80 backdrop-blur-md shadow-sm ${isNativeApp ? 'pt-safe' : ''}`}>
+  return <header 
+    className="sticky top-0 z-40 border-b bg-background/80 backdrop-blur-md shadow-sm"
+    style={isNativeApp ? { paddingTop: `${statusBarHeight}px` } : undefined}
+  >
       <nav className="container mx-auto flex items-center justify-between px-4 py-4">
         <Link to="/" aria-label="Talk home" className="flex items-center gap-2 focus-ring rounded-md">
           <Logo className="h-12 w-12" />
