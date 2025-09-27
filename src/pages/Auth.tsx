@@ -30,8 +30,34 @@ const Auth = () => {
   const [termsAccepted, setTermsAccepted] = useState(false);
   const [privacyAccepted, setPrivacyAccepted] = useState(false);
 
-  // Keep session listener - only for existing users
+  // Keep session listener and create profile on first auth
   useEffect(() => {
+    const {
+      data: {
+        subscription
+      }
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (session) {
+        setTimeout(async () => {
+          try {
+            await supabase.from("profiles").upsert({
+              user_id: session.user.id,
+              email: session.user.email ?? undefined,
+              full_name: fullName || undefined,
+              phone: phone || undefined,
+              address: address || undefined,
+              date_of_birth: dateOfBirth || undefined
+            }, {
+              onConflict: "user_id"
+            });
+          } catch (e) {
+            console.error(e);
+          } finally {
+            navigate("/");
+          }
+        }, 0);
+      }
+    });
     supabase.auth.getSession().then(({
       data: {
         session
@@ -39,6 +65,9 @@ const Auth = () => {
     }) => {
       if (session) navigate("/");
     });
+    return () => subscription.unsubscribe();
+    // We intentionally omit deps like fullName to avoid re-subscribing
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [navigate]);
   const redirectUrl = useMemo(() => `${window.location.origin}/`, []);
   const handleSignIn = async (e: React.FormEvent) => {
@@ -283,36 +312,11 @@ const Auth = () => {
         return;
       }
 
-      // Create profile immediately after successful signup
+      // Store sanitized form data for profile creation
       if (data.user) {
-        try {
-          const { error: profileError } = await supabase.from("profiles").upsert({
-            user_id: data.user.id,
-            email: data.user.email ?? sanitizedEmail,
-            full_name: sanitizedFullName,
-            phone: sanitizedPhone,
-            address: sanitizedAddress,
-            date_of_birth: dateOfBirth
-          }, {
-            onConflict: "user_id"
-          });
-          
-          if (profileError) {
-            console.error('Profile creation error:', profileError);
-            toast({
-              title: "Profile creation failed",
-              description: "Your account was created but profile setup failed. You can update your profile later.",
-              variant: "destructive"
-            });
-          }
-        } catch (profileError) {
-          console.error('Failed to create profile:', profileError);
-          toast({
-            title: "Profile creation failed", 
-            description: "Your account was created but profile setup failed. You can update your profile later.",
-            variant: "destructive"
-          });
-        }
+        setFullName(sanitizedFullName);
+        setPhone(sanitizedPhone);
+        setAddress(sanitizedAddress);
 
         // Log successful signup
         try {

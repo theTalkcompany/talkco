@@ -100,37 +100,6 @@
   }
 }
 
-/* MOBILE APP ONLY - PINK THEME FOR TESTING SYNC */
-.native-app {
-  --background: 330 100% 98% !important; /* Light pink background */
-  --card: 330 100% 97% !important; /* Pink cards */
-  --popover: 330 100% 97% !important;
-  --primary: 330 81% 60% !important; /* Hot pink primary */
-  --secondary: 330 40% 90% !important; /* Light pink secondary */
-  --muted: 330 40% 90% !important;
-  --accent: 300 100% 75% !important; /* Magenta accent */
-  --border: 330 31.8% 85% !important; /* Pink borders */
-  --input: 330 31.8% 90% !important; /* Pink inputs */
-  --ring: 330 81% 60% !important; /* Pink focus rings */
-  --sidebar-background: 330 100% 95% !important; /* Pink sidebar */
-  --sidebar-primary: 330 81% 60% !important; 
-  --sidebar-accent: 330 40% 90% !important;
-  --sidebar-border: 330 13% 85% !important;
-}
-
-/* ALTERNATIVE - Force pink on ALL native devices */
-@media (max-width: 1024px) {
-  body {
-    background: hotpink !important;
-  }
-}
-
-/* NUCLEAR OPTION - Override everything with pink on mobile */
-.capacitor-app, .capacitor-app * {
-  background-color: hotpink !important;
-  border-color: deeppink !important;
-}
-
 @layer base {
   * {
     @apply border-border;
@@ -147,28 +116,11 @@
     font-family: var(--font-sans);
     background-image: var(--gradient-soft);
     background-attachment: fixed;
-    
-    /* Mobile scroll optimizations */
-    -webkit-overflow-scrolling: touch;
-    scroll-behavior: smooth;
-    touch-action: manipulation;
-  }
-  
-  /* Fix background attachment on mobile for better performance */
-  @media (max-width: 768px) {
-    body {
-      background-attachment: scroll;
-    }
   }
 }
 
 /* Components and utilities using tokens */
 @layer components {
-  /* iOS Safe Area Support */
-  .pt-safe {
-    padding-top: env(safe-area-inset-top);
-  }
-
   .bg-gradient-primary {
     background-image: var(--gradient-primary);
   }
@@ -261,12 +213,5 @@
     .hover-tilt, .btn-hero, .surface-card, .interactive-card { transition: none; }
     .glow-field::before { display: none; }
     .loading-skeleton { animation: none; }
-  }
-  
-  /* Disable glow field on mobile for better scroll performance */
-  @media (max-width: 768px), (hover: none) {
-    .glow-field::before { 
-      display: none; 
-    }
   }
 }

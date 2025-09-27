@@ -1,13 +1,12 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { AlertTriangle, CheckCircle, XCircle, Clock, Bot, Shield, UserX, AlertOctagon, Mail, Phone, User } from "lucide-react";
+import { AlertTriangle, CheckCircle, XCircle, Clock, Bot, Shield } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
 import { format } from "date-fns";
-import { Separator } from "@/components/ui/separator";
 
 interface Report {
   id: string;
@@ -27,18 +26,6 @@ interface Report {
   rooms?: {
     name: string;
   };
-  reported_user_profile?: {
-    full_name?: string;
-    email?: string;
-    phone?: string;
-    display_name?: string;
-  };
-  reporter_profile?: {
-    full_name?: string;
-    email?: string;
-    phone?: string;
-    display_name?: string;
-  };
 }
 
 const ReportsAdmin = () => {
@@ -52,8 +39,7 @@ const ReportsAdmin = () => {
 
   const fetchReports = async () => {
     try {
-      // First fetch reports with rooms
-      const { data: reportsData, error: reportsError } = await supabase
+      const { data, error } = await supabase
         .from('reports')
         .select(`
           *,
@@ -63,44 +49,8 @@ const ReportsAdmin = () => {
         `)
         .order('created_at', { ascending: false });
 
-      if (reportsError) throw reportsError;
-
-      if (!reportsData || reportsData.length === 0) {
-        setReports([]);
-        return;
-      }
-
-      // Get unique user IDs from reports
-      const reportedUserIds = [...new Set(reportsData.map(r => r.reported_user_id))];
-      const reporterUserIds = [...new Set(reportsData.map(r => r.reported_by_user_id))];
-      const allUserIds = [...new Set([...reportedUserIds, ...reporterUserIds])];
-
-      // Fetch profiles for all users involved
-      const { data: profilesData, error: profilesError } = await supabase
-        .from('profiles')
-        .select('user_id, full_name, email, phone, display_name')
-        .in('user_id', allUserIds);
-
-      if (profilesError) {
-        console.warn('Error fetching profiles:', profilesError);
-      }
-
-      // Create a map of user profiles for quick lookup
-      const profilesMap = new Map();
-      if (profilesData) {
-        profilesData.forEach(profile => {
-          profilesMap.set(profile.user_id, profile);
-        });
-      }
-
-      // Combine reports with profile data
-      const reportsWithProfiles = reportsData.map(report => ({
-        ...report,
-        reported_user_profile: profilesMap.get(report.reported_user_id),
-        reporter_profile: profilesMap.get(report.reported_by_user_id)
-      }));
-
-      setReports(reportsWithProfiles as Report[]);
+      if (error) throw error;
+      setReports((data || []) as Report[]);
     } catch (error) {
       console.error('Error fetching reports:', error);
       toast({
@@ -136,70 +86,6 @@ const ReportsAdmin = () => {
       toast({
         title: "Error",
         description: "Failed to update report",
-        variant: "destructive",
-      });
-    }
-  };
-
-  const banUser = async (userId: string, reportId: string, reason: string) => {
-    try {
-      const { error } = await supabase
-        .from('user_moderation')
-        .insert({
-          user_id: userId,
-          action_type: 'ban',
-          reason: reason,
-          created_by: (await supabase.auth.getUser()).data.user?.id,
-          notes: `Banned due to report ${reportId}`
-        });
-
-      if (error) throw error;
-
-      // Also resolve the report
-      await updateReportStatus(reportId, 'resolved');
-
-      toast({
-        title: "User banned",
-        description: "User has been permanently banned from the platform",
-      });
-    } catch (error) {
-      console.error('Error banning user:', error);
-      toast({
-        title: "Error",
-        description: "Failed to ban user",
-        variant: "destructive",
-      });
-    }
-  };
-
-  const warnUser = async (userId: string, reportId: string, reason: string) => {
-    try {
-      const { error } = await supabase
-        .from('user_moderation')
-        .insert({
-          user_id: userId,
-          action_type: 'warning',
-          reason: reason,
-          created_by: (await supabase.auth.getUser()).data.user?.id,
-          notes: `Warning issued due to report ${reportId}`,
-          duration_hours: 168, // 7 days
-          expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString()
-        });
-
-      if (error) throw error;
-
-      // Also resolve the report
-      await updateReportStatus(reportId, 'resolved');
-
-      toast({
-        title: "Warning issued",
-        description: "User has been warned for their behavior",
-      });
-    } catch (error) {
-      console.error('Error warning user:', error);
-      toast({
-        title: "Error",
-        description: "Failed to warn user",
         variant: "destructive",
       });
     }
@@ -241,16 +127,13 @@ const ReportsAdmin = () => {
            report.reason.toLowerCase().includes('automated');
   };
 
-  const pendingReports = useMemo(() => reports.filter(r => r.status === 'pending'), [reports]);
-  const resolvedReports = useMemo(() => reports.filter(r => r.status !== 'pending'), [reports]);
+  const pendingReports = reports.filter(r => r.status === 'pending');
+  const resolvedReports = reports.filter(r => r.status !== 'pending');
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center py-12">
-        <div className="flex flex-col items-center gap-3">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-          <div className="text-muted-foreground">Loading reports...</div>
-        </div>
+      <div className="flex items-center justify-center py-8">
+        <div className="text-muted-foreground">Loading reports...</div>
       </div>
     );
   }
@@ -317,121 +200,38 @@ const ReportsAdmin = () => {
                     {isAIFlagged(report) ? 'Automatically flagged by AI moderation system' : 'User report'} • {format(new Date(report.created_at), 'PPp')}
                   </CardDescription>
                 </CardHeader>
-                <CardContent className="space-y-6">
-                  {/* User Information Section */}
-                  <div className="grid md:grid-cols-2 gap-4">
-                    {/* Reported User */}
-                    <div className="space-y-3">
-                      <div className="flex items-center gap-2 text-sm font-medium text-red-700">
-                        <UserX className="h-4 w-4" />
-                        Reported User
-                      </div>
-                      <div className="bg-red-50 border border-red-200 rounded-lg p-4 space-y-2">
-                        <div className="flex items-center gap-2">
-                          <User className="h-4 w-4 text-muted-foreground" />
-                          <span className="font-medium">
-                            {report.reported_user_profile?.full_name || report.reported_user_profile?.display_name || 'Unknown User'}
-                          </span>
-                        </div>
-                        {report.reported_user_profile?.email && (
-                          <div className="flex items-center gap-2 text-sm">
-                            <Mail className="h-4 w-4 text-muted-foreground" />
-                            <span>{report.reported_user_profile.email}</span>
-                          </div>
-                        )}
-                        {report.reported_user_profile?.phone && (
-                          <div className="flex items-center gap-2 text-sm">
-                            <Phone className="h-4 w-4 text-muted-foreground" />
-                            <span>{report.reported_user_profile.phone}</span>
-                          </div>
-                        )}
-                        <div className="text-xs text-muted-foreground mt-2">
-                          ID: <code className="bg-white px-1 rounded">{report.reported_user_id}</code>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Reporter Information */}
-                    {!isAIFlagged(report) && (
-                      <div className="space-y-3">
-                        <div className="flex items-center gap-2 text-sm font-medium text-blue-700">
-                          <Shield className="h-4 w-4" />
-                          Reported By
-                        </div>
-                        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 space-y-2">
-                          <div className="flex items-center gap-2">
-                            <User className="h-4 w-4 text-muted-foreground" />
-                            <span className="font-medium">
-                              {report.reporter_profile?.full_name || report.reporter_profile?.display_name || 'Unknown User'}
-                            </span>
-                          </div>
-                          {report.reporter_profile?.email && (
-                            <div className="flex items-center gap-2 text-sm">
-                              <Mail className="h-4 w-4 text-muted-foreground" />
-                              <span>{report.reporter_profile.email}</span>
-                            </div>
-                          )}
-                          <div className="text-xs text-muted-foreground mt-2">
-                            ID: <code className="bg-white px-1 rounded">{report.reported_by_user_id}</code>
-                          </div>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-
-                  <Separator />
-
-                  {/* Reported Content */}
+                <CardContent className="space-y-4">
                   {report.message_content && (
                     <div>
-                      <h4 className="font-medium mb-2 flex items-center gap-2">
-                        <AlertTriangle className="h-4 w-4 text-orange-600" />
+                      <h4 className="font-medium mb-2">
                         Reported {report.room_id ? 'Message' : report.post_id ? 'Post' : 'Comment'}:
                       </h4>
-                      <div className="bg-muted p-4 rounded-md text-sm border-l-4 border-orange-500">
+                      <div className="bg-muted p-3 rounded-md text-sm">
                         "{report.message_content}"
                       </div>
                     </div>
                   )}
+                  
+                  <div className="text-sm text-muted-foreground">
+                    <p>Reported User ID: <code className="bg-muted px-1 rounded">{report.reported_user_id}</code></p>
+                    <p>Reported By: <code className="bg-muted px-1 rounded">{report.reported_by_user_id}</code></p>
+                  </div>
 
-                  <Separator />
-
-                  {/* Action Buttons */}
-                  <div className="flex flex-wrap gap-2 pt-2">
-                    <Button 
-                      onClick={() => banUser(report.reported_user_id, report.id, report.reason)}
-                      variant="destructive"
-                      size="sm"
-                      className="flex items-center gap-2"
-                    >
-                      <UserX className="h-4 w-4" />
-                      Ban User
-                    </Button>
-                    <Button 
-                      onClick={() => warnUser(report.reported_user_id, report.id, report.reason)}
-                      variant="outline"
-                      size="sm"
-                      className="flex items-center gap-2 border-orange-500 text-orange-600 hover:bg-orange-50"
-                    >
-                      <AlertOctagon className="h-4 w-4" />
-                      Warn User
-                    </Button>
+                  <div className="flex gap-2 pt-2">
                     <Button 
                       onClick={() => updateReportStatus(report.id, 'resolved')}
                       variant="default"
                       size="sm"
-                      className="flex items-center gap-2"
                     >
-                      <CheckCircle className="h-4 w-4" />
+                      <CheckCircle className="h-4 w-4 mr-2" />
                       Resolve
                     </Button>
                     <Button 
                       onClick={() => updateReportStatus(report.id, 'dismissed')}
                       variant="outline"
                       size="sm"
-                      className="flex items-center gap-2"
                     >
-                      <XCircle className="h-4 w-4" />
+                      <XCircle className="h-4 w-4 mr-2" />
                       Dismiss
                     </Button>
                   </div>

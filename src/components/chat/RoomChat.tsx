@@ -8,7 +8,6 @@ import { ArrowLeft, Send, Users, Flag, UserX, Shield } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
 import { useContentModeration } from "@/hooks/useContentModeration";
-import { useIsMobile } from "@/hooks/use-mobile";
 import { format } from "date-fns";
 
 interface Room {
@@ -48,7 +47,6 @@ const RoomChat = ({ room, onLeaveRoom }: RoomChatProps) => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
   const { moderateContent, isChecking } = useContentModeration();
-  const isMobile = useIsMobile();
 
   const isRoomAdmin = currentUser && room.created_by === currentUser.id;
 
@@ -57,9 +55,9 @@ const RoomChat = ({ room, onLeaveRoom }: RoomChatProps) => {
     fetchMessages();
     fetchParticipants();
     
-    // Subscribe to new messages with truly unique channel names
+    // Subscribe to new messages
     const messagesChannel = supabase
-      .channel(`room_messages_${room.id}_${Math.random().toString(36).substr(2, 9)}`)
+      .channel('room-messages')
       .on(
         'postgres_changes',
         {
@@ -68,32 +66,24 @@ const RoomChat = ({ room, onLeaveRoom }: RoomChatProps) => {
           table: 'room_messages',
           filter: `room_id=eq.${room.id}`,
         },
-        async (payload) => {
-          console.log('New message received:', payload);
+        (payload) => {
           const newMessage = payload.new as Message;
-          
           // Fetch profile for the new message
-          const { data: profile } = await supabase
+          supabase
             .from('profiles')
             .select('display_name, full_name, email')
             .eq('user_id', newMessage.user_id)
-            .maybeSingle();
-            
-          setMessages(prev => {
-            // Prevent duplicate messages
-            const exists = prev.find(m => m.id === newMessage.id);
-            if (exists) return prev;
-            return [...prev, { ...newMessage, profiles: profile }];
-          });
+            .maybeSingle()
+            .then(({ data: profile }) => {
+              setMessages(prev => [...prev, { ...newMessage, profiles: profile }]);
+            });
         }
       )
-      .subscribe((status) => {
-        console.log('Messages subscription status:', status);
-      });
+      .subscribe();
 
     // Subscribe to participants changes  
     const participantsChannel = supabase
-      .channel(`room_participants_${room.id}_${Math.random().toString(36).substr(2, 9)}`)
+      .channel('room-participants')
       .on(
         'postgres_changes',
         {
@@ -102,14 +92,11 @@ const RoomChat = ({ room, onLeaveRoom }: RoomChatProps) => {
           table: 'room_participants',
           filter: `room_id=eq.${room.id}`,
         },
-        (payload) => {
-          console.log('Participants change:', payload);
+        () => {
           fetchParticipants();
         }
       )
-      .subscribe((status) => {
-        console.log('Participants subscription status:', status);
-      });
+      .subscribe();
 
     return () => {
       supabase.removeChannel(messagesChannel);
@@ -118,10 +105,7 @@ const RoomChat = ({ room, onLeaveRoom }: RoomChatProps) => {
   }, [room.id]);
 
   useEffect(() => {
-    // Auto-scroll to bottom for all new messages
-    if (messages.length > 0) {
-      scrollToBottom();
-    }
+    scrollToBottom();
   }, [messages]);
 
   const getCurrentUser = async () => {
@@ -165,11 +149,6 @@ const RoomChat = ({ room, onLeaveRoom }: RoomChatProps) => {
       );
 
       setMessages(messagesWithProfiles);
-      
-      // Auto-scroll to bottom after initial messages load
-      setTimeout(() => {
-        scrollToBottom();
-      }, 100);
     } catch (error) {
       console.error('Error fetching messages:', error);
     }
@@ -345,9 +324,9 @@ const RoomChat = ({ room, onLeaveRoom }: RoomChatProps) => {
   };
 
   return (
-    <div className="flex flex-col fixed inset-0 z-50 bg-background">
+    <div className="flex flex-col h-[600px]">
       {/* Header */}
-      <div className="flex items-center justify-between p-4 border-b bg-background shrink-0">
+      <div className="flex items-center justify-between p-4 border-b">
         <div className="flex items-center gap-3">
           <Button variant="ghost" size="sm" onClick={handleLeaveRoom}>
             <ArrowLeft className="h-4 w-4" />
@@ -431,7 +410,7 @@ const RoomChat = ({ room, onLeaveRoom }: RoomChatProps) => {
       </div>
 
       {/* Input */}
-      <div className={`p-4 border-t bg-background shrink-0 ${isMobile ? 'pb-20' : 'pb-4'}`}>
+      <div className="p-4 border-t">
         <div className="flex gap-2">
           <Textarea
             value={newMessage}
@@ -442,10 +421,7 @@ const RoomChat = ({ room, onLeaveRoom }: RoomChatProps) => {
             disabled={sending}
           />
           <Button
-            onClick={(e) => {
-              e.preventDefault();
-              sendMessage();
-            }}
+            onClick={sendMessage}
             disabled={!newMessage.trim() || sending || isChecking}
             size="icon"
             className="shrink-0"

@@ -9,28 +9,18 @@
   "orientation": "portrait",
   "categories": ["health", "medical", "lifestyle"],
   "lang": "en-GB",
-  "scope": "/",
-  "edge_side_panel": {
-    "preferred_width": 400
-  },
   "icons": [
     {
-      "src": "/app-icon-192.png",
+      "src": "/lovable-uploads/08826e54-6a87-4ce3-b5bb-626bfd13e791.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any maskable"
     },
     {
-      "src": "/app-icon-512.png",
+      "src": "/lovable-uploads/08826e54-6a87-4ce3-b5bb-626bfd13e791.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any maskable"
-    },
-    {
-      "src": "/app-icon-1024.png",
-      "sizes": "1024x1024",
-      "type": "image/png",
-      "purpose": "any"
     }
   ],
   "screenshots": [

@@ -7,15 +7,12 @@ import Logo from "@/components/branding/Logo";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Menu, X, Shield, MessageSquare } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { Capacitor } from "@capacitor/core";
-import { StatusBar } from "@capacitor/status-bar";
 const Navbar = () => {
   const {
     toast
   } = useToast();
   const [loggedIn, setLoggedIn] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [statusBarHeight, setStatusBarHeight] = useState(0);
   const isMobile = useIsMobile();
   useEffect(() => {
     const {
@@ -31,24 +28,6 @@ const Navbar = () => {
       }
     }) => setLoggedIn(!!session));
     return () => subscription.unsubscribe();
-  }, []);
-
-  useEffect(() => {
-    const getStatusBarHeight = async () => {
-      if (Capacitor.isNativePlatform()) {
-        try {
-          // For iOS devices, use standard status bar heights
-          // iPhone with notch: 44px, iPhone without notch: 20px
-          // We'll use 44px as it works for most modern iPhones
-          setStatusBarHeight(44);
-        } catch (error) {
-          console.log('StatusBar plugin not available, using fallback');
-          setStatusBarHeight(44);
-        }
-      }
-    };
-    
-    getStatusBarHeight();
   }, []);
   const handleLogout = async () => {
     const {
@@ -67,7 +46,7 @@ const Navbar = () => {
       });
     }
   };
-  const navItems = [{
+  const loggedInNavItems = [{
     to: "/feed",
     label: "Feed"
   }, {
@@ -84,26 +63,29 @@ const Navbar = () => {
     label: "Profile"
   }];
 
+  const publicNavItems = [{
+    to: "/help",
+    label: "Get Help"
+  }];
+
+  const navItems = loggedIn ? loggedInNavItems : publicNavItems;
+
   const footerLinks = [
     { to: "/terms-of-service", label: "Terms of Service" },
     { to: "/privacy-policy", label: "Privacy Policy" },
     { to: "/contact", label: "Contact" },
   ];
-  const isNativeApp = Capacitor.isNativePlatform();
-  
-  return <header 
-    className="sticky top-0 z-40 border-b bg-background/80 backdrop-blur-md shadow-sm"
-    style={isNativeApp ? { paddingTop: `${statusBarHeight}px` } : undefined}
-  >
-      <nav className="container mx-auto flex items-center justify-between px-4 py-4">
+  return <header className="sticky top-0 z-40 border-b bg-background/80 backdrop-blur-md shadow-sm">
+      <nav className="container mx-auto flex items-center justify-between py-4 px-4">
         <Link to="/" aria-label="Talk home" className="flex items-center gap-2 focus-ring rounded-md">
           <Logo className="h-12 w-12" />
-          <span className="text-sm font-semibold text-primary bg-primary/10 px-3 py-1 rounded-full">Beta</span>
+          <span className="font-bold text-xl text-primary">
+        </span>
         </Link>
         
         {/* Desktop Navigation */}
         <div className="hidden md:flex items-center gap-8">
-          {navItems.map(item => <NavLink key={item.to} to={item.to} className={({
+          {navItems.length > 0 && navItems.map(item => <NavLink key={item.to} to={item.to} className={({
           isActive
         }) => `text-sm font-medium transition-colors focus-ring rounded-md px-3 py-2 ${isActive ? "text-primary bg-primary/10" : "text-foreground/70 hover:text-foreground hover:bg-accent/50"}`}>
               {item.label}
@@ -143,20 +125,20 @@ const Navbar = () => {
                 <Menu className="h-5 w-5" />
               </Button>
             </SheetTrigger>
-            <SheetContent side="right" className="w-80 flex flex-col h-full">
-              <div className="flex items-center justify-between mb-8 flex-shrink-0">
+            <SheetContent side="right" className="w-80">
+              <div className="flex items-center justify-between mb-8">
                 <div className="flex items-center gap-2">
                   <Logo className="h-6 w-6" />
-                  <span className="text-sm font-semibold text-primary bg-primary/10 px-3 py-1 rounded-full">Beta</span>
+                  <span className="font-bold text-lg text-primary">Talk</span>
                 </div>
                 <Button variant="ghost" size="icon" onClick={() => setIsMenuOpen(false)}>
                   <X className="h-4 w-4" />
                 </Button>
               </div>
               
-              <nav className="flex flex-col gap-2 overflow-y-auto flex-1 pr-2 -mr-2">
+              <nav className="flex flex-col gap-2">
                 {/* Main Navigation */}
-                {navItems.map(item => <NavLink key={item.to} to={item.to} onClick={() => setIsMenuOpen(false)} className={({
+                {navItems.length > 0 && navItems.map(item => <NavLink key={item.to} to={item.to} onClick={() => setIsMenuOpen(false)} className={({
                 isActive
               }) => `text-left px-4 py-3 rounded-lg font-medium transition-colors focus-ring ${isActive ? "text-primary bg-primary/10" : "text-foreground/70 hover:text-foreground hover:bg-accent/50"}`}>
                     {item.label}

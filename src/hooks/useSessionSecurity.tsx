@@ -12,22 +12,23 @@ export const useSessionSecurity = () => {
   const SESSION_TIMEOUT = 30 * 60 * 1000; // 30 minutes
 
   const logSecurityEvent = useCallback(async (eventType: string, details?: any) => {
-    // Lightweight logging without external IP calls
     try {
       const { data: { user } } = await supabase.auth.getUser();
+      const ipInfo = await getIPInfo();
       
-      // Don't block on database writes
-      supabase.from('security_events').insert({
+      await supabase.from('security_events').insert({
         event_type: eventType,
         user_id: user?.id || null,
+        ip_address: ipInfo.ip,
         user_agent: navigator.userAgent,
         details: {
           timestamp: new Date().toISOString(),
+          location: ipInfo.location,
           ...details
         }
-      }); // Fire and forget - no await
+      });
     } catch (error) {
-      // Don't log errors to avoid console spam
+      console.error('Failed to log security event:', error);
     }
   }, []);
 
@@ -78,11 +79,11 @@ export const useSessionSecurity = () => {
           sessionWarningTimer = setTimeout(handleSessionWarning, SESSION_WARNING_TIME);
           sessionTimeoutTimer = setTimeout(handleSessionTimeout, SESSION_TIMEOUT);
           
-          // Set up activity monitoring (less frequent)
-          activityCheckTimer = setInterval(detectSuspiciousActivity, 300000); // Check every 5 minutes
+          // Set up activity monitoring
+          activityCheckTimer = setInterval(detectSuspiciousActivity, 60000); // Check every minute
           
-          // Log session start (non-blocking)
-          logSecurityEvent('session_started');
+          // Log session start
+          await logSecurityEvent('session_started');
         } else {
           // Clear timers when session ends
           clearTimeout(sessionWarningTimer);

@@ -6,7 +6,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { ReportDialog } from "@/components/feed/ReportDialog";
 import { useContentModeration } from "@/hooks/useContentModeration";
-import { Pencil, Trash2, Save, X, Flag } from "lucide-react";
+import { Flag } from "lucide-react";
 
 interface LikeRow { id: string; user_id: string }
 interface CommentRow { id: string; content: string; user_id: string; created_at: string }
@@ -46,9 +46,6 @@ const [reportDialog, setReportDialog] = useState<{
   reportedContent: "",
   contentType: "post",
 });
-const [editing, setEditing] = useState<{[key: string]: boolean}>({});
-const [editingContent, setEditingContent] = useState<{[key: string]: string}>({});
-const [deleting, setDeleting] = useState<{[key: string]: boolean}>({});
 
   useEffect(() => {
     const init = async () => {
@@ -65,33 +62,37 @@ const [deleting, setDeleting] = useState<{[key: string]: boolean}>({});
   }, []);
 
 const loadPosts = async () => {
-  // Fetch posts and profiles in parallel for better performance
-  const [postsResult, profilesResult] = await Promise.all([
-    supabase
-      .from("posts")
-      .select("id, content, user_id, created_at, likes(id, user_id), comments(id, content, user_id, created_at)")
-      .order("created_at", { ascending: false }),
-    supabase
-      .from("profiles")
-      .select("user_id, display_name")
-  ]);
+  const { data, error } = await supabase
+    .from("posts")
+    .select("id, content, user_id, created_at, likes(id, user_id), comments(id, content, user_id, created_at)")
+    .order("created_at", { ascending: false });
 
-  if (postsResult.error) {
-    console.error(postsResult.error);
-    toast({ title: "Couldn't load feed", description: postsResult.error.message, variant: "destructive" });
+  if (error) {
+    console.error(error);
+    toast({ title: "Couldn't load feed", description: error.message, variant: "destructive" });
     return;
   }
-  
-  const postsData = postsResult.data as unknown as PostRow[];
+  const postsData = data as unknown as PostRow[];
   setPosts(postsData);
 
-  // Build name map from profiles
-  if (!profilesResult.error && profilesResult.data) {
-    const map: Record<string, string> = {};
-    profilesResult.data.forEach((pr: any) => {
-      if (pr.display_name) map[pr.user_id] = pr.display_name as string;
-    });
-    setNameMap(map);
+  // Build list of unique user IDs from posts and comments
+  const userIds = new Set<string>();
+  postsData.forEach((p) => {
+    userIds.add(p.user_id);
+    p.comments?.forEach((c) => userIds.add(c.user_id));
+  });
+  if (userIds.size > 0) {
+    const { data: profiles, error: pErr } = await supabase
+      .from("profiles")
+      .select("user_id, display_name")
+      .in("user_id", Array.from(userIds));
+    if (!pErr && profiles) {
+      const map: Record<string, string> = {};
+      (profiles as any[]).forEach((pr) => {
+        if (pr.display_name) map[pr.user_id] = pr.display_name as string;
+      });
+      setNameMap(map);
+    }
   }
 };
 
@@ -187,130 +188,6 @@ const loadPosts = async () => {
     });
   };
 
-  const handleEditPost = (postId: string, currentContent: string) => {
-    setEditing(prev => ({ ...prev, [`post_${postId}`]: true }));
-    setEditingContent(prev => ({ ...prev, [`post_${postId}`]: currentContent }));
-  };
-
-  const handleSavePostEdit = async (postId: string) => {
-    if (!sessionUserId) return;
-    
-    const newContent = editingContent[`post_${postId}`];
-    if (!newContent?.trim()) return;
-
-    try {
-      const { error } = await supabase
-        .from("posts")
-        .update({ content: newContent.trim(), updated_at: new Date().toISOString() })
-        .eq("id", postId)
-        .eq("user_id", sessionUserId);
-
-      if (error) throw error;
-
-      // Moderate the edited content
-      await moderateContent(newContent.trim(), sessionUserId, 'post', postId);
-
-      setEditing(prev => ({ ...prev, [`post_${postId}`]: false }));
-      setEditingContent(prev => ({ ...prev, [`post_${postId}`]: "" }));
-      await loadPosts();
-      
-      toast({ title: "Post updated", description: "Your post has been updated successfully." });
-    } catch (error: any) {
-      toast({ title: "Update failed", description: error.message, variant: "destructive" });
-    }
-  };
-
-  const handleCancelPostEdit = (postId: string) => {
-    setEditing(prev => ({ ...prev, [`post_${postId}`]: false }));
-    setEditingContent(prev => ({ ...prev, [`post_${postId}`]: "" }));
-  };
-
-  const handleDeletePost = async (postId: string) => {
-    if (!sessionUserId) return;
-    if (!confirm("Are you sure you want to delete this post? This action cannot be undone.")) return;
-
-    setDeleting(prev => ({ ...prev, [`post_${postId}`]: true }));
-
-    try {
-      const { error } = await supabase
-        .from("posts")
-        .delete()
-        .eq("id", postId)
-        .eq("user_id", sessionUserId);
-
-      if (error) throw error;
-
-      await loadPosts();
-      toast({ title: "Post deleted", description: "Your post has been deleted successfully." });
-    } catch (error: any) {
-      toast({ title: "Delete failed", description: error.message, variant: "destructive" });
-    } finally {
-      setDeleting(prev => ({ ...prev, [`post_${postId}`]: false }));
-    }
-  };
-
-  const handleEditComment = (commentId: string, currentContent: string) => {
-    setEditing(prev => ({ ...prev, [`comment_${commentId}`]: true }));
-    setEditingContent(prev => ({ ...prev, [`comment_${commentId}`]: currentContent }));
-  };
-
-  const handleSaveCommentEdit = async (commentId: string) => {
-    if (!sessionUserId) return;
-    
-    const newContent = editingContent[`comment_${commentId}`];
-    if (!newContent?.trim()) return;
-
-    try {
-      const { error } = await supabase
-        .from("comments")
-        .update({ content: newContent.trim(), updated_at: new Date().toISOString() })
-        .eq("id", commentId)
-        .eq("user_id", sessionUserId);
-
-      if (error) throw error;
-
-      // Moderate the edited content
-      await moderateContent(newContent.trim(), sessionUserId, 'comment', commentId);
-
-      setEditing(prev => ({ ...prev, [`comment_${commentId}`]: false }));
-      setEditingContent(prev => ({ ...prev, [`comment_${commentId}`]: "" }));
-      await loadPosts();
-      
-      toast({ title: "Comment updated", description: "Your comment has been updated successfully." });
-    } catch (error: any) {
-      toast({ title: "Update failed", description: error.message, variant: "destructive" });
-    }
-  };
-
-  const handleCancelCommentEdit = (commentId: string) => {
-    setEditing(prev => ({ ...prev, [`comment_${commentId}`]: false }));
-    setEditingContent(prev => ({ ...prev, [`comment_${commentId}`]: "" }));
-  };
-
-  const handleDeleteComment = async (commentId: string) => {
-    if (!sessionUserId) return;
-    if (!confirm("Are you sure you want to delete this comment? This action cannot be undone.")) return;
-
-    setDeleting(prev => ({ ...prev, [`comment_${commentId}`]: true }));
-
-    try {
-      const { error } = await supabase
-        .from("comments")
-        .delete()
-        .eq("id", commentId)
-        .eq("user_id", sessionUserId);
-
-      if (error) throw error;
-
-      await loadPosts();
-      toast({ title: "Comment deleted", description: "Your comment has been deleted successfully." });
-    } catch (error: any) {
-      toast({ title: "Delete failed", description: error.message, variant: "destructive" });
-    } finally {
-      setDeleting(prev => ({ ...prev, [`comment_${commentId}`]: false }));
-    }
-  };
-
   return (
     <>
       <Helmet>
@@ -355,59 +232,8 @@ const loadPosts = async () => {
               const comments = post.comments || [];
               return (
                 <article key={post.id} className="rounded-lg border bg-card p-4 hover-tilt">
-                  <div className="flex justify-between items-start gap-2">
-                    <h2 className="font-semibold">{nameMap[post.user_id] || "Anonymous"}</h2>
-                    {sessionUserId === post.user_id && (
-                      <div className="flex gap-1">
-                        <button
-                          className="text-muted-foreground hover:text-foreground transition-colors p-1"
-                          onClick={() => handleEditPost(post.id, post.content)}
-                          title="Edit post"
-                          disabled={editing[`post_${post.id}`]}
-                        >
-                          <Pencil className="h-3 w-3" />
-                        </button>
-                        <button
-                          className="text-muted-foreground hover:text-destructive transition-colors p-1"
-                          onClick={() => handleDeletePost(post.id)}
-                          title="Delete post"
-                          disabled={deleting[`post_${post.id}`]}
-                        >
-                          <Trash2 className="h-3 w-3" />
-                        </button>
-                      </div>
-                    )}
-                  </div>
-                  
-                  {editing[`post_${post.id}`] ? (
-                    <div className="mt-2">
-                      <Textarea
-                        value={editingContent[`post_${post.id}`] || ""}
-                        onChange={(e) => setEditingContent(prev => ({ ...prev, [`post_${post.id}`]: e.target.value }))}
-                        className="mb-2"
-                      />
-                      <div className="flex gap-2">
-                        <Button
-                          size="sm"
-                          onClick={() => handleSavePostEdit(post.id)}
-                          disabled={!editingContent[`post_${post.id}`]?.trim()}
-                        >
-                          <Save className="h-3 w-3 mr-1" />
-                          Save
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => handleCancelPostEdit(post.id)}
-                        >
-                          <X className="h-3 w-3 mr-1" />
-                          Cancel
-                        </Button>
-                      </div>
-                    </div>
-                  ) : (
-                    <p className="mt-2 text-foreground/90 whitespace-pre-wrap">{post.content}</p>
-                  )}
+                  <h2 className="font-semibold">{nameMap[post.user_id] || "Anonymous"}</h2>
+                  <p className="mt-2 text-foreground/90 whitespace-pre-wrap">{post.content}</p>
                   <div className="mt-3 flex items-center gap-3 text-sm text-muted-foreground">
                     <button
                       className={`inline-flex items-center gap-1 transition-colors ${likedByMe ? "text-primary" : "hover:text-foreground"}`}
@@ -449,70 +275,18 @@ const loadPosts = async () => {
                             <li key={c.id} className="rounded bg-card p-2">
                               <div className="flex justify-between items-start gap-2">
                                 <div className="flex-1">
-                                  {editing[`comment_${c.id}`] ? (
-                                    <div className="space-y-2">
-                                      <Textarea
-                                        value={editingContent[`comment_${c.id}`] || ""}
-                                        onChange={(e) => setEditingContent(prev => ({ ...prev, [`comment_${c.id}`]: e.target.value }))}
-                                        className="text-sm"
-                                      />
-                                      <div className="flex gap-2">
-                                        <Button
-                                          size="sm"
-                                          onClick={() => handleSaveCommentEdit(c.id)}
-                                          disabled={!editingContent[`comment_${c.id}`]?.trim()}
-                                        >
-                                          <Save className="h-3 w-3 mr-1" />
-                                          Save
-                                        </Button>
-                                        <Button
-                                          size="sm"
-                                          variant="outline"
-                                          onClick={() => handleCancelCommentEdit(c.id)}
-                                        >
-                                          <X className="h-3 w-3 mr-1" />
-                                          Cancel
-                                        </Button>
-                                      </div>
-                                    </div>
-                                  ) : (
-                                    <>
-                                      <p className="text-sm">{c.content}</p>
-                                      <div className="mt-1 text-xs text-muted-foreground">{nameMap[c.user_id] || "Anonymous"} • {new Date(c.created_at).toLocaleString()}</div>
-                                    </>
-                                  )}
+                                  <p className="text-sm">{c.content}</p>
+                                  <div className="mt-1 text-xs text-muted-foreground">{nameMap[c.user_id] || "Anonymous"} • {new Date(c.created_at).toLocaleString()}</div>
                                 </div>
-                                <div className="flex gap-1 flex-shrink-0">
-                                  {sessionUserId === c.user_id && (
-                                    <>
-                                      <button
-                                        className="text-muted-foreground hover:text-foreground transition-colors p-1"
-                                        onClick={() => handleEditComment(c.id, c.content)}
-                                        title="Edit comment"
-                                        disabled={editing[`comment_${c.id}`]}
-                                      >
-                                        <Pencil className="h-3 w-3" />
-                                      </button>
-                                      <button
-                                        className="text-muted-foreground hover:text-destructive transition-colors p-1"
-                                        onClick={() => handleDeleteComment(c.id)}
-                                        title="Delete comment"
-                                        disabled={deleting[`comment_${c.id}`]}
-                                      >
-                                        <Trash2 className="h-3 w-3" />
-                                      </button>
-                                    </>
-                                  )}
-                                  {sessionUserId && sessionUserId !== c.user_id && (
-                                    <button
-                                      className="text-muted-foreground hover:text-orange-600 transition-colors p-1"
-                                      onClick={() => openReportDialog("comment", post.id, c.id, c.user_id, c.content)}
-                                      title="Report this comment"
-                                    >
-                                      <Flag className="h-3 w-3" />
-                                    </button>
-                                  )}
-                                </div>
+                                {sessionUserId && sessionUserId !== c.user_id && (
+                                  <button
+                                    className="text-muted-foreground hover:text-orange-600 transition-colors flex-shrink-0"
+                                    onClick={() => openReportDialog("comment", post.id, c.id, c.user_id, c.content)}
+                                    title="Report this comment"
+                                  >
+                                    <Flag className="h-3 w-3" />
+                                  </button>
+                                )}
                               </div>
                             </li>
                           ))}

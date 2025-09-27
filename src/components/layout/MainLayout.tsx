@@ -4,7 +4,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { useSessionSecurity } from "@/hooks/useSessionSecurity";
 import { SecurityMonitor } from "@/components/security/SecurityMonitor";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { WelcomePopup } from "@/components/WelcomePopup";
 import Navbar from "./Navbar";
 import Footer from "./Footer";
 import MobileBottomNav from "./MobileBottomNav";
@@ -38,35 +37,24 @@ const MainLayout = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     if (sessionExists === null) return; // not ready yet
     
-    const publicRoutes = ["/", "/auth", "/privacy-policy", "/terms-of-service", "/contact", "/app-store-compliance"];
-    const isPublicRoute = publicRoutes.includes(location.pathname);
-    
-    // Protect routes except public ones
-    if (!sessionExists && !isPublicRoute) {
-      navigate("/auth");
-    }
+    // Only redirect to auth if user is on /auth and already authenticated
     if (sessionExists && location.pathname === "/auth") {
       navigate("/");
     }
   }, [sessionExists, location.pathname, navigate]);
 
-  // Scroll to top on route change
-  useEffect(() => {
-    window.scrollTo(0, 0);
-  }, [location.pathname]);
-
-  const showFooter = location.pathname !== "/feed";
+  const showFooter = location.pathname !== "/feed" && !isMobile;
+  const showMobileNav = sessionExists && isMobile;
 
   return (
-    <div className="min-h-screen flex flex-col glow-field overflow-x-hidden" onMouseMove={onMouseMove}>
+    <div className="min-h-screen flex flex-col glow-field" onMouseMove={onMouseMove}>
       <SecurityMonitor />
-      <WelcomePopup />
       <Navbar />
-      <main className={`flex-grow container mx-auto px-4 py-8 ${isMobile ? 'pb-20' : ''} w-full`}>
+      <main className={`flex-grow container mx-auto px-4 py-8 ${showMobileNav ? 'pb-20' : ''}`}>
         {children}
       </main>
       {showFooter && <Footer />}
-      <MobileBottomNav />
+      {showMobileNav && <MobileBottomNav />}
     </div>
   );
 };
