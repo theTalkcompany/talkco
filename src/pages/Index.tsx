@@ -10,7 +10,6 @@ const Index = () => {
   const [quote, setQuote] = useState<Quote | null>(null);
   const [loading, setLoading] = useState(true);
   const [showDailyModal, setShowDailyModal] = useState(false);
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
 
   const getTodayKey = () => {
     const d = new Date();
@@ -40,21 +39,8 @@ const Index = () => {
       try {
         // Get current user to ensure same quote as quotes page
         const { data: { user } } = await supabase.auth.getUser();
-        setIsAuthenticated(!!user);
-        
-        if (user) {
-          const dailyQuote = await getDailyQuote(user.id);
-          setQuote(dailyQuote);
-          
-          // Check if we should show the daily modal for authenticated users
-          checkIfShouldShowModal();
-        } else {
-          // For non-authenticated users, show a sample quote
-          setQuote({
-            text: "Every day is a new beginning. Take a deep breath, smile, and start again.",
-            author: "Unknown"
-          });
-        }
+        const dailyQuote = await getDailyQuote(user?.id);
+        setQuote(dailyQuote);
       } catch (error) {
         console.error("Failed to load quote:", error);
       } finally {
@@ -62,14 +48,9 @@ const Index = () => {
       }
     };
 
+    // Load quote and check if we should show the daily modal
     loadQuote();
-
-    // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setIsAuthenticated(!!session);
-    });
-
-    return () => subscription.unsubscribe();
+    checkIfShouldShowModal();
   }, []);
   const features = [{
     icon: Shield,
@@ -116,13 +97,13 @@ const Index = () => {
           </p>
           <div className="flex flex-wrap gap-4 mb-6">
             <Button size="lg" variant="hero" asChild className="group">
-              <Link to="/auth" className="focus-ring">
-                Get Started 
+              <Link to="/chat" className="focus-ring">
+                Start a Talk 
                 <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
               </Link>
             </Button>
             <Button size="lg" variant="outline" asChild className="bg-white/10 border-white/20 hover:bg-white/20 text-white">
-              <Link to="/help" className="focus-ring">Learn More</Link>
+              <Link to="/feed" className="focus-ring">Explore the Feed</Link>
             </Button>
           </div>
           
@@ -165,21 +146,12 @@ const Index = () => {
             </> : <p className="text-muted-foreground">Unable to load today's quote. Please try again later.</p>}
           
           <div className="mt-8">
-            {isAuthenticated ? (
-              <Button variant="soft" asChild className="group">
-                <Link to="/quotes" className="focus-ring">
-                  View All Quotes 
-                  <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
-                </Link>
-              </Button>
-            ) : (
-              <Button variant="soft" asChild className="group">
-                <Link to="/auth" className="focus-ring">
-                  Sign Up to View Quotes 
-                  <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
-                </Link>
-              </Button>
-            )}
+            <Button variant="soft" asChild className="group">
+              <Link to="/quotes" className="focus-ring">
+                View All Quotes 
+                <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
+              </Link>
+            </Button>
           </div>
         </article>
 
@@ -214,25 +186,12 @@ const Index = () => {
           </ul>
           
           <div className="flex flex-wrap gap-3">
-            {isAuthenticated ? (
-              <>
-                <Button variant="outline" asChild>
-                  <Link to="/feed" className="focus-ring">Visit Feed</Link>
-                </Button>
-                <Button variant="ghost" asChild>
-                  <Link to="/help" className="focus-ring">Get Help</Link>
-                </Button>
-              </>
-            ) : (
-              <>
-                <Button variant="outline" asChild>
-                  <Link to="/auth" className="focus-ring">Join Community</Link>
-                </Button>
-                <Button variant="ghost" asChild>
-                  <Link to="/help" className="focus-ring">Get Help</Link>
-                </Button>
-              </>
-            )}
+            <Button variant="outline" asChild>
+              <Link to="/feed" className="focus-ring">Visit Feed</Link>
+            </Button>
+            <Button variant="ghost" asChild>
+              <Link to="/help" className="focus-ring">Get Help</Link>
+            </Button>
           </div>
         </article>
       </section>
@@ -279,13 +238,10 @@ const Index = () => {
         </div>
       </section>
       
-      {/* Show daily quote modal only for authenticated users */}
-      {isAuthenticated && (
-        <DailyQuoteModal 
-          open={showDailyModal} 
-          onOpenChange={setShowDailyModal}
-        />
-      )}
+      <DailyQuoteModal 
+        open={showDailyModal} 
+        onOpenChange={setShowDailyModal}
+      />
     </>;
 };
 export default Index;
