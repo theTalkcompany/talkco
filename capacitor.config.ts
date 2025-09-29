@@ -1,7 +1,7 @@
 import { CapacitorConfig } from '@capacitor/cli'
 
 const config: CapacitorConfig = {
-  appId: 'com.talkco.app',
+  appId: 'com.talkco.app.temp',
   appName: 'Talk - Mental Health Support',
   webDir: 'dist',
   bundledWebRuntime: false,
