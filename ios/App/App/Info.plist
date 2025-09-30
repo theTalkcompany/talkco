@@ -57,6 +57,18 @@
 	<key>UIViewControllerBasedStatusBarAppearance</key>
 	<true/>
 	
+	<!-- App Icons Configuration -->
+	<key>CFBundleIcons</key>
+	<dict>
+		<key>CFBundlePrimaryIcon</key>
+		<dict>
+			<key>CFBundleIconFiles</key>
+			<array/>
+			<key>CFBundleIconName</key>
+			<string>AppIcon</string>
+		</dict>
+	</dict>
+	
 	<!-- App Store & Privacy Configurations -->
 	<key>NSAppTransportSecurity</key>
 	<dict>
