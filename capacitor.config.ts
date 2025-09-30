@@ -11,6 +11,7 @@ const config: CapacitorConfig = {
     backgroundColor: '#3b82f6',
     allowsLinkPreview: false,
     scrollEnabled: true,
+    buildConfiguration: 'Release',
     // iOS App Store privacy configuration
     privacyManifests: {
       NSUserTrackingUsageDescription: 'This app does not track users for advertising or analytics purposes.',
