@@ -1,11 +1,17 @@
 import { NavLink } from "react-router-dom";
 import { MessageCircle, FileText, HelpCircle } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useHaptics } from "@/hooks/useHaptics";
 
 const MobileBottomNav = () => {
   const isMobile = useIsMobile();
+  const { impact } = useHaptics();
 
   if (!isMobile) return null;
+
+  const handleNavClick = () => {
+    impact('light');
+  };
 
   const navItems = [
     {
@@ -34,6 +40,7 @@ const MobileBottomNav = () => {
             <NavLink
               key={item.to}
               to={item.to}
+              onClick={handleNavClick}
               className={({ isActive }) =>
                 `flex flex-col items-center justify-center py-2 px-4 rounded-lg transition-colors focus-ring ${
                   isActive

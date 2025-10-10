@@ -15,10 +15,10 @@ const config: CapacitorConfig = {
     // iOS App Store privacy configuration
     privacyManifests: {
       NSUserTrackingUsageDescription: 'This app does not track users for advertising or analytics purposes.',
-      NSCameraUsageDescription: 'This app does not use the camera.',
+      NSCameraUsageDescription: 'Allow camera access to take profile pictures and share photos in the community.',
       NSMicrophoneUsageDescription: 'This app does not use the microphone.',
       NSLocationWhenInUseUsageDescription: 'This app does not use location services.',
-      NSPhotoLibraryUsageDescription: 'This app does not access your photo library.',
+      NSPhotoLibraryUsageDescription: 'Allow photo library access to select profile pictures and share photos.',
       NSContactsUsageDescription: 'This app does not access your contacts.',
       NSCalendarsUsageDescription: 'This app does not access your calendar.',
       NSRemindersUsageDescription: 'This app does not access your reminders.',
@@ -52,6 +52,11 @@ const config: CapacitorConfig = {
       resize: 'body',
       style: 'dark',
       resizeOnFullScreen: true,
+    },
+    LocalNotifications: {
+      smallIcon: 'ic_stat_icon_config_sample',
+      iconColor: '#3b82f6',
+      sound: 'beep.wav',
     },
   },
 }
