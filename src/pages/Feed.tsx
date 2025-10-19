@@ -6,7 +6,9 @@ import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { ReportDialog } from "@/components/feed/ReportDialog";
 import { useContentModeration } from "@/hooks/useContentModeration";
-import { Pencil, Trash2, Save, X, Flag } from "lucide-react";
+import { usePullToRefresh } from "@/hooks/usePullToRefresh";
+import { useHaptics } from "@/hooks/useHaptics";
+import { Pencil, Trash2, Save, X, Flag, RefreshCw } from "lucide-react";
 
 interface LikeRow { id: string; user_id: string }
 interface CommentRow { id: string; content: string; user_id: string; created_at: string }
@@ -22,6 +24,7 @@ interface PostRow {
 const Feed = () => {
   const { toast } = useToast();
   const { moderateContent, isChecking } = useContentModeration();
+  const { impact } = useHaptics();
   const [sessionUserId, setSessionUserId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [posting, setPosting] = useState(false);
@@ -49,6 +52,14 @@ const [reportDialog, setReportDialog] = useState<{
 const [editing, setEditing] = useState<{[key: string]: boolean}>({});
 const [editingContent, setEditingContent] = useState<{[key: string]: string}>({});
 const [deleting, setDeleting] = useState<{[key: string]: boolean}>({});
+
+  const handleRefresh = async () => {
+    await impact('light');
+    await loadPosts();
+    toast({ title: "Feed refreshed" });
+  };
+
+  const { containerRef, isRefreshing } = usePullToRefresh(handleRefresh);
 
   useEffect(() => {
     const init = async () => {
@@ -105,6 +116,7 @@ const loadPosts = async () => {
     const content = newPost.trim();
     if (!content) return;
     
+    await impact('medium');
     setPosting(true);
     
     // Create the post first
@@ -134,6 +146,7 @@ const loadPosts = async () => {
       toast({ title: "Sign in to like", description: "Sign in to support posts with a like." });
       return;
     }
+    await impact('light');
     const liked = post.likes?.some((l) => l.user_id === sessionUserId);
     if (liked) {
       const { error } = await supabase.from("likes").delete().match({ post_id: post.id, user_id: sessionUserId });
@@ -319,9 +332,23 @@ const loadPosts = async () => {
         <link rel="canonical" href="/feed" />
       </Helmet>
 
-      <section className="surface-card p-6">
-        <h1 className="text-3xl font-bold">Community Feed</h1>
-        <p className="mt-2 text-muted-foreground">Post your thoughts anonymously and receive supportive comments.</p>
+      <div ref={containerRef}>
+        <section className="surface-card p-6">
+          <div className="flex justify-between items-center mb-4">
+            <div>
+              <h1 className="text-3xl font-bold">Community Feed</h1>
+              <p className="mt-2 text-muted-foreground">Post your thoughts anonymously and receive supportive comments.</p>
+            </div>
+            <Button variant="outline" size="icon" onClick={handleRefresh} disabled={isRefreshing}>
+              <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+            </Button>
+          </div>
+
+          {isRefreshing && (
+            <div className="text-center text-sm text-muted-foreground mb-4">
+              Refreshing...
+            </div>
+          )}
 
         {/* Composer */}
         <div className="mt-6 rounded-lg border bg-background p-4">
@@ -544,6 +571,7 @@ const loadPosts = async () => {
           )}
         </div>
       </section>
+      </div>
 
       <ReportDialog
         open={reportDialog.open}

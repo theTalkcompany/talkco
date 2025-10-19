@@ -22,7 +22,7 @@ const config: CapacitorConfig = {
       NSRemindersUsageDescription: 'This app does not access your reminders.',
       NSHealthShareUsageDescription: 'This app does not access health data.',
       NSHealthUpdateUsageDescription: 'This app does not update health data.',
-      NSFaceIDUsageDescription: 'This app does not use Face ID.',
+      NSFaceIDUsageDescription: 'Use Face ID or Touch ID for secure and quick access to your account.',
       NSBluetoothAlwaysUsageDescription: 'This app does not use Bluetooth.',
       NSMotionUsageDescription: 'This app does not access motion data.',
     }
@@ -55,6 +55,9 @@ const config: CapacitorConfig = {
       smallIcon: 'ic_stat_icon_config_sample',
       iconColor: '#3b82f6',
       sound: 'beep.wav',
+    },
+    PushNotifications: {
+      presentationOptions: ['badge', 'sound', 'alert'],
     },
   },
 }
