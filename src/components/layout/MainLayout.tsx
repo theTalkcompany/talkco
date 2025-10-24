@@ -28,10 +28,14 @@ const MainLayout = ({ children }: { children: ReactNode }) => {
   }, []);
 
   useEffect(() => {
+    // Quick initial session check
+    supabase.auth.getSession().then(({ data: { session } }) => setSessionExists(!!session));
+    
+    // Set up listener for future changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setSessionExists(!!session);
     });
-    supabase.auth.getSession().then(({ data: { session } }) => setSessionExists(!!session));
+    
     return () => subscription.unsubscribe();
   }, []);
 

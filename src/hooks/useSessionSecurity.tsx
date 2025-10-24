@@ -70,27 +70,32 @@ export const useSessionSecurity = () => {
     let sessionWarningTimer: NodeJS.Timeout;
     let sessionTimeoutTimer: NodeJS.Timeout;
     let activityCheckTimer: NodeJS.Timeout;
+    let subscription: any;
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        if (session) {
-          // Set up session timers
-          sessionWarningTimer = setTimeout(handleSessionWarning, SESSION_WARNING_TIME);
-          sessionTimeoutTimer = setTimeout(handleSessionTimeout, SESSION_TIMEOUT);
-          
-          // Set up activity monitoring (less frequent)
-          activityCheckTimer = setInterval(detectSuspiciousActivity, 300000); // Check every 5 minutes
-          
-          // Log session start (non-blocking)
-          logSecurityEvent('session_started');
-        } else {
-          // Clear timers when session ends
-          clearTimeout(sessionWarningTimer);
-          clearTimeout(sessionTimeoutTimer);
-          clearInterval(activityCheckTimer);
+    // Delay security monitoring to not block app startup
+    const initTimer = setTimeout(() => {
+      const { data: { subscription: authSubscription } } = supabase.auth.onAuthStateChange(
+        async (event, session) => {
+          if (session) {
+            // Set up session timers
+            sessionWarningTimer = setTimeout(handleSessionWarning, SESSION_WARNING_TIME);
+            sessionTimeoutTimer = setTimeout(handleSessionTimeout, SESSION_TIMEOUT);
+            
+            // Set up activity monitoring (less frequent)
+            activityCheckTimer = setInterval(detectSuspiciousActivity, 300000); // Check every 5 minutes
+            
+            // Log session start (non-blocking)
+            logSecurityEvent('session_started');
+          } else {
+            // Clear timers when session ends
+            clearTimeout(sessionWarningTimer);
+            clearTimeout(sessionTimeoutTimer);
+            clearInterval(activityCheckTimer);
+          }
         }
-      }
-    );
+      );
+      subscription = authSubscription;
+    }, 2000);
 
     // Track page navigation for suspicious activity detection
     const handlePageChange = () => {
@@ -101,7 +106,8 @@ export const useSessionSecurity = () => {
     window.addEventListener('beforeunload', handlePageChange);
 
     return () => {
-      subscription.unsubscribe();
+      clearTimeout(initTimer);
+      if (subscription) subscription.unsubscribe();
       clearTimeout(sessionWarningTimer);
       clearTimeout(sessionTimeoutTimer);
       clearInterval(activityCheckTimer);
