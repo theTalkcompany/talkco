@@ -84,13 +84,15 @@
 	
 	<!-- Privacy Descriptions (Required by Apple) -->
 	<key>NSCameraUsageDescription</key>
-	<string>Talk may use the camera to allow you to share photos in your posts and profile.</string>
+	<string>Talk needs access to your camera to take photos for your posts and profile picture.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Talk needs access to your photo library to select photos for your posts and profile picture.</string>
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>Talk needs permission to save photos to your photo library.</string>
 	<key>NSMicrophoneUsageDescription</key>
 	<string>Talk does not use the microphone.</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>Talk does not use location services.</string>
-	<key>NSPhotoLibraryUsageDescription</key>
-	<string>Talk may access your photo library to allow you to share photos in your posts and profile.</string>
 	<key>NSContactsUsageDescription</key>
 	<string>Talk does not access your contacts.</string>
 	<key>NSUserTrackingUsageDescription</key>
