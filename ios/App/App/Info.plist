@@ -84,15 +84,15 @@
 	
 	<!-- Privacy Descriptions (Required by Apple) -->
 	<key>NSCameraUsageDescription</key>
-	<string>This app does not use the camera.</string>
+	<string>Talk may use the camera to allow you to share photos in your posts and profile.</string>
 	<key>NSMicrophoneUsageDescription</key>
-	<string>This app does not use the microphone.</string>
+	<string>Talk does not use the microphone.</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
-	<string>This app does not use location services.</string>
+	<string>Talk does not use location services.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
-	<string>This app does not access your photo library.</string>
+	<string>Talk may access your photo library to allow you to share photos in your posts and profile.</string>
 	<key>NSContactsUsageDescription</key>
-	<string>This app does not access your contacts.</string>
+	<string>Talk does not access your contacts.</string>
 	<key>NSUserTrackingUsageDescription</key>
 	<string>This app does not track users. We respect your privacy and do not collect personal data for advertising.</string>
 	
