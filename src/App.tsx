@@ -4,7 +4,6 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { HelmetProvider } from "react-helmet-async";
-import { useEffect } from "react";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import Feed from "./pages/Feed";
@@ -17,37 +16,9 @@ import PrivacyPolicy from "./pages/PrivacyPolicy";
 import TermsOfService from "./pages/TermsOfService";
 import Contact from "./pages/Contact";
 import AppStoreCompliance from "./pages/AppStoreCompliance";
-import Landing from "./pages/Landing";
-import DisplayPage from "./pages/DisplayPage";
 import MainLayout from "./components/layout/MainLayout";
-import { usePushNotifications } from "./hooks/usePushNotifications";
 
 const queryClient = new QueryClient();
-
-const AppContent = () => {
-  usePushNotifications(); // Initialize push notifications
-  
-  return (
-    <MainLayout>
-      <Routes>
-        <Route path="/" element={<Index />} />
-        <Route path="/feed" element={<Feed />} />
-        <Route path="/chat" element={<Chat />} />
-        <Route path="/help" element={<Help />} />
-        <Route path="/quotes" element={<Quotes />} />
-        <Route path="/auth" element={<Auth />} />
-        <Route path="/profile" element={<Profile />} />
-        <Route path="/privacy-policy" element={<PrivacyPolicy />} />
-        <Route path="/terms-of-service" element={<TermsOfService />} />
-        <Route path="/contact" element={<Contact />} />
-        <Route path="/app-store-compliance" element={<AppStoreCompliance />} />
-        <Route path="/landing" element={<Landing />} />
-        <Route path="/website" element={<DisplayPage />} />
-        <Route path="*" element={<NotFound />} />
-      </Routes>
-    </MainLayout>
-  );
-};
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
@@ -56,7 +27,23 @@ const App = () => (
         <Toaster />
         <Sonner />
         <BrowserRouter>
-          <AppContent />
+          <MainLayout>
+            <Routes>
+              <Route path="/" element={<Index />} />
+              <Route path="/feed" element={<Feed />} />
+              <Route path="/chat" element={<Chat />} />
+              <Route path="/help" element={<Help />} />
+              <Route path="/quotes" element={<Quotes />} />
+              <Route path="/auth" element={<Auth />} />
+              <Route path="/profile" element={<Profile />} />
+              <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+              <Route path="/terms-of-service" element={<TermsOfService />} />
+              <Route path="/contact" element={<Contact />} />
+              <Route path="/app-store-compliance" element={<AppStoreCompliance />} />
+              {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </MainLayout>
         </BrowserRouter>
       </HelmetProvider>
     </TooltipProvider>

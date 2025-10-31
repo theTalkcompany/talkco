@@ -17,42 +17,35 @@ export const WelcomePopup = () => {
   const { toast } = useToast();
 
   useEffect(() => {
-    // Defer check to not block app startup
-    const timer = setTimeout(() => {
-      checkFirstLogin().catch(err => {
-        console.error('Error in checkFirstLogin:', err);
-      });
-    }, 1500);
+    const checkFirstLogin = async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        
+        if (!session?.user) return;
 
-    return () => clearTimeout(timer);
+        // Check if user has completed first login
+        const { data: profile, error } = await supabase
+          .from('profiles')
+          .select('first_login_completed')
+          .eq('user_id', session.user.id)
+          .single();
+
+        if (error) {
+          console.error('Error checking first login status:', error);
+          return;
+        }
+
+        // Show popup if this is their first login
+        if (profile && !profile.first_login_completed) {
+          setShowWelcome(true);
+        }
+      } catch (error) {
+        console.error('Error in checkFirstLogin:', error);
+      }
+    };
+
+    checkFirstLogin();
   }, []);
-
-  const checkFirstLogin = async () => {
-    try {
-      const { data: { session } } = await supabase.auth.getSession();
-      
-      if (!session?.user) return;
-
-      // Check if user has completed first login
-      const { data: profile, error } = await supabase
-        .from('profiles')
-        .select('first_login_completed')
-        .eq('user_id', session.user.id)
-        .single();
-
-      if (error) {
-        console.error('Error checking first login status:', error);
-        return;
-      }
-
-      // Show popup if this is their first login
-      if (profile && !profile.first_login_completed) {
-        setShowWelcome(true);
-      }
-    } catch (error) {
-      console.error('Error in checkFirstLogin:', error);
-    }
-  };
 
   const handleWelcomeComplete = async () => {
     setLoading(true);

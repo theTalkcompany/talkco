@@ -28,21 +28,17 @@ const MainLayout = ({ children }: { children: ReactNode }) => {
   }, []);
 
   useEffect(() => {
-    // Quick initial session check
-    supabase.auth.getSession().then(({ data: { session } }) => setSessionExists(!!session));
-    
-    // Set up listener for future changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setSessionExists(!!session);
     });
-    
+    supabase.auth.getSession().then(({ data: { session } }) => setSessionExists(!!session));
     return () => subscription.unsubscribe();
   }, []);
 
   useEffect(() => {
     if (sessionExists === null) return; // not ready yet
     
-    const publicRoutes = ["/", "/auth", "/privacy-policy", "/terms-of-service", "/contact", "/app-store-compliance", "/landing"];
+    const publicRoutes = ["/", "/auth", "/privacy-policy", "/terms-of-service", "/contact", "/app-store-compliance"];
     const isPublicRoute = publicRoutes.includes(location.pathname);
     
     // Protect routes except public ones

@@ -3,12 +3,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Button } from "@/components/ui/button";
 import { getDailyQuote, type Quote } from "@/data/quotes";
 import { supabase } from "@/integrations/supabase/client";
-import { X, Quote as QuoteIcon, Bell, BellOff } from "lucide-react";
-import { useLocalNotifications } from "@/hooks/useLocalNotifications";
-import { useHaptics } from "@/hooks/useHaptics";
-import { useToast } from "@/hooks/use-toast";
-import { Switch } from "@/components/ui/switch";
-import { Label } from "@/components/ui/label";
+import { X, Quote as QuoteIcon } from "lucide-react";
 
 interface DailyQuoteModalProps {
   open: boolean;
@@ -18,52 +13,12 @@ interface DailyQuoteModalProps {
 export const DailyQuoteModal = ({ open, onOpenChange }: DailyQuoteModalProps) => {
   const [quote, setQuote] = useState<Quote | null>(null);
   const [loading, setLoading] = useState(true);
-  const [notificationsEnabled, setNotificationsEnabled] = useState(false);
-  const { scheduleDailyQuoteNotification, cancelDailyQuoteNotification, checkNotificationStatus } = useLocalNotifications();
-  const { impact, notification } = useHaptics();
-  const { toast } = useToast();
 
   useEffect(() => {
     if (open) {
       loadQuote();
-      checkNotifications();
     }
   }, [open]);
-
-  const checkNotifications = async () => {
-    const status = await checkNotificationStatus();
-    setNotificationsEnabled(status);
-  };
-
-  const handleNotificationToggle = async (checked: boolean) => {
-    await impact('medium');
-    
-    if (checked) {
-      const success = await scheduleDailyQuoteNotification();
-      if (success) {
-        setNotificationsEnabled(true);
-        toast({
-          title: "Daily reminders enabled",
-          description: "You'll receive a notification at 9 AM every day with your daily quote.",
-        });
-        await notification('success');
-      } else {
-        toast({
-          title: "Permission needed",
-          description: "Please enable notifications in your device settings.",
-          variant: "destructive",
-        });
-        await notification('error');
-      }
-    } else {
-      await cancelDailyQuoteNotification();
-      setNotificationsEnabled(false);
-      toast({
-        title: "Daily reminders disabled",
-        description: "You won't receive daily quote notifications anymore.",
-      });
-    }
-  };
 
   const loadQuote = async () => {
     try {
@@ -120,33 +75,13 @@ export const DailyQuoteModal = ({ open, onOpenChange }: DailyQuoteModalProps) =>
           )}
         </div>
         
-        <div className="space-y-4 pt-4 border-t">
-          <div className="flex items-center justify-between px-2">
-            <div className="flex items-center gap-2">
-              {notificationsEnabled ? (
-                <Bell className="h-4 w-4 text-primary" />
-              ) : (
-                <BellOff className="h-4 w-4 text-muted-foreground" />
-              )}
-              <Label htmlFor="notifications" className="text-sm cursor-pointer">
-                Daily reminder at 9 AM
-              </Label>
-            </div>
-            <Switch
-              id="notifications"
-              checked={notificationsEnabled}
-              onCheckedChange={handleNotificationToggle}
-            />
-          </div>
-          
-          <div className="flex justify-center">
-            <Button 
-              onClick={() => onOpenChange(false)}
-              className="min-w-[120px]"
-            >
-              Continue
-            </Button>
-          </div>
+        <div className="flex justify-center pt-4 border-t">
+          <Button 
+            onClick={() => onOpenChange(false)}
+            className="min-w-[120px]"
+          >
+            Continue
+          </Button>
         </div>
       </DialogContent>
     </Dialog>

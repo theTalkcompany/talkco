@@ -9,15 +9,12 @@ import { useToast } from "@/components/ui/use-toast";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Shield, AlertTriangle, Camera, ExternalLink } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Shield, AlertTriangle } from "lucide-react";
 import AvatarPicker from "@/components/profile/AvatarPicker";
 import MyPosts from "@/components/profile/MyPosts";
 import ReportsAdmin from "@/components/admin/ReportsAdmin";
 import WillowAdmin from "@/components/admin/WillowAdmin";
 import { useUserRole } from "@/hooks/useUserRole";
-import { useCamera } from "@/hooks/useCamera";
-import { useHaptics } from "@/hooks/useHaptics";
 
 interface ProfileRow {
   user_id: string;
@@ -39,8 +36,6 @@ const presetAvatars = presetSeeds.map((s) => `/avatars/${s}.svg`);
 export default function Profile() {
   const { toast } = useToast();
   const { isAdmin } = useUserRole();
-  const { takePicture, pickFromGallery } = useCamera();
-  const { impact } = useHaptics();
   const [loading, setLoading] = useState(true);
   const [userId, setUserId] = useState<string | null>(null);
   const [profile, setProfile] = useState<ProfileRow | null>(null);
@@ -98,7 +93,6 @@ const [editing, setEditing] = useState({
   const handleSave = async () => {
     if (!userId) return;
     setLoading(true);
-    await impact('light');
     try {
       if (profile) {
         const { error } = await supabase
@@ -175,7 +169,6 @@ const [editing, setEditing] = useState({
 
   const choosePreset = async (url: string) => {
     if (!userId) return;
-    await impact('light');
     try {
       setAvatarUrl(url);
       const { error } = await supabase
@@ -195,72 +188,6 @@ const [editing, setEditing] = useState({
     } catch (err: any) {
       console.error(err);
       toast({ title: "Failed to set avatar", description: err.message, variant: "destructive" });
-    }
-  };
-
-  const handleTakePhoto = async () => {
-    await impact('medium');
-    const imageData = await takePicture();
-    if (!imageData) {
-      toast({ title: "Camera unavailable", description: "Camera feature is only available on mobile devices." });
-      return;
-    }
-    await uploadImageData(imageData);
-  };
-
-  const handlePickFromGallery = async () => {
-    await impact('light');
-    const imageData = await pickFromGallery();
-    if (!imageData) {
-      toast({ title: "Gallery unavailable", description: "Photo library is only available on mobile devices." });
-      return;
-    }
-    await uploadImageData(imageData);
-  };
-
-  const uploadImageData = async (dataUrl: string) => {
-    if (!userId) return;
-    
-    try {
-      // Convert data URL to blob
-      const response = await fetch(dataUrl);
-      const blob = await response.blob();
-      
-      // Upload to storage
-      const ext = blob.type.split('/')[1];
-      const path = `${userId}/avatar.${ext}`;
-      const { error: uploadError } = await supabase.storage
-        .from("avatars")
-        .upload(path, blob, { upsert: true, contentType: blob.type });
-      
-      if (uploadError) throw uploadError;
-      
-      const { data: publicData } = supabase.storage
-        .from("avatars")
-        .getPublicUrl(path);
-      const publicUrl = publicData.publicUrl;
-      setAvatarUrl(publicUrl);
-      
-      // Save to profile
-      const { error: upError } = await supabase
-        .from("profiles")
-        .upsert({
-          user_id: userId,
-          avatar_url: publicUrl,
-          full_name: editing.full_name || null,
-          display_name: editing.display_name || null,
-          email: editing.email || null,
-          phone: editing.phone || null,
-          address: editing.address || null,
-        }, { onConflict: "user_id" } as any);
-      
-      if (upError) throw upError;
-      
-      toast({ title: "Avatar updated" });
-      setDialogOpen(false);
-    } catch (err: any) {
-      console.error(err);
-      toast({ title: "Upload failed", description: err.message, variant: "destructive" });
     }
   };
 
@@ -300,23 +227,10 @@ const [editing, setEditing] = useState({
                     <DialogDescription>Select a built-in style or upload your own image.</DialogDescription>
                   </DialogHeader>
                   <Tabs defaultValue="upload">
-                    <TabsList className="grid w-full grid-cols-3">
-                      <TabsTrigger value="camera">Camera</TabsTrigger>
+                    <TabsList>
                       <TabsTrigger value="upload">Upload</TabsTrigger>
                       <TabsTrigger value="choose">Choose</TabsTrigger>
                     </TabsList>
-                    <TabsContent value="camera" className="space-y-4">
-                      <p className="text-sm text-muted-foreground">Take a new photo with your camera.</p>
-                      <div className="flex gap-2">
-                        <Button onClick={handleTakePhoto} className="flex-1">
-                          <Camera className="h-4 w-4 mr-2" />
-                          Take Photo
-                        </Button>
-                        <Button onClick={handlePickFromGallery} variant="outline" className="flex-1">
-                          Choose from Gallery
-                        </Button>
-                      </div>
-                    </TabsContent>
                     <TabsContent value="upload" className="space-y-4">
                       <p className="text-sm text-muted-foreground">Upload a square image for best results.</p>
                       <Input type="file" accept="image/*" onChange={onFileChange} />
@@ -378,80 +292,57 @@ const [editing, setEditing] = useState({
         </Card>
 
         {isAdmin && (
-          <>
-            <Card className="md:col-span-3">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Shield className="h-5 w-5" />
-                  System Settings
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="flex gap-4">
-                  <Dialog open={showSystemSettings} onOpenChange={setShowSystemSettings}>
-                    <DialogTrigger asChild>
-                      <Button variant="outline" className="flex items-center gap-2">
-                        <Shield className="h-4 w-4" />
-                        System Settings
-                      </Button>
-                    </DialogTrigger>
-                    <DialogContent className="max-w-6xl max-h-[90vh] flex flex-col">
-                      <DialogHeader className="flex-shrink-0">
-                        <DialogTitle>System Settings</DialogTitle>
-                        <DialogDescription>
-                          Manage system configuration, privacy policy, and user roles
-                        </DialogDescription>
-                      </DialogHeader>
-                      <div className="flex-1 overflow-y-auto min-h-0 pr-2">
-                        <WillowAdmin />
-                      </div>
-                    </DialogContent>
-                  </Dialog>
-                  
-                  <Dialog open={showReports} onOpenChange={setShowReports}>
-                    <DialogTrigger asChild>
-                      <Button variant="outline" className="flex items-center gap-2">
-                        <AlertTriangle className="h-4 w-4" />
-                        View User Reports
-                      </Button>
-                    </DialogTrigger>
-                    <DialogContent className="max-w-4xl max-h-[90vh] flex flex-col">
-                      <DialogHeader className="flex-shrink-0">
-                        <DialogTitle>User Reports Management</DialogTitle>
-                        <DialogDescription>
-                          Review and manage reports submitted by community members
-                        </DialogDescription>
-                      </DialogHeader>
-                      <div className="flex-1 overflow-y-auto min-h-0 pr-2">
-                        <ReportsAdmin />
-                      </div>
-                    </DialogContent>
-                  </Dialog>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="md:col-span-3">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <ExternalLink className="h-5 w-5" />
-                  Public Landing Page
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-sm text-muted-foreground mb-4">
-                  View the public-facing landing page for talkco.uk domain. This page is visible to all visitors 
-                  and showcases the app with App Store download links.
-                </p>
-                <Link to="/landing" target="_blank">
-                  <Button variant="outline" className="flex items-center gap-2">
-                    <ExternalLink className="h-4 w-4" />
-                    View Landing Page
-                  </Button>
-                </Link>
-              </CardContent>
-            </Card>
-          </>
+          <Card className="md:col-span-3">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Shield className="h-5 w-5" />
+                System Settings
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex gap-4">
+                <Dialog open={showSystemSettings} onOpenChange={setShowSystemSettings}>
+                  <DialogTrigger asChild>
+                    <Button variant="outline" className="flex items-center gap-2">
+                      <Shield className="h-4 w-4" />
+                      System Settings
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent className="max-w-6xl max-h-[90vh] flex flex-col">
+                    <DialogHeader className="flex-shrink-0">
+                      <DialogTitle>System Settings</DialogTitle>
+                      <DialogDescription>
+                        Manage system configuration, privacy policy, and user roles
+                      </DialogDescription>
+                    </DialogHeader>
+                    <div className="flex-1 overflow-y-auto min-h-0 pr-2">
+                      <WillowAdmin />
+                    </div>
+                  </DialogContent>
+                </Dialog>
+                
+                <Dialog open={showReports} onOpenChange={setShowReports}>
+                  <DialogTrigger asChild>
+                    <Button variant="outline" className="flex items-center gap-2">
+                      <AlertTriangle className="h-4 w-4" />
+                      View User Reports
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent className="max-w-4xl max-h-[90vh] flex flex-col">
+                    <DialogHeader className="flex-shrink-0">
+                      <DialogTitle>User Reports Management</DialogTitle>
+                      <DialogDescription>
+                        Review and manage reports submitted by community members
+                      </DialogDescription>
+                    </DialogHeader>
+                    <div className="flex-1 overflow-y-auto min-h-0 pr-2">
+                      <ReportsAdmin />
+                    </div>
+                  </DialogContent>
+                </Dialog>
+              </div>
+            </CardContent>
+          </Card>
         )}
       </section>
     </>

@@ -4,37 +4,14 @@ import { getDailyQuote, type Quote } from "@/data/quotes";
 import { supabase } from "@/integrations/supabase/client";
 import AdminQuotes from "@/components/admin/AdminQuotes";
 import { Button } from "@/components/ui/button";
-import { Settings, Share2 } from "lucide-react";
+import { Settings } from "lucide-react";
 import { useUserRole } from "@/hooks/useUserRole";
-import { useNativeShare } from "@/hooks/useNativeShare";
-import { useHaptics } from "@/hooks/useHaptics";
-import { useToast } from "@/hooks/use-toast";
 
 const Quotes = () => {
   const [quote, setQuote] = useState<Quote | null>(null);
   const [loading, setLoading] = useState(true);
   const [showAdmin, setShowAdmin] = useState(false);
   const { isAdmin: userIsAdmin } = useUserRole();
-  const { shareQuote } = useNativeShare();
-  const { impact, notification } = useHaptics();
-  const { toast } = useToast();
-
-  const handleShare = async () => {
-    if (!quote) return;
-    
-    await impact('light');
-    const result = await shareQuote(quote.text, quote.author);
-    
-    if (result === 'clipboard') {
-      toast({
-        title: "Copied to clipboard",
-        description: "Quote copied! Share it with someone who needs it.",
-      });
-      await notification('success');
-    } else if (result) {
-      await notification('success');
-    }
-  };
 
   useEffect(() => {
     const loadQuote = async () => {
@@ -113,14 +90,6 @@ const Quotes = () => {
           <>
             <blockquote className="mt-6 text-xl leading-relaxed">"{quote.text}"</blockquote>
             <cite className="block mt-2 text-sm text-muted-foreground">— {quote.author}</cite>
-            <Button 
-              onClick={handleShare}
-              variant="outline"
-              className="mt-6 gap-2"
-            >
-              <Share2 className="h-4 w-4" />
-              Share Quote
-            </Button>
           </>
         )}
         <p className="mt-6 text-sm text-muted-foreground">New quote unlocks tomorrow. Keep going—you're doing great.</p>
