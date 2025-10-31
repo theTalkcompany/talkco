@@ -10,23 +10,6 @@ const config: CapacitorConfig = {
     backgroundColor: '#3b82f6',
     allowsLinkPreview: false,
     scrollEnabled: true,
-    // iOS App Store privacy configuration
-    privacyManifests: {
-      NSUserTrackingUsageDescription: 'This app does not track users for advertising or analytics purposes.',
-      NSCameraUsageDescription: 'Allow camera access to take profile pictures and share photos in the community.',
-      NSMicrophoneUsageDescription: 'This app does not use the microphone.',
-      NSLocationWhenInUseUsageDescription: 'This app does not use location services.',
-      NSPhotoLibraryUsageDescription: 'Allow photo library access to select profile pictures and share photos.',
-      NSPhotoLibraryAddUsageDescription: 'Allow saving photos to your photo library.',
-      NSContactsUsageDescription: 'This app does not access your contacts.',
-      NSCalendarsUsageDescription: 'This app does not access your calendar.',
-      NSRemindersUsageDescription: 'This app does not access your reminders.',
-      NSHealthShareUsageDescription: 'This app does not access health data.',
-      NSHealthUpdateUsageDescription: 'This app does not update health data.',
-      NSFaceIDUsageDescription: 'Use Face ID or Touch ID for secure and quick access to your account.',
-      NSBluetoothAlwaysUsageDescription: 'This app does not use Bluetooth.',
-      NSMotionUsageDescription: 'This app does not access motion data.',
-    }
   },
   android: {
     allowMixedContent: true,
