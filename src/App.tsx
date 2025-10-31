@@ -30,8 +30,7 @@ const AppContent = () => {
   return (
     <MainLayout>
       <Routes>
-        <Route path="/" element={<DisplayPage />} />
-        <Route path="/home" element={<Index />} />
+        <Route path="/" element={<Index />} />
         <Route path="/feed" element={<Feed />} />
         <Route path="/chat" element={<Chat />} />
         <Route path="/help" element={<Help />} />
@@ -43,6 +42,7 @@ const AppContent = () => {
         <Route path="/contact" element={<Contact />} />
         <Route path="/app-store-compliance" element={<AppStoreCompliance />} />
         <Route path="/landing" element={<Landing />} />
+        <Route path="/website" element={<DisplayPage />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
     </MainLayout>
