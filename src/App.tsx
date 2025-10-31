@@ -17,6 +17,7 @@ import PrivacyPolicy from "./pages/PrivacyPolicy";
 import TermsOfService from "./pages/TermsOfService";
 import Contact from "./pages/Contact";
 import AppStoreCompliance from "./pages/AppStoreCompliance";
+import Landing from "./pages/Landing";
 import MainLayout from "./components/layout/MainLayout";
 import { usePushNotifications } from "./hooks/usePushNotifications";
 
@@ -39,6 +40,7 @@ const AppContent = () => {
         <Route path="/terms-of-service" element={<TermsOfService />} />
         <Route path="/contact" element={<Contact />} />
         <Route path="/app-store-compliance" element={<AppStoreCompliance />} />
+        <Route path="/landing" element={<Landing />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
     </MainLayout>

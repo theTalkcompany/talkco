@@ -9,7 +9,8 @@ import { useToast } from "@/components/ui/use-toast";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Shield, AlertTriangle, Camera } from "lucide-react";
+import { Shield, AlertTriangle, Camera, ExternalLink } from "lucide-react";
+import { Link } from "react-router-dom";
 import AvatarPicker from "@/components/profile/AvatarPicker";
 import MyPosts from "@/components/profile/MyPosts";
 import ReportsAdmin from "@/components/admin/ReportsAdmin";
@@ -377,57 +378,80 @@ const [editing, setEditing] = useState({
         </Card>
 
         {isAdmin && (
-          <Card className="md:col-span-3">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Shield className="h-5 w-5" />
-                System Settings
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="flex gap-4">
-                <Dialog open={showSystemSettings} onOpenChange={setShowSystemSettings}>
-                  <DialogTrigger asChild>
-                    <Button variant="outline" className="flex items-center gap-2">
-                      <Shield className="h-4 w-4" />
-                      System Settings
-                    </Button>
-                  </DialogTrigger>
-                  <DialogContent className="max-w-6xl max-h-[90vh] flex flex-col">
-                    <DialogHeader className="flex-shrink-0">
-                      <DialogTitle>System Settings</DialogTitle>
-                      <DialogDescription>
-                        Manage system configuration, privacy policy, and user roles
-                      </DialogDescription>
-                    </DialogHeader>
-                    <div className="flex-1 overflow-y-auto min-h-0 pr-2">
-                      <WillowAdmin />
-                    </div>
-                  </DialogContent>
-                </Dialog>
-                
-                <Dialog open={showReports} onOpenChange={setShowReports}>
-                  <DialogTrigger asChild>
-                    <Button variant="outline" className="flex items-center gap-2">
-                      <AlertTriangle className="h-4 w-4" />
-                      View User Reports
-                    </Button>
-                  </DialogTrigger>
-                  <DialogContent className="max-w-4xl max-h-[90vh] flex flex-col">
-                    <DialogHeader className="flex-shrink-0">
-                      <DialogTitle>User Reports Management</DialogTitle>
-                      <DialogDescription>
-                        Review and manage reports submitted by community members
-                      </DialogDescription>
-                    </DialogHeader>
-                    <div className="flex-1 overflow-y-auto min-h-0 pr-2">
-                      <ReportsAdmin />
-                    </div>
-                  </DialogContent>
-                </Dialog>
-              </div>
-            </CardContent>
-          </Card>
+          <>
+            <Card className="md:col-span-3">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Shield className="h-5 w-5" />
+                  System Settings
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="flex gap-4">
+                  <Dialog open={showSystemSettings} onOpenChange={setShowSystemSettings}>
+                    <DialogTrigger asChild>
+                      <Button variant="outline" className="flex items-center gap-2">
+                        <Shield className="h-4 w-4" />
+                        System Settings
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent className="max-w-6xl max-h-[90vh] flex flex-col">
+                      <DialogHeader className="flex-shrink-0">
+                        <DialogTitle>System Settings</DialogTitle>
+                        <DialogDescription>
+                          Manage system configuration, privacy policy, and user roles
+                        </DialogDescription>
+                      </DialogHeader>
+                      <div className="flex-1 overflow-y-auto min-h-0 pr-2">
+                        <WillowAdmin />
+                      </div>
+                    </DialogContent>
+                  </Dialog>
+                  
+                  <Dialog open={showReports} onOpenChange={setShowReports}>
+                    <DialogTrigger asChild>
+                      <Button variant="outline" className="flex items-center gap-2">
+                        <AlertTriangle className="h-4 w-4" />
+                        View User Reports
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent className="max-w-4xl max-h-[90vh] flex flex-col">
+                      <DialogHeader className="flex-shrink-0">
+                        <DialogTitle>User Reports Management</DialogTitle>
+                        <DialogDescription>
+                          Review and manage reports submitted by community members
+                        </DialogDescription>
+                      </DialogHeader>
+                      <div className="flex-1 overflow-y-auto min-h-0 pr-2">
+                        <ReportsAdmin />
+                      </div>
+                    </DialogContent>
+                  </Dialog>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="md:col-span-3">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <ExternalLink className="h-5 w-5" />
+                  Public Landing Page
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm text-muted-foreground mb-4">
+                  View the public-facing landing page for talkco.uk domain. This page is visible to all visitors 
+                  and showcases the app with App Store download links.
+                </p>
+                <Link to="/landing" target="_blank">
+                  <Button variant="outline" className="flex items-center gap-2">
+                    <ExternalLink className="h-4 w-4" />
+                    View Landing Page
+                  </Button>
+                </Link>
+              </CardContent>
+            </Card>
+          </>
         )}
       </section>
     </>
