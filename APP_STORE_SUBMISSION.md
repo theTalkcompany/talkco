@@ -74,6 +74,25 @@ Update in App Store Connect:
 - ✅ Updated iOS privacy descriptions for Camera and Photos
 - ✅ Added notification icon and color configuration
 
+### Camera Permissions Fix (Oct 31, 2025):
+**Issue**: Camera feature was failing in TestFlight because privacy keys were missing from `Info.plist` in Xcode.
+
+**Root Cause**: The `npx cap sync` command did not properly copy privacy descriptions from the project's source `Info.plist` to the Xcode project.
+
+**Solution**: Manually added required privacy keys directly in Xcode's `Info.plist`:
+- `NSPhotoLibraryUsageDescription`: "Talk needs access to your photo library to select photos for your posts and profile picture."
+- `NSPhotoLibraryAddUsageDescription`: "Talk needs permission to save photos to your photo library."
+- `NSCameraUsageDescription`: "Talk needs access to your camera to take photos for your posts and profile picture."
+
+**Steps Taken**:
+1. Opened `ios/App/App/Info.plist` in Xcode
+2. Added the three privacy description keys with user-friendly explanations
+3. Cleaned build in Xcode (Product → Clean Build Folder)
+4. Rebuilt and uploaded to TestFlight
+5. **Result**: ✅ Build 1.4 (1) successfully passed TestFlight processing (Oct 31, 2025 4:20 PM)
+
+**Important Note**: This fix must be done in Xcode after each `npx cap sync` if the keys don't automatically transfer.
+
 ## What to Tell Apple in Response
 
 When resubmitting, include this message:
@@ -100,14 +119,19 @@ We believe these additions address the concerns about minimum functionality and 
 
 ---
 
+## Platform Strategy
+
+**Important**: Talk is now an **app-only platform**. The website has been taken down to focus exclusively on delivering the best native mobile experience through the iOS and Android apps.
+
 ## Next Steps
 
 1. ✅ Complete native implementation
-2. ⬜ Test all features on physical iOS device
-3. ⬜ Record video showing native features (optional)
-4. ⬜ Update App Store Connect with new build
-5. ⬜ Add response to review notes
-6. ⬜ Resubmit for review
+2. ✅ Fix camera permissions in Xcode
+3. ✅ TestFlight build successfully processing
+4. ⬜ Test all features on physical iOS device
+5. ⬜ Record video showing native features (optional)
+6. ⬜ Submit for App Store review
+7. ⬜ Add response to review notes explaining native features
 
 ## Additional Resources
 
