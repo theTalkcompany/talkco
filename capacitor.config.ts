@@ -17,6 +17,7 @@ const config: CapacitorConfig = {
       NSMicrophoneUsageDescription: 'This app does not use the microphone.',
       NSLocationWhenInUseUsageDescription: 'This app does not use location services.',
       NSPhotoLibraryUsageDescription: 'Allow photo library access to select profile pictures and share photos.',
+      NSPhotoLibraryAddUsageDescription: 'Allow saving photos to your photo library.',
       NSContactsUsageDescription: 'This app does not access your contacts.',
       NSCalendarsUsageDescription: 'This app does not access your calendar.',
       NSRemindersUsageDescription: 'This app does not access your reminders.',
