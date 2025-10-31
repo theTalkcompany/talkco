@@ -42,7 +42,7 @@ const MainLayout = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     if (sessionExists === null) return; // not ready yet
     
-    const publicRoutes = ["/", "/auth", "/privacy-policy", "/terms-of-service", "/contact", "/app-store-compliance"];
+    const publicRoutes = ["/", "/auth", "/privacy-policy", "/terms-of-service", "/contact", "/app-store-compliance", "/landing"];
     const isPublicRoute = publicRoutes.includes(location.pathname);
     
     // Protect routes except public ones
