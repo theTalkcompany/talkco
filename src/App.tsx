@@ -2,9 +2,10 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { HelmetProvider } from "react-helmet-async";
 import { useEffect } from "react";
+import { Capacitor } from "@capacitor/core";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import Feed from "./pages/Feed";
@@ -26,10 +27,13 @@ const queryClient = new QueryClient();
 const AppContent = () => {
   usePushNotifications(); // Initialize push notifications
   
+  const isNative = Capacitor.isNativePlatform();
+  
   return (
     <MainLayout>
       <Routes>
-        <Route path="/" element={<Index />} />
+        {/* Show Landing page for web browsers, Index for native app */}
+        <Route path="/" element={isNative ? <Index /> : <Landing />} />
         <Route path="/feed" element={<Feed />} />
         <Route path="/chat" element={<Chat />} />
         <Route path="/help" element={<Help />} />
@@ -40,7 +44,6 @@ const AppContent = () => {
         <Route path="/terms-of-service" element={<TermsOfService />} />
         <Route path="/contact" element={<Contact />} />
         <Route path="/app-store-compliance" element={<AppStoreCompliance />} />
-        <Route path="/landing" element={<Landing />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
     </MainLayout>
