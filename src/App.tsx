@@ -28,11 +28,11 @@ const AppContent = () => {
   
   return (
     <Routes>
-      <Route path="/landing" element={<Landing />} />
+      <Route path="/" element={<Landing />} />
       <Route path="*" element={
         <MainLayout>
           <Routes>
-            <Route path="/" element={<Index />} />
+            <Route path="/app" element={<Index />} />
             <Route path="/feed" element={<Feed />} />
             <Route path="/chat" element={<Chat />} />
             <Route path="/help" element={<Help />} />
