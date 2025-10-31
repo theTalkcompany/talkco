@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { HelmetProvider } from "react-helmet-async";
 import { useEffect } from "react";
+import { Capacitor } from '@capacitor/core';
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import Feed from "./pages/Feed";
@@ -26,10 +27,14 @@ const queryClient = new QueryClient();
 const AppContent = () => {
   usePushNotifications(); // Initialize push notifications
   
+  // Determine which component to show at root based on platform
+  const isNative = Capacitor.isNativePlatform();
+  const RootComponent = isNative ? Index : Landing;
+  
   return (
     <MainLayout>
       <Routes>
-        <Route path="/" element={<Index />} />
+        <Route path="/" element={<RootComponent />} />
         <Route path="/feed" element={<Feed />} />
         <Route path="/chat" element={<Chat />} />
         <Route path="/help" element={<Help />} />
@@ -40,7 +45,6 @@ const AppContent = () => {
         <Route path="/terms-of-service" element={<TermsOfService />} />
         <Route path="/contact" element={<Contact />} />
         <Route path="/app-store-compliance" element={<AppStoreCompliance />} />
-        <Route path="/landing" element={<Landing />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
     </MainLayout>
