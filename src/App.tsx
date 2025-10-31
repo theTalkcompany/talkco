@@ -27,27 +27,23 @@ const AppContent = () => {
   usePushNotifications(); // Initialize push notifications
   
   return (
-    <Routes>
-      <Route path="/" element={<Landing />} />
-      <Route path="*" element={
-        <MainLayout>
-          <Routes>
-            <Route path="/app" element={<Index />} />
-            <Route path="/feed" element={<Feed />} />
-            <Route path="/chat" element={<Chat />} />
-            <Route path="/help" element={<Help />} />
-            <Route path="/quotes" element={<Quotes />} />
-            <Route path="/auth" element={<Auth />} />
-            <Route path="/profile" element={<Profile />} />
-            <Route path="/privacy-policy" element={<PrivacyPolicy />} />
-            <Route path="/terms-of-service" element={<TermsOfService />} />
-            <Route path="/contact" element={<Contact />} />
-            <Route path="/app-store-compliance" element={<AppStoreCompliance />} />
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </MainLayout>
-      } />
-    </Routes>
+    <MainLayout>
+      <Routes>
+        <Route path="/" element={<Index />} />
+        <Route path="/feed" element={<Feed />} />
+        <Route path="/chat" element={<Chat />} />
+        <Route path="/help" element={<Help />} />
+        <Route path="/quotes" element={<Quotes />} />
+        <Route path="/auth" element={<Auth />} />
+        <Route path="/profile" element={<Profile />} />
+        <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+        <Route path="/terms-of-service" element={<TermsOfService />} />
+        <Route path="/contact" element={<Contact />} />
+        <Route path="/app-store-compliance" element={<AppStoreCompliance />} />
+        <Route path="/landing" element={<Landing />} />
+        <Route path="*" element={<NotFound />} />
+      </Routes>
+    </MainLayout>
   );
 };
 
