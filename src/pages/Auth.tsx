@@ -211,8 +211,8 @@ const Auth = () => {
     // Validate date of birth
     if (!dateOfBirth) {
       toast({
-        title: "Date of birth required",
-        description: "Please enter your date of birth to continue.",
+        title: "Year of birth required",
+        description: "Please select your year of birth to continue.",
         variant: "destructive"
       });
       return;
@@ -509,14 +509,25 @@ const Auth = () => {
                   <div className="auth-input-box" style={{
                   margin: '12px 0'
                 }}>
-                    <input type="date" placeholder="Date of Birth" value={dateOfBirth} onChange={e => setDateOfBirth(e.target.value)} required max={new Date().toISOString().split('T')[0]} />
+                    <select
+                      value={dateOfBirth ? dateOfBirth.split('-')[0] : ''}
+                      onChange={e => setDateOfBirth(e.target.value ? `${e.target.value}-01-01` : '')}
+                      required
+                      style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid #ccc', background: 'white' }}
+                    >
+                      <option value="">Select Year of Birth</option>
+                      {Array.from({ length: 100 }, (_, i) => {
+                        const year = new Date().getFullYear() - 13 - i;
+                        return <option key={year} value={year}>{year}</option>;
+                      })}
+                    </select>
                     <label style={{
                     fontSize: '11px',
                     color: 'hsl(215.4 16.3% 46.9%)',
                     marginTop: '2px',
                     display: 'block'
                   }}>
-                      Date of Birth (Required)
+                      Year of Birth (Required, for age verification only)
                     </label>
                   </div>
                   <div className="auth-input-box" style={{

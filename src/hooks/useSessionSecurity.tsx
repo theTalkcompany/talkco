@@ -67,9 +67,9 @@ export const useSessionSecurity = () => {
   }, [logSecurityEvent]);
 
   useEffect(() => {
-    let sessionWarningTimer: NodeJS.Timeout;
-    let sessionTimeoutTimer: NodeJS.Timeout;
-    let activityCheckTimer: NodeJS.Timeout;
+    let sessionWarningTimer: ReturnType<typeof setTimeout>;
+    let sessionTimeoutTimer: ReturnType<typeof setTimeout>;
+    let activityCheckTimer: ReturnType<typeof setInterval>;
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
