@@ -49,6 +49,16 @@ const WillowChat = () => {
     setJustSent(true);
     window.setTimeout(() => setJustSent(false), 900);
 
+    // Increment Willow session counter for profile stat
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const uid = session?.user?.id;
+      if (uid) {
+        const key = `talkco_willow_sessions_${uid}`;
+        localStorage.setItem(key, String(Number(localStorage.getItem(key) || 0) + 1));
+      }
+    } catch {}
+
     try {
       const { data, error } = await supabase.functions.invoke("willow-chat", {
         body: { messages: nextMessages },
