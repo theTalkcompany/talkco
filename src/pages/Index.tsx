@@ -88,39 +88,39 @@ const Index = () => {
       </Helmet>
 
       {/* Hero Section */}
-      <section className="rounded-2xl bg-gradient-primary p-8 md:p-12 shadow-glow hover-tilt mb-8">
+      <section className="rounded-2xl bg-gradient-primary p-6 sm:p-8 md:p-12 shadow-glow hover-tilt mb-8 animate-fade-in">
         <div className="max-w-4xl">
-          <h1 className="text-4xl md:text-6xl font-extrabold leading-tight mb-6 text-white">
+          <h1 className="text-3xl sm:text-4xl md:text-6xl font-extrabold leading-tight mb-4 sm:mb-6 text-white">
             A safe, anonymous space to 
             <span className="block text-white">
               talk and heal
             </span>
           </h1>
-          <p className="text-lg md:text-xl opacity-90 mb-8 max-w-2xl">
+          <p className="text-base sm:text-lg md:text-xl opacity-90 mb-6 sm:mb-8 max-w-2xl">
             Share your thoughts without showing your face. Connect with people, group chat, or talk to an AI. You matter here.
           </p>
-          <div className="flex flex-wrap gap-4 mb-6">
+          <div className="flex flex-wrap gap-3 sm:gap-4 mb-6">
             {isAuthenticated ? (
               <>
-                <Button size="lg" variant="hero" asChild className="group">
+                <Button size="lg" variant="hero" asChild className="group rounded-full animate-soft-pulse min-h-[48px]">
                   <Link to="/chat" className="focus-ring">
                     Start a Talk 
                     <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
                   </Link>
                 </Button>
-                <Button size="lg" variant="outline" asChild className="bg-white/10 border-white/20 hover:bg-white/20 text-white">
+                <Button size="lg" variant="outline" asChild className="bg-white/10 border-white/20 hover:bg-white/20 text-white min-h-[48px]">
                   <Link to="/feed" className="focus-ring">Explore the Feed</Link>
                 </Button>
               </>
             ) : (
               <>
-                <Button size="lg" variant="hero" asChild className="group">
+                <Button size="lg" variant="hero" asChild className="group rounded-full animate-soft-pulse min-h-[48px]">
                   <Link to="/auth" className="focus-ring">
                     Get Started 
                     <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
                   </Link>
                 </Button>
-                <Button size="lg" variant="outline" asChild className="bg-white/10 border-white/20 hover:bg-white/20 text-white">
+                <Button size="lg" variant="outline" asChild className="bg-white/10 border-white/20 hover:bg-white/20 text-white min-h-[48px]">
                   <Link to="/auth" className="focus-ring">Sign Up Free</Link>
                 </Button>
               </>
