@@ -105,6 +105,8 @@ const loadPosts = async () => {
 
   const canPost = useMemo(() => !!sessionUserId && newPost.trim().length > 0 && !posting, [sessionUserId, newPost, posting]);
 
+  const guidelinesKey = useMemo(() => sessionUserId ? `talkco_feed_guidelines_${sessionUserId}` : "", [sessionUserId]);
+
   const handleCreatePost = async () => {
     if (!sessionUserId) {
       toast({ title: "Sign in required", description: "Please sign in to share a post." });
@@ -112,29 +114,55 @@ const loadPosts = async () => {
     }
     const content = newPost.trim();
     if (!content) return;
-    
+
+    // Show one-time guidelines modal before first post
+    if (guidelinesKey && !localStorage.getItem(guidelinesKey)) {
+      setPendingPost(true);
+      setGuidelinesOpen(true);
+      return;
+    }
+
+    await actuallyPost(content);
+  };
+
+  const actuallyPost = async (content: string) => {
+    if (!sessionUserId) return;
     setPosting(true);
-    
-    // Create the post first
+    const finalContent = contentWarning ? `${CW_MARKER} ${content}` : content;
+
     const { data: newPostData, error } = await supabase
       .from("posts")
-      .insert({ content, user_id: sessionUserId })
+      .insert({ content: finalContent, user_id: sessionUserId })
       .select()
       .single();
-      
+
     if (error) {
       toast({ title: "Couldn't post", description: error.message, variant: "destructive" });
       setPosting(false);
       return;
     }
-    
-    // Then moderate the content
-    await moderateContent(content, sessionUserId, 'post', newPostData.id);
-    
+
+    await moderateContent(finalContent, sessionUserId, 'post', newPostData.id);
+
     setNewPost("");
+    setContentWarning(false);
     toast({ title: "Posted", description: "Your post is now live." });
     await loadPosts();
     setPosting(false);
+  };
+
+  const acceptGuidelines = async () => {
+    if (guidelinesKey) localStorage.setItem(guidelinesKey, "1");
+    setGuidelinesOpen(false);
+    if (pendingPost) {
+      setPendingPost(false);
+      await actuallyPost(newPost.trim());
+    }
+  };
+
+  const cancelGuidelines = () => {
+    setGuidelinesOpen(false);
+    setPendingPost(false);
   };
 
   const toggleLike = async (post: PostRow) => {
