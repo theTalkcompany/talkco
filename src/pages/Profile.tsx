@@ -218,6 +218,32 @@ export default function Profile() {
     { id: "week_one",     label: "Week One",        emoji: "💜", unlocked: daysWithTalk >= 7 },
   ], [posts.length, commentCount, currentStreak, daysWithTalk]);
 
+  // Badge unlock toasts (compare against previously seen unlocks)
+  useEffect(() => {
+    if (!userId || loading) return;
+    const key = `talkco_badges_seen_${userId}`;
+    let seen: string[] = [];
+    try { seen = JSON.parse(localStorage.getItem(key) || "[]"); } catch {}
+    const newlyUnlocked = badges.filter(b => b.unlocked && !seen.includes(b.id));
+    if (newlyUnlocked.length === 0) return;
+    newlyUnlocked.forEach((b, i) => {
+      setTimeout(() => toast({ title: `🎉 Badge unlocked: ${b.label}!`, description: "Keep going — every step matters." }), i * 600);
+    });
+    localStorage.setItem(key, JSON.stringify([...seen, ...newlyUnlocked.map(b => b.id)]));
+  }, [badges, userId, loading, toast]);
+
+  // Live-refresh Willow session count when the user returns to this tab
+  useEffect(() => {
+    if (!userId) return;
+    const refresh = () => setWillowSessions(Number(localStorage.getItem(`talkco_willow_sessions_${userId}`) || 0));
+    window.addEventListener("focus", refresh);
+    window.addEventListener("storage", refresh);
+    return () => {
+      window.removeEventListener("focus", refresh);
+      window.removeEventListener("storage", refresh);
+    };
+  }, [userId]);
+
   const togglePin = (id: string) => {
     if (!userId) return;
     const next = pinnedId === id ? null : id;
