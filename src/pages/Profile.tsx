@@ -51,6 +51,10 @@ const [editing, setEditing] = useState({
 });
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [bio, setBio] = useState("");
+  const [accountCreatedAt, setAccountCreatedAt] = useState<string | null>(null);
+  const [postCount, setPostCount] = useState(0);
+  const [commentCount, setCommentCount] = useState(0);
 
   useEffect(() => {
     let mounted = true;
