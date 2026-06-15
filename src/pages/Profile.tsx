@@ -12,6 +12,8 @@ import { useToast } from "@/components/ui/use-toast";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
   Shield, AlertTriangle, Heart, MessageCircle, Pencil, Lock, LayoutGrid, Rows3, Pin, Sparkles, Check,
   Flame, Lock as LockIcon, ChevronDown, Download, Mail, Key, Trash2, Bot, ArrowRight, Info,
@@ -216,6 +218,32 @@ export default function Profile() {
     { id: "week_one",     label: "Week One",        emoji: "💜", unlocked: daysWithTalk >= 7 },
   ], [posts.length, commentCount, currentStreak, daysWithTalk]);
 
+  // Badge unlock toasts (compare against previously seen unlocks)
+  useEffect(() => {
+    if (!userId || loading) return;
+    const key = `talkco_badges_seen_${userId}`;
+    let seen: string[] = [];
+    try { seen = JSON.parse(localStorage.getItem(key) || "[]"); } catch {}
+    const newlyUnlocked = badges.filter(b => b.unlocked && !seen.includes(b.id));
+    if (newlyUnlocked.length === 0) return;
+    newlyUnlocked.forEach((b, i) => {
+      setTimeout(() => toast({ title: `🎉 Badge unlocked: ${b.label}!`, description: "Keep going — every step matters." }), i * 600);
+    });
+    localStorage.setItem(key, JSON.stringify([...seen, ...newlyUnlocked.map(b => b.id)]));
+  }, [badges, userId, loading, toast]);
+
+  // Live-refresh Willow session count when the user returns to this tab
+  useEffect(() => {
+    if (!userId) return;
+    const refresh = () => setWillowSessions(Number(localStorage.getItem(`talkco_willow_sessions_${userId}`) || 0));
+    window.addEventListener("focus", refresh);
+    window.addEventListener("storage", refresh);
+    return () => {
+      window.removeEventListener("focus", refresh);
+      window.removeEventListener("storage", refresh);
+    };
+  }, [userId]);
+
   const togglePin = (id: string) => {
     if (!userId) return;
     const next = pinnedId === id ? null : id;
@@ -295,7 +323,9 @@ export default function Profile() {
   };
 
   const handlePasswordReset = async () => {
-    if (!editing.email) return toast({ title: "No email set" });
+    if (!editing.email || editing.email.endsWith("@talkco.app")) {
+      return toast({ title: "Connect your email to enable password reset", description: "Add a real email in Edit Profile → Advanced." });
+    }
     const { error } = await supabase.auth.resetPasswordForEmail(editing.email);
     if (error) toast({ title: "Couldn't send reset", description: error.message, variant: "destructive" });
     else toast({ title: "Reset email sent", description: "Check your inbox to set a new password." });
@@ -511,29 +541,7 @@ export default function Profile() {
         </section>
       )}
 
-      {/* Preferences */}
-      {userId && (
-        <section className="mt-6 rounded-xl border bg-card p-4 animate-fade-in">
-          <h2 className="text-sm font-semibold mb-3">Your Preferences</h2>
-          <div className="divide-y">
-            {[
-              { key: "publicStreak" as const, label: "Show my streak publicly", desc: "Display your check-in streak on your profile." },
-              { key: "allowReplies" as const, label: "Allow others to reply to my posts", desc: "Turn off to disable replies on new posts." },
-              { key: "notifyReplies" as const, label: "Receive supportive reply notifications", desc: "Get notified when someone responds." },
-              { key: "publicTopics" as const, label: "Show my topic badges publicly", desc: "Display the topics you post about most." },
-              { key: "anonByDefault" as const, label: "Anonymous mode by default on all posts", desc: "Start every new post anonymous." },
-            ].map(row => (
-              <div key={row.key} className="flex items-center justify-between gap-3 py-3">
-                <div className="min-w-0">
-                  <p className="text-sm font-medium">{row.label}</p>
-                  <p className="text-xs text-muted-foreground">{row.desc}</p>
-                </div>
-                <Switch checked={prefs[row.key]} onCheckedChange={(v) => updatePref(row.key, v)} />
-              </div>
-            ))}
-          </div>
-        </section>
-      )}
+
 
       {/* Admin */}
       {isAdmin && (
@@ -584,51 +592,96 @@ export default function Profile() {
       <Dialog open={editOpen} onOpenChange={setEditOpen}>
         <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
           <DialogHeader><DialogTitle>Edit profile</DialogTitle><DialogDescription>Customise how you appear in Talk. Your details stay private.</DialogDescription></DialogHeader>
-          <div className="grid gap-4">
-            <div className="grid gap-2">
-              <Label>Banner style</Label>
-              <div className="grid grid-cols-3 gap-2">
-                {BANNER_PRESETS.map(b => (
-                  <button key={b.id} onClick={() => setBannerId(b.id)} className={`relative h-14 rounded-lg overflow-hidden ring-offset-2 transition ${bannerId === b.id ? "ring-2 ring-primary" : "ring-1 ring-border"}`} style={{ background: b.css }} aria-label={b.label}>
-                    {bannerId === b.id && <Check className="absolute bottom-1 right-1 h-3.5 w-3.5 text-white drop-shadow" />}
-                  </button>
+
+          <Tabs defaultValue="profile" className="w-full">
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="profile">Profile</TabsTrigger>
+              <TabsTrigger value="prefs">Preferences</TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="profile" className="grid gap-4 mt-4">
+              <div className="grid gap-2">
+                <Label>Banner style</Label>
+                <div className="grid grid-cols-3 gap-2">
+                  {BANNER_PRESETS.map(b => (
+                    <button key={b.id} onClick={() => setBannerId(b.id)} className={`relative h-14 rounded-lg overflow-hidden ring-offset-2 transition ${bannerId === b.id ? "ring-2 ring-primary" : "ring-1 ring-border"}`} style={{ background: b.css }} aria-label={b.label}>
+                      {bannerId === b.id && <Check className="absolute bottom-1 right-1 h-3.5 w-3.5 text-white drop-shadow" />}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="grid gap-2">
+                <Label>Avatar ring colour</Label>
+                <div className="flex flex-wrap gap-2">
+                  {RING_COLORS.map(c => (
+                    <button key={c} onClick={() => setRingColor(c)} className={`h-8 w-8 rounded-full border-2 transition ${ringColor === c ? "border-foreground scale-110" : "border-transparent"}`} style={{ backgroundColor: c }} aria-label={`Ring ${c}`} />
+                  ))}
+                </div>
+              </div>
+
+              <div className="grid gap-2">
+                <Label htmlFor="display_name">Display name</Label>
+                <Input id="display_name" value={editing.display_name} onChange={(e) => setEditing(v => ({ ...v, display_name: e.target.value }))} placeholder="How others will see you" className="text-base min-h-[44px]" />
+                <p className="text-xs text-muted-foreground">Leave blank to appear as Anonymous.</p>
+              </div>
+
+              <div className="grid gap-2">
+                <Label>Current vibe</Label>
+                <Select value={vibe?.label || "__none"} onValueChange={(val) => updateVibe(val === "__none" ? null : VIBES.find(v => v.label === val) || null)}>
+                  <SelectTrigger><SelectValue placeholder="How are you feeling this week?" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="__none">No vibe set</SelectItem>
+                    {VIBES.map(v => (
+                      <SelectItem key={v.label} value={v.label}>{v.emoji} {v.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="grid gap-2">
+                <Label htmlFor="bio">Short bio</Label>
+                <Textarea id="bio" value={bio} onChange={(e) => setBio(e.target.value.slice(0, 160))} placeholder="A sentence or two about yourself…" rows={3} className="text-base" />
+                <p className="text-xs text-muted-foreground text-right">{bio.length}/160</p>
+              </div>
+
+              <details className="text-sm">
+                <summary className="cursor-pointer text-muted-foreground hover:text-foreground">Advanced (private — only you see these)</summary>
+                <div className="mt-3 grid gap-3">
+                  <div className="grid gap-2"><Label htmlFor="full_name">Full name</Label><Input id="full_name" value={editing.full_name} onChange={(e) => setEditing(v => ({ ...v, full_name: e.target.value }))} placeholder="Your name" /></div>
+                  <div className="grid gap-2"><Label htmlFor="email">Email</Label><Input id="email" type="email" value={editing.email} onChange={(e) => setEditing(v => ({ ...v, email: e.target.value }))} placeholder="you@example.com" /></div>
+                </div>
+              </details>
+            </TabsContent>
+
+            <TabsContent value="prefs" className="mt-4">
+              <div className="divide-y">
+                {[
+                  { key: "publicStreak" as const, label: "Show my streak publicly", desc: "Display your check-in streak on your profile." },
+                  { key: "allowReplies" as const, label: "Allow others to reply to my posts", desc: "Turn off to disable replies on new posts." },
+                  { key: "notifyReplies" as const, label: "Receive supportive reply notifications", desc: "Get notified when someone responds." },
+                  { key: "publicTopics" as const, label: "Show my topic badges publicly", desc: "Display the topics you post about most." },
+                  { key: "anonByDefault" as const, label: "Anonymous mode by default on all posts", desc: "Start every new post anonymous." },
+                ].map(row => (
+                  <div key={row.key} className="flex items-center justify-between gap-3 py-3">
+                    <div className="min-w-0">
+                      <p className="text-sm font-medium">{row.label}</p>
+                      <p className="text-xs text-muted-foreground">{row.desc}</p>
+                    </div>
+                    <Switch checked={prefs[row.key]} onCheckedChange={(v) => updatePref(row.key, v)} />
+                  </div>
                 ))}
               </div>
-            </div>
+            </TabsContent>
+          </Tabs>
 
-            <div className="grid gap-2">
-              <Label>Avatar ring colour</Label>
-              <div className="flex flex-wrap gap-2">
-                {RING_COLORS.map(c => (
-                  <button key={c} onClick={() => setRingColor(c)} className={`h-8 w-8 rounded-full border-2 transition ${ringColor === c ? "border-foreground scale-110" : "border-transparent"}`} style={{ backgroundColor: c }} aria-label={`Ring ${c}`} />
-                ))}
-              </div>
-            </div>
-
-            <div className="grid gap-2">
-              <Label htmlFor="display_name">Display name</Label>
-              <Input id="display_name" value={editing.display_name} onChange={(e) => setEditing(v => ({ ...v, display_name: e.target.value }))} placeholder="How others will see you" className="text-base min-h-[44px]" />
-              <p className="text-xs text-muted-foreground">Leave blank to appear as Anonymous.</p>
-            </div>
-            <div className="grid gap-2">
-              <Label htmlFor="bio">Short bio</Label>
-              <Textarea id="bio" value={bio} onChange={(e) => setBio(e.target.value.slice(0, 160))} placeholder="A sentence or two about yourself…" rows={3} className="text-base" />
-              <p className="text-xs text-muted-foreground text-right">{bio.length}/160</p>
-            </div>
-            <details className="text-sm">
-              <summary className="cursor-pointer text-muted-foreground hover:text-foreground">Advanced (private — only you see these)</summary>
-              <div className="mt-3 grid gap-3">
-                <div className="grid gap-2"><Label htmlFor="full_name">Full name</Label><Input id="full_name" value={editing.full_name} onChange={(e) => setEditing(v => ({ ...v, full_name: e.target.value }))} placeholder="Your name" /></div>
-                <div className="grid gap-2"><Label htmlFor="email">Email</Label><Input id="email" type="email" value={editing.email} onChange={(e) => setEditing(v => ({ ...v, email: e.target.value }))} placeholder="you@example.com" /></div>
-              </div>
-            </details>
-          </div>
-          <DialogFooter>
+          <DialogFooter className="mt-2">
             <Button variant="ghost" onClick={() => setEditOpen(false)}>Cancel</Button>
             <Button variant="hero" onClick={handleSave} disabled={saving}>{saving ? "Saving…" : "Save changes"}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
 
       {/* Avatar picker */}
       <Dialog open={avatarOpen} onOpenChange={setAvatarOpen}>
