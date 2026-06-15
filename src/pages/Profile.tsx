@@ -1,15 +1,21 @@
 import { useEffect, useMemo, useState } from "react";
 import { Helmet } from "react-helmet-async";
+import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/components/ui/use-toast";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription, DialogFooter } from "@/components/ui/dialog";
-import { Shield, AlertTriangle, Heart, MessageCircle, Pencil, Lock, LayoutGrid, Rows3, Pin, Sparkles, Check } from "lucide-react";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import {
+  Shield, AlertTriangle, Heart, MessageCircle, Pencil, Lock, LayoutGrid, Rows3, Pin, Sparkles, Check,
+  Flame, Lock as LockIcon, ChevronDown, Download, Mail, Key, Trash2, Bot, ArrowRight, Info,
+} from "lucide-react";
 import AvatarPicker from "@/components/profile/AvatarPicker";
 import ReportsAdmin from "@/components/admin/ReportsAdmin";
 import WillowAdmin from "@/components/admin/WillowAdmin";
@@ -37,12 +43,22 @@ const presetSeeds = ["Aurora","Milo","Nova","Zara","Leo","Ivy","Juno","Kai","Lun
 const presetAvatars = presetSeeds.map((s) => `/avatars/${s}.svg`);
 
 const BANNER_PRESETS = [
-  { id: "purple", label: "Lilac", css: "linear-gradient(135deg,#a78bfa 0%,#7c3aed 50%,#5b21b6 100%)" },
+  { id: "purple", label: "Lilac",  css: "linear-gradient(135deg,#a78bfa 0%,#7c3aed 50%,#5b21b6 100%)" },
   { id: "sunset", label: "Sunset", css: "linear-gradient(135deg,#f9a8d4 0%,#a78bfa 60%,#6366f1 100%)" },
   { id: "ocean",  label: "Ocean",  css: "linear-gradient(135deg,#a5b4fc 0%,#818cf8 50%,#4f46e5 100%)" },
   { id: "mint",   label: "Mint",   css: "linear-gradient(135deg,#a7f3d0 0%,#a5b4fc 60%,#7c3aed 100%)" },
   { id: "peach",  label: "Peach",  css: "linear-gradient(135deg,#fed7aa 0%,#fda4af 50%,#a78bfa 100%)" },
   { id: "dots",   label: "Dotted", css: "radial-gradient(circle at 1px 1px, rgba(255,255,255,0.4) 1px, transparent 0) 0 0/16px 16px, linear-gradient(135deg,#7c3aed,#a78bfa)" },
+];
+
+const RING_COLORS = ["#a78bfa","#f472b6","#60a5fa","#34d399","#fbbf24","#fb7185","#94a3b8","#7c3aed"];
+
+const VIBES = [
+  { emoji: "😔", label: "Struggling" },
+  { emoji: "😐", label: "Getting by" },
+  { emoji: "🙂", label: "Doing okay" },
+  { emoji: "😊", label: "Good day" },
+  { emoji: "💪", label: "Thriving" },
 ];
 
 const META_RE = /^\[META:({.*?})\]\s*/;
@@ -55,6 +71,15 @@ function parsePost(raw: string): { meta: any; content: string } {
 
 const DAY_LABELS = ["S","M","T","W","T","F","S"];
 
+const DEFAULT_PREFS = {
+  publicStreak: true,
+  allowReplies: true,
+  notifyReplies: true,
+  publicTopics: true,
+  anonByDefault: true,
+};
+type Prefs = typeof DEFAULT_PREFS;
+
 export default function Profile() {
   const { toast } = useToast();
   const { isAdmin } = useUserRole();
@@ -66,6 +91,7 @@ export default function Profile() {
   const [showSystemSettings, setShowSystemSettings] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
   const [avatarOpen, setAvatarOpen] = useState(false);
+  const [accountOpen, setAccountOpen] = useState(false);
 
   const [editing, setEditing] = useState({ full_name: "", display_name: "", email: "", phone: "", address: "" });
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
@@ -77,7 +103,11 @@ export default function Profile() {
   const [commentDates, setCommentDates] = useState<string[]>([]);
   const [view, setView] = useState<"feed" | "grid">("feed");
   const [bannerId, setBannerId] = useState<string>("purple");
+  const [ringColor, setRingColor] = useState<string>(RING_COLORS[0]);
   const [pinnedId, setPinnedId] = useState<string | null>(null);
+  const [vibe, setVibe] = useState<{ emoji: string; label: string } | null>(null);
+  const [prefs, setPrefs] = useState<Prefs>(DEFAULT_PREFS);
+  const [willowSessions, setWillowSessions] = useState(0);
 
   const banner = BANNER_PRESETS.find(b => b.id === bannerId) || BANNER_PRESETS[0];
 
@@ -93,7 +123,15 @@ export default function Profile() {
 
       setBio(localStorage.getItem(`talkco_bio_${uid}`) || "");
       setBannerId(localStorage.getItem(`talkco_banner_${uid}`) || "purple");
+      setRingColor(localStorage.getItem(`talkco_ring_${uid}`) || RING_COLORS[0]);
       setPinnedId(localStorage.getItem(`talkco_pinned_${uid}`));
+      try {
+        const v = localStorage.getItem(`talkco_vibe_${uid}`);
+        if (v) setVibe(JSON.parse(v));
+        const p = localStorage.getItem(`talkco_prefs_${uid}`);
+        if (p) setPrefs({ ...DEFAULT_PREFS, ...JSON.parse(p) });
+      } catch {}
+      setWillowSessions(Number(localStorage.getItem(`talkco_willow_sessions_${uid}`) || 0));
 
       const [profileRes, postsRes, commentsRes] = await Promise.all([
         supabase.from("profiles").select("user_id, full_name, display_name, email, phone, address, avatar_url").eq("user_id", uid).maybeSingle(),
@@ -139,27 +177,44 @@ export default function Profile() {
     return Object.entries(counts).sort((a, b) => b[1] - a[1]).slice(0, 4).map(([t]) => t);
   }, [posts]);
 
-  const streak = useMemo(() => {
-    // Last 7 days, Sun..Sat aligned to current week
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const start = new Date(today);
-    start.setDate(today.getDate() - today.getDay()); // Sunday of this week
-    const allDates = [
-      ...posts.map(p => p.created_at),
-      ...commentDates,
-    ].map(d => {
-      const dt = new Date(d); dt.setHours(0, 0, 0, 0); return dt.getTime();
+  // Active day set (timestamps at midnight)
+  const activeDaySet = useMemo(() => {
+    const set = new Set<number>();
+    [...posts.map(p => p.created_at), ...commentDates].forEach(d => {
+      const dt = new Date(d); dt.setHours(0, 0, 0, 0); set.add(dt.getTime());
     });
-    const set = new Set(allDates);
+    return set;
+  }, [posts, commentDates]);
+
+  const weekStreak = useMemo(() => {
+    const today = new Date(); today.setHours(0, 0, 0, 0);
+    const start = new Date(today); start.setDate(today.getDate() - today.getDay());
     return Array.from({ length: 7 }, (_, i) => {
       const d = new Date(start); d.setDate(start.getDate() + i);
-      return { label: DAY_LABELS[i], active: set.has(d.getTime()), isToday: d.getTime() === today.getTime() };
+      return { label: DAY_LABELS[i], active: activeDaySet.has(d.getTime()), isToday: d.getTime() === today.getTime() };
     });
-  }, [posts, commentDates]);
+  }, [activeDaySet]);
+
+  const currentStreak = useMemo(() => {
+    const today = new Date(); today.setHours(0, 0, 0, 0);
+    let count = 0;
+    const d = new Date(today);
+    // If today not active, start counting from yesterday (so streak doesn't break mid-day)
+    if (!activeDaySet.has(d.getTime())) d.setDate(d.getDate() - 1);
+    while (activeDaySet.has(d.getTime())) { count++; d.setDate(d.getDate() - 1); }
+    return count;
+  }, [activeDaySet]);
 
   const pinnedPost = useMemo(() => posts.find(p => p.id === pinnedId) || null, [posts, pinnedId]);
   const otherPosts = useMemo(() => posts.filter(p => p.id !== pinnedId), [posts, pinnedId]);
+
+  const badges = useMemo(() => [
+    { id: "first_post",   label: "First Post",      emoji: "🌱", unlocked: posts.length >= 1 },
+    { id: "first_reply",  label: "First Reply",     emoji: "💬", unlocked: commentCount >= 1 },
+    { id: "streak_7",     label: "7-Day Streak",    emoji: "🔥", unlocked: currentStreak >= 7 },
+    { id: "helpful_5",    label: "Helpful Member",  emoji: "🤝", unlocked: commentCount >= 5 },
+    { id: "week_one",     label: "Week One",        emoji: "💜", unlocked: daysWithTalk >= 7 },
+  ], [posts.length, commentCount, currentStreak, daysWithTalk]);
 
   const togglePin = (id: string) => {
     if (!userId) return;
@@ -168,6 +223,19 @@ export default function Profile() {
     if (next) localStorage.setItem(`talkco_pinned_${userId}`, next);
     else localStorage.removeItem(`talkco_pinned_${userId}`);
     toast({ title: next ? "Pinned to profile" : "Unpinned" });
+  };
+
+  const updateVibe = (v: { emoji: string; label: string } | null) => {
+    setVibe(v);
+    if (!userId) return;
+    if (v) localStorage.setItem(`talkco_vibe_${userId}`, JSON.stringify(v));
+    else localStorage.removeItem(`talkco_vibe_${userId}`);
+  };
+
+  const updatePref = (key: keyof Prefs, value: boolean) => {
+    const next = { ...prefs, [key]: value };
+    setPrefs(next);
+    if (userId) localStorage.setItem(`talkco_prefs_${userId}`, JSON.stringify(next));
   };
 
   const handleSave = async () => {
@@ -189,6 +257,7 @@ export default function Profile() {
       if (error) throw error;
       localStorage.setItem(`talkco_bio_${userId}`, bio);
       localStorage.setItem(`talkco_banner_${userId}`, bannerId);
+      localStorage.setItem(`talkco_ring_${userId}`, ringColor);
       setProfile(payload as ProfileRow);
       toast({ title: "Profile saved" });
       setEditOpen(false);
@@ -216,6 +285,30 @@ export default function Profile() {
     }
   };
 
+  const handleDownloadData = async () => {
+    if (!userId) return;
+    const blob = new Blob([JSON.stringify({ profile, posts, commentCount, prefs, vibe, bio, exportedAt: new Date().toISOString() }, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a"); a.href = url; a.download = `talkco-data-${userId}.json`; a.click();
+    URL.revokeObjectURL(url);
+    toast({ title: "Download started" });
+  };
+
+  const handlePasswordReset = async () => {
+    if (!editing.email) return toast({ title: "No email set" });
+    const { error } = await supabase.auth.resetPasswordForEmail(editing.email);
+    if (error) toast({ title: "Couldn't send reset", description: error.message, variant: "destructive" });
+    else toast({ title: "Reset email sent", description: "Check your inbox to set a new password." });
+  };
+
+  const handleDeleteAccount = () => {
+    if (!confirm("This will permanently delete your account and all data. Continue?")) return;
+    toast({
+      title: "Request received",
+      description: "To finalise deletion, please contact support@talkco.uk. Your data will be removed within 30 days.",
+    });
+  };
+
   const canonical = useMemo(() => `${window.location.origin}/profile`, []);
 
   const PostCard = ({ post, pinned }: { post: PostRow; pinned?: boolean }) => {
@@ -226,21 +319,11 @@ export default function Profile() {
       <article className={`rounded-xl border p-4 transition-shadow hover:shadow-sm animate-fade-in ${pinned ? "bg-primary/5 border-primary/30" : "bg-card"}`}>
         <header className="flex items-center justify-between gap-2 mb-2">
           <div className="flex items-center gap-2 text-xs">
-            {pinned && (
-              <span className="inline-flex items-center gap-1 rounded-full bg-primary/15 px-2 py-0.5 text-primary font-medium">
-                <Pin className="h-3 w-3" /> Pinned
-              </span>
-            )}
-            {tag && (
-              <span className="inline-flex items-center rounded-full bg-primary/10 px-2 py-0.5 text-primary">#{tag}</span>
-            )}
+            {pinned && <span className="inline-flex items-center gap-1 rounded-full bg-primary/15 px-2 py-0.5 text-primary font-medium"><Pin className="h-3 w-3" /> Pinned</span>}
+            {tag && <span className="inline-flex items-center rounded-full bg-primary/10 px-2 py-0.5 text-primary">#{tag}</span>}
             <span className="text-muted-foreground">{new Date(post.created_at).toLocaleDateString()}</span>
           </div>
-          <button
-            onClick={() => togglePin(post.id)}
-            className={`p-1 rounded transition-colors ${pinned ? "text-primary" : "text-muted-foreground hover:text-foreground"}`}
-            title={pinned ? "Unpin" : "Pin to profile"}
-          >
+          <button onClick={() => togglePin(post.id)} className={`p-1 rounded transition-colors ${pinned ? "text-primary" : "text-muted-foreground hover:text-foreground"}`} title={pinned ? "Unpin" : "Pin to profile"}>
             <Pin className="h-3.5 w-3.5" />
           </button>
         </header>
@@ -256,11 +339,7 @@ export default function Profile() {
   const GridTile = ({ post }: { post: PostRow }) => {
     const { meta, content } = parsePost(post.content);
     return (
-      <button
-        onClick={() => togglePin(post.id)}
-        className={`relative aspect-square rounded-lg border bg-gradient-to-br from-primary/10 to-primary/5 p-3 text-left overflow-hidden hover:shadow-sm transition ${pinnedId === post.id ? "ring-2 ring-primary" : ""}`}
-        title="Tap to pin/unpin"
-      >
+      <button onClick={() => togglePin(post.id)} className={`relative aspect-square rounded-lg border bg-gradient-to-br from-primary/10 to-primary/5 p-3 text-left overflow-hidden hover:shadow-sm transition ${pinnedId === post.id ? "ring-2 ring-primary" : ""}`} title="Tap to pin/unpin">
         {pinnedId === post.id && <Pin className="absolute top-2 right-2 h-3.5 w-3.5 text-primary" />}
         {meta?.tag && <div className="text-[10px] font-medium text-primary mb-1">#{meta.tag}</div>}
         <p className="text-xs text-foreground/80 line-clamp-5 leading-snug">{content}</p>
@@ -284,12 +363,7 @@ export default function Profile() {
       <section className="animate-fade-in">
         <div className="relative rounded-2xl overflow-hidden shadow-elev" style={{ background: banner.css, minHeight: 160 }}>
           <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent" />
-          <Button
-            size="sm"
-            variant="secondary"
-            onClick={() => setEditOpen(true)}
-            className="absolute top-3 right-3 bg-white/90 hover:bg-white text-primary border-0 shadow-sm"
-          >
+          <Button size="sm" variant="secondary" onClick={() => setEditOpen(true)} className="absolute top-3 right-3 bg-white/90 hover:bg-white text-primary border-0 shadow-sm">
             <Pencil className="h-3.5 w-3.5 mr-1" /> Edit Profile
           </Button>
         </div>
@@ -297,7 +371,8 @@ export default function Profile() {
         <div className="relative px-2 sm:px-4 -mt-12 sm:-mt-10 flex items-end gap-4">
           <button
             onClick={() => setAvatarOpen(true)}
-            className="flex-shrink-0 rounded-full ring-4 ring-background bg-background transition hover:scale-105"
+            className="flex-shrink-0 rounded-full bg-background transition hover:scale-105 p-1"
+            style={{ boxShadow: `0 0 0 3px ${ringColor}, 0 0 0 6px hsl(var(--background))` }}
             aria-label="Change avatar"
           >
             <Avatar className="h-20 w-20 sm:h-24 sm:w-24">
@@ -306,20 +381,35 @@ export default function Profile() {
             </Avatar>
           </button>
           <div className="pb-1 sm:pb-2 min-w-0 flex-1">
-            <h1 className="text-xl sm:text-2xl font-bold truncate">{displayName}</h1>
-            <p className="inline-flex items-center gap-1 text-[11px] text-muted-foreground">
-              <Lock className="h-3 w-3" /> Your profile is only visible to Talk members
-            </p>
+            <div className="flex items-center gap-2 flex-wrap">
+              <h1 className="text-xl sm:text-2xl font-bold truncate">{displayName}</h1>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <button className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-xs transition hover:bg-muted ${vibe ? "bg-primary/10 border-primary/30 text-primary" : "text-muted-foreground"}`}>
+                    {vibe ? <><span>{vibe.emoji}</span><span>{vibe.label}</span></> : <><Sparkles className="h-3 w-3" /> Set vibe</>}
+                  </button>
+                </PopoverTrigger>
+                <PopoverContent className="w-56 p-2">
+                  <p className="text-xs font-medium text-muted-foreground px-2 py-1">Current vibe</p>
+                  <div className="grid gap-1">
+                    {VIBES.map(v => (
+                      <button key={v.label} onClick={() => updateVibe(v)} className={`flex items-center gap-2 rounded px-2 py-1.5 text-sm hover:bg-muted text-left ${vibe?.label === v.label ? "bg-primary/10 text-primary" : ""}`}>
+                        <span className="text-lg">{v.emoji}</span><span>{v.label}</span>
+                      </button>
+                    ))}
+                    {vibe && <button onClick={() => updateVibe(null)} className="text-xs text-muted-foreground px-2 py-1 hover:text-foreground text-left">Clear vibe</button>}
+                  </div>
+                </PopoverContent>
+              </Popover>
+            </div>
+            <p className="inline-flex items-center gap-1 text-[11px] text-muted-foreground"><Lock className="h-3 w-3" /> Your profile is only visible to Talk members</p>
             {bio && <p className="mt-1 text-sm text-foreground/80 line-clamp-2">{bio}</p>}
           </div>
         </div>
 
-        {/* Topic badges */}
-        {topTags.length > 0 && (
+        {prefs.publicTopics && topTags.length > 0 && (
           <div className="mt-3 px-2 sm:px-4 flex flex-wrap gap-1.5">
-            {topTags.map(t => (
-              <span key={t} className="rounded-full bg-primary/10 text-primary text-xs px-2.5 py-0.5">#{t}</span>
-            ))}
+            {topTags.map(t => <span key={t} className="rounded-full bg-primary/10 text-primary text-xs px-2.5 py-0.5">#{t}</span>)}
           </div>
         )}
       </section>
@@ -327,48 +417,66 @@ export default function Profile() {
       {/* Stats bar */}
       {userId && (
         <section className="mt-5 grid grid-cols-3 rounded-xl border bg-card divide-x animate-fade-in">
-          <div className="text-center py-4">
-            <p className="text-2xl font-bold">{posts.length}</p>
-            <p className="text-[11px] uppercase tracking-wide text-muted-foreground mt-0.5">Posts</p>
-          </div>
-          <div className="text-center py-4">
-            <p className="text-2xl font-bold">{commentCount}</p>
-            <p className="text-[11px] uppercase tracking-wide text-muted-foreground mt-0.5">Supportive Replies</p>
-          </div>
-          <div className="text-center py-4">
-            <p className="text-2xl font-bold">{daysWithTalk}</p>
-            <p className="text-[11px] uppercase tracking-wide text-muted-foreground mt-0.5">Days with Talk</p>
-          </div>
+          <div className="text-center py-4"><p className="text-2xl font-bold">{posts.length}</p><p className="text-[11px] uppercase tracking-wide text-muted-foreground mt-0.5">Posts</p></div>
+          <div className="text-center py-4"><p className="text-2xl font-bold">{commentCount}</p><p className="text-[11px] uppercase tracking-wide text-muted-foreground mt-0.5">Supportive Replies</p></div>
+          <div className="text-center py-4"><p className="text-2xl font-bold">{daysWithTalk}</p><p className="text-[11px] uppercase tracking-wide text-muted-foreground mt-0.5">Days with Talk</p></div>
         </section>
       )}
 
-      {/* Mood streak */}
-      {userId && (
+      {/* Streak */}
+      {userId && prefs.publicStreak && (
         <section className="mt-4 rounded-xl border bg-card p-4 animate-fade-in">
-          <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center justify-between mb-1 gap-2 flex-wrap">
             <div className="flex items-center gap-2">
-              <Sparkles className="h-4 w-4 text-primary" />
-              <h2 className="text-sm font-semibold">This week</h2>
+              <h2 className="text-sm font-semibold">Your Check-in Streak 🔥</h2>
             </div>
-            <p className="text-xs text-muted-foreground">
-              {streak.filter(d => d.active).length} of 7 days active
-            </p>
+            <p className="text-lg font-bold text-primary">{currentStreak} day{currentStreak === 1 ? "" : "s"} streak!</p>
           </div>
+          <p className="text-xs text-muted-foreground mb-3 inline-flex items-center gap-1"><Info className="h-3 w-3" /> A day counts when you post, reply, or chat with Willow.</p>
           <div className="flex items-center justify-between gap-1">
-            {streak.map((d, i) => (
+            {weekStreak.map((d, i) => (
               <div key={i} className="flex flex-col items-center gap-1.5 flex-1">
-                <div
-                  className={`h-9 w-9 rounded-full flex items-center justify-center text-xs font-medium transition-all
-                    ${d.active
-                      ? "bg-primary text-primary-foreground shadow-sm"
-                      : "bg-muted text-muted-foreground"}
-                    ${d.isToday && !d.active ? "ring-2 ring-primary/40" : ""}`}
-                >
-                  {d.active ? <Check className="h-4 w-4" /> : d.label}
+                <div className={`h-9 w-9 rounded-full flex items-center justify-center text-xs font-medium transition-all
+                    ${d.active ? "bg-primary text-primary-foreground shadow-sm" : "bg-muted text-muted-foreground"}
+                    ${d.isToday && !d.active ? "ring-2 ring-primary/40" : ""}`}>
+                  {d.active ? <Flame className="h-4 w-4" /> : d.label}
                 </div>
                 <span className={`text-[10px] ${d.isToday ? "text-primary font-semibold" : "text-muted-foreground"}`}>{d.label}</span>
               </div>
             ))}
+          </div>
+        </section>
+      )}
+
+      {/* Badges */}
+      {userId && (
+        <section className="mt-4 rounded-xl border bg-card p-4 animate-fade-in">
+          <h2 className="text-sm font-semibold mb-3">Your Badges</h2>
+          <div className="grid grid-cols-5 gap-2">
+            {badges.map(b => (
+              <div key={b.id} className={`relative flex flex-col items-center gap-1 rounded-lg p-2 text-center transition ${b.unlocked ? "bg-primary/5" : "bg-muted/40 opacity-60"}`} title={b.label}>
+                <div className={`h-12 w-12 rounded-full flex items-center justify-center text-2xl ${b.unlocked ? "bg-gradient-to-br from-primary/20 to-primary/5" : "bg-background grayscale"}`}>
+                  {b.unlocked ? b.emoji : <LockIcon className="h-4 w-4 text-muted-foreground" />}
+                </div>
+                <p className="text-[10px] font-medium leading-tight">{b.label}</p>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* Willow sessions */}
+      {userId && (
+        <section className="mt-4 rounded-xl border bg-gradient-to-br from-primary/10 to-primary/5 p-4 animate-fade-in">
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <div className="h-10 w-10 rounded-full bg-primary/15 flex items-center justify-center"><Bot className="h-5 w-5 text-primary" /></div>
+              <div>
+                <p className="text-sm font-semibold">Your Willow Sessions</p>
+                <p className="text-xs text-muted-foreground">{willowSessions} conversation{willowSessions === 1 ? "" : "s"} so far</p>
+              </div>
+            </div>
+            <Button asChild size="sm" variant="hero"><Link to="/chat">Continue <ArrowRight className="h-3.5 w-3.5 ml-1" /></Link></Button>
           </div>
         </section>
       )}
@@ -379,23 +487,10 @@ export default function Profile() {
           <div className="flex items-center justify-between mb-3">
             <h2 className="text-sm font-semibold">Your posts</h2>
             <div className="inline-flex rounded-md border overflow-hidden">
-              <button
-                onClick={() => setView("feed")}
-                className={`p-2 ${view === "feed" ? "bg-primary text-primary-foreground" : "bg-background hover:bg-muted"}`}
-                aria-label="Feed view"
-              >
-                <Rows3 className="h-4 w-4" />
-              </button>
-              <button
-                onClick={() => setView("grid")}
-                className={`p-2 ${view === "grid" ? "bg-primary text-primary-foreground" : "bg-background hover:bg-muted"}`}
-                aria-label="Grid view"
-              >
-                <LayoutGrid className="h-4 w-4" />
-              </button>
+              <button onClick={() => setView("feed")} className={`p-2 ${view === "feed" ? "bg-primary text-primary-foreground" : "bg-background hover:bg-muted"}`} aria-label="Feed view"><Rows3 className="h-4 w-4" /></button>
+              <button onClick={() => setView("grid")} className={`p-2 ${view === "grid" ? "bg-primary text-primary-foreground" : "bg-background hover:bg-muted"}`} aria-label="Grid view"><LayoutGrid className="h-4 w-4" /></button>
             </div>
           </div>
-
           {loading ? (
             <p className="text-sm text-muted-foreground">Loading…</p>
           ) : posts.length === 0 ? (
@@ -416,28 +511,46 @@ export default function Profile() {
         </section>
       )}
 
+      {/* Preferences */}
+      {userId && (
+        <section className="mt-6 rounded-xl border bg-card p-4 animate-fade-in">
+          <h2 className="text-sm font-semibold mb-3">Your Preferences</h2>
+          <div className="divide-y">
+            {[
+              { key: "publicStreak" as const, label: "Show my streak publicly", desc: "Display your check-in streak on your profile." },
+              { key: "allowReplies" as const, label: "Allow others to reply to my posts", desc: "Turn off to disable replies on new posts." },
+              { key: "notifyReplies" as const, label: "Receive supportive reply notifications", desc: "Get notified when someone responds." },
+              { key: "publicTopics" as const, label: "Show my topic badges publicly", desc: "Display the topics you post about most." },
+              { key: "anonByDefault" as const, label: "Anonymous mode by default on all posts", desc: "Start every new post anonymous." },
+            ].map(row => (
+              <div key={row.key} className="flex items-center justify-between gap-3 py-3">
+                <div className="min-w-0">
+                  <p className="text-sm font-medium">{row.label}</p>
+                  <p className="text-xs text-muted-foreground">{row.desc}</p>
+                </div>
+                <Switch checked={prefs[row.key]} onCheckedChange={(v) => updatePref(row.key, v)} />
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
       {/* Admin */}
       {isAdmin && (
         <section className="mt-6">
           <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2"><Shield className="h-5 w-5" /> System Settings</CardTitle>
-            </CardHeader>
+            <CardHeader><CardTitle className="flex items-center gap-2"><Shield className="h-5 w-5" /> System Settings</CardTitle></CardHeader>
             <CardContent>
               <div className="flex gap-3 flex-wrap">
                 <Dialog open={showSystemSettings} onOpenChange={setShowSystemSettings}>
-                  <DialogTrigger asChild>
-                    <Button variant="outline" className="flex items-center gap-2"><Shield className="h-4 w-4" /> System Settings</Button>
-                  </DialogTrigger>
+                  <DialogTrigger asChild><Button variant="outline" className="flex items-center gap-2"><Shield className="h-4 w-4" /> System Settings</Button></DialogTrigger>
                   <DialogContent className="max-w-6xl max-h-[90vh] flex flex-col">
                     <DialogHeader><DialogTitle>System Settings</DialogTitle><DialogDescription>Manage configuration, privacy policy, and user roles</DialogDescription></DialogHeader>
                     <div className="flex-1 overflow-y-auto min-h-0 pr-2"><WillowAdmin /></div>
                   </DialogContent>
                 </Dialog>
                 <Dialog open={showReports} onOpenChange={setShowReports}>
-                  <DialogTrigger asChild>
-                    <Button variant="outline" className="flex items-center gap-2"><AlertTriangle className="h-4 w-4" /> View User Reports</Button>
-                  </DialogTrigger>
+                  <DialogTrigger asChild><Button variant="outline" className="flex items-center gap-2"><AlertTriangle className="h-4 w-4" /> View User Reports</Button></DialogTrigger>
                   <DialogContent className="max-w-4xl max-h-[90vh] flex flex-col">
                     <DialogHeader><DialogTitle>User Reports Management</DialogTitle><DialogDescription>Review and manage reports submitted by community members</DialogDescription></DialogHeader>
                     <div className="flex-1 overflow-y-auto min-h-0 pr-2"><ReportsAdmin /></div>
@@ -449,30 +562,49 @@ export default function Profile() {
         </section>
       )}
 
+      {/* Account / Danger zone */}
+      {userId && (
+        <section className="mt-6 mb-10 rounded-xl border bg-muted/30 animate-fade-in">
+          <button onClick={() => setAccountOpen(o => !o)} className="w-full flex items-center justify-between gap-2 p-4 text-left">
+            <span className="text-sm font-semibold text-muted-foreground">Account</span>
+            <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform ${accountOpen ? "rotate-180" : ""}`} />
+          </button>
+          {accountOpen && (
+            <div className="border-t p-4 grid gap-2 sm:grid-cols-2">
+              <Button variant="outline" className="justify-start" onClick={() => setEditOpen(true)}><Mail className="h-4 w-4 mr-2" /> Change email</Button>
+              <Button variant="outline" className="justify-start" onClick={handlePasswordReset}><Key className="h-4 w-4 mr-2" /> Change password</Button>
+              <Button variant="outline" className="justify-start" onClick={handleDownloadData}><Download className="h-4 w-4 mr-2" /> Download my data</Button>
+              <Button variant="outline" className="justify-start text-destructive hover:text-destructive" onClick={handleDeleteAccount}><Trash2 className="h-4 w-4 mr-2" /> Delete account</Button>
+            </div>
+          )}
+        </section>
+      )}
+
       {/* Edit profile modal */}
       <Dialog open={editOpen} onOpenChange={setEditOpen}>
         <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>Edit profile</DialogTitle>
-            <DialogDescription>Customise how you appear in Talk. Your details stay private.</DialogDescription>
-          </DialogHeader>
+          <DialogHeader><DialogTitle>Edit profile</DialogTitle><DialogDescription>Customise how you appear in Talk. Your details stay private.</DialogDescription></DialogHeader>
           <div className="grid gap-4">
             <div className="grid gap-2">
               <Label>Banner style</Label>
               <div className="grid grid-cols-3 gap-2">
                 {BANNER_PRESETS.map(b => (
-                  <button
-                    key={b.id}
-                    onClick={() => setBannerId(b.id)}
-                    className={`relative h-14 rounded-lg overflow-hidden ring-offset-2 transition ${bannerId === b.id ? "ring-2 ring-primary" : "ring-1 ring-border"}`}
-                    style={{ background: b.css }}
-                    aria-label={b.label}
-                  >
+                  <button key={b.id} onClick={() => setBannerId(b.id)} className={`relative h-14 rounded-lg overflow-hidden ring-offset-2 transition ${bannerId === b.id ? "ring-2 ring-primary" : "ring-1 ring-border"}`} style={{ background: b.css }} aria-label={b.label}>
                     {bannerId === b.id && <Check className="absolute bottom-1 right-1 h-3.5 w-3.5 text-white drop-shadow" />}
                   </button>
                 ))}
               </div>
             </div>
+
+            <div className="grid gap-2">
+              <Label>Avatar ring colour</Label>
+              <div className="flex flex-wrap gap-2">
+                {RING_COLORS.map(c => (
+                  <button key={c} onClick={() => setRingColor(c)} className={`h-8 w-8 rounded-full border-2 transition ${ringColor === c ? "border-foreground scale-110" : "border-transparent"}`} style={{ backgroundColor: c }} aria-label={`Ring ${c}`} />
+                ))}
+              </div>
+            </div>
+
             <div className="grid gap-2">
               <Label htmlFor="display_name">Display name</Label>
               <Input id="display_name" value={editing.display_name} onChange={(e) => setEditing(v => ({ ...v, display_name: e.target.value }))} placeholder="How others will see you" className="text-base min-h-[44px]" />
@@ -486,14 +618,8 @@ export default function Profile() {
             <details className="text-sm">
               <summary className="cursor-pointer text-muted-foreground hover:text-foreground">Advanced (private — only you see these)</summary>
               <div className="mt-3 grid gap-3">
-                <div className="grid gap-2">
-                  <Label htmlFor="full_name">Full name</Label>
-                  <Input id="full_name" value={editing.full_name} onChange={(e) => setEditing(v => ({ ...v, full_name: e.target.value }))} placeholder="Your name" />
-                </div>
-                <div className="grid gap-2">
-                  <Label htmlFor="email">Email</Label>
-                  <Input id="email" type="email" value={editing.email} onChange={(e) => setEditing(v => ({ ...v, email: e.target.value }))} placeholder="you@example.com" />
-                </div>
+                <div className="grid gap-2"><Label htmlFor="full_name">Full name</Label><Input id="full_name" value={editing.full_name} onChange={(e) => setEditing(v => ({ ...v, full_name: e.target.value }))} placeholder="Your name" /></div>
+                <div className="grid gap-2"><Label htmlFor="email">Email</Label><Input id="email" type="email" value={editing.email} onChange={(e) => setEditing(v => ({ ...v, email: e.target.value }))} placeholder="you@example.com" /></div>
               </div>
             </details>
           </div>
@@ -507,10 +633,7 @@ export default function Profile() {
       {/* Avatar picker */}
       <Dialog open={avatarOpen} onOpenChange={setAvatarOpen}>
         <DialogContent className="max-w-2xl">
-          <DialogHeader>
-            <DialogTitle>Choose your avatar</DialogTitle>
-            <DialogDescription>Photos are optional — emoji and illustrated avatars keep you anonymous.</DialogDescription>
-          </DialogHeader>
+          <DialogHeader><DialogTitle>Choose your avatar</DialogTitle><DialogDescription>Photos are optional — emoji and illustrated avatars keep you anonymous.</DialogDescription></DialogHeader>
           <AvatarPicker builtIn={presetAvatars} onSelect={choosePreset} />
         </DialogContent>
       </Dialog>
