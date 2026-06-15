@@ -221,82 +221,120 @@ const [editing, setEditing] = useState({
         <link rel="canonical" href={canonical} />
       </Helmet>
 
-      <header className="mb-6">
-        <h1 className="text-3xl font-bold">User Profile</h1>
+      <header className="mb-6 animate-fade-in">
+        <h1 className="text-2xl sm:text-3xl font-bold">Your Profile</h1>
+        <p className="text-sm text-muted-foreground mt-1">Your space — anonymous by default.</p>
       </header>
 
-      <section className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      {/* Your Journey stats */}
+      {userId && (
+        <section className="grid grid-cols-3 gap-2 sm:gap-4 mb-6 animate-fade-in">
+          <Card className="text-center">
+            <CardContent className="p-3 sm:p-5">
+              <Calendar className="h-5 w-5 mx-auto text-primary mb-1" />
+              <p className="text-xl sm:text-2xl font-bold">
+                {accountCreatedAt
+                  ? Math.max(1, Math.floor((Date.now() - new Date(accountCreatedAt).getTime()) / 86400000))
+                  : 1}
+              </p>
+              <p className="text-[11px] sm:text-xs text-muted-foreground">days with Talk</p>
+            </CardContent>
+          </Card>
+          <Card className="text-center">
+            <CardContent className="p-3 sm:p-5">
+              <FileText className="h-5 w-5 mx-auto text-primary mb-1" />
+              <p className="text-xl sm:text-2xl font-bold">{postCount}</p>
+              <p className="text-[11px] sm:text-xs text-muted-foreground">posts shared</p>
+            </CardContent>
+          </Card>
+          <Card className="text-center">
+            <CardContent className="p-3 sm:p-5">
+              <MessageCircle className="h-5 w-5 mx-auto text-primary mb-1" />
+              <p className="text-xl sm:text-2xl font-bold">{commentCount}</p>
+              <p className="text-[11px] sm:text-xs text-muted-foreground">supportive replies</p>
+            </CardContent>
+          </Card>
+        </section>
+      )}
+
+      <section className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6">
         <Card className="md:col-span-1">
           <CardHeader>
-            <CardTitle>Profile Picture</CardTitle>
+            <CardTitle className="flex items-center gap-2">
+              <Sparkles className="h-4 w-4 text-primary" />
+              Avatar
+            </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="flex flex-col items-center gap-4">
               <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
                 <DialogTrigger asChild>
-                  <button aria-label="Change avatar" className="rounded-full focus:outline-none focus:ring-2 focus:ring-ring">
-                    <Avatar className="h-24 w-24">
+                  <button aria-label="Change avatar" className="rounded-full focus:outline-none focus:ring-2 focus:ring-ring transition hover:scale-105">
+                    <Avatar className="h-24 w-24 shadow-elev">
                       <AvatarImage src={avatarUrl || undefined} alt="User avatar" />
-                      <AvatarFallback>{editing.full_name?.[0]?.toUpperCase() || "U"}</AvatarFallback>
+                      <AvatarFallback className="text-2xl">{editing.display_name?.[0]?.toUpperCase() || editing.full_name?.[0]?.toUpperCase() || "U"}</AvatarFallback>
                     </Avatar>
                   </button>
                 </DialogTrigger>
                 <DialogContent className="max-w-2xl">
                   <DialogHeader>
-                    <DialogTitle>Update your avatar</DialogTitle>
-                    <DialogDescription>Select a built-in style or upload your own image.</DialogDescription>
+                    <DialogTitle>Choose your avatar</DialogTitle>
+                    <DialogDescription>For your privacy, photos are optional — emoji and illustrated avatars keep you anonymous.</DialogDescription>
                   </DialogHeader>
-                  <Tabs defaultValue="upload">
-                    <TabsList>
-                      <TabsTrigger value="upload">Upload</TabsTrigger>
-                      <TabsTrigger value="choose">Choose</TabsTrigger>
-                    </TabsList>
-                    <TabsContent value="upload" className="space-y-4">
-                      <p className="text-sm text-muted-foreground">Upload a square image for best results.</p>
-                      <Input type="file" accept="image/*" onChange={onFileChange} />
-                    </TabsContent>
-                    <TabsContent value="choose" className="mt-4">
-                      <AvatarPicker builtIn={presetAvatars} onSelect={choosePreset} />
-                    </TabsContent>
-                  </Tabs>
+                  <AvatarPicker builtIn={presetAvatars} onSelect={choosePreset} />
                 </DialogContent>
               </Dialog>
-              <p className="text-sm text-muted-foreground">Click the image to upload or choose an avatar.</p>
+              <p className="text-xs text-muted-foreground text-center">Tap to change. No photo required.</p>
             </div>
           </CardContent>
         </Card>
 
         <Card className="md:col-span-2">
           <CardHeader>
-            <CardTitle>Account Information</CardTitle>
+            <CardTitle>About You</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="grid gap-4">
               <div className="grid gap-2">
-                <Label htmlFor="full_name">Full name</Label>
-                <Input id="full_name" value={editing.full_name} onChange={(e) => setEditing((v) => ({ ...v, full_name: e.target.value }))} placeholder="Your name" />
+                <Label htmlFor="display_name">Display name</Label>
+                <Input
+                  id="display_name"
+                  value={editing.display_name}
+                  onChange={(e) => setEditing((v) => ({ ...v, display_name: e.target.value }))}
+                  placeholder="How others will see you"
+                  className="text-base min-h-[44px]"
+                />
+                <p className="text-xs text-muted-foreground">Leave blank to appear as Anonymous.</p>
               </div>
               <div className="grid gap-2">
-                <Label htmlFor="display_name">Display name (optional)</Label>
-                <Input id="display_name" value={editing.display_name} onChange={(e) => setEditing((v) => ({ ...v, display_name: e.target.value }))} placeholder="Shown instead of your name" />
-                <p className="text-xs text-muted-foreground">Leave blank to appear as Anonymous in posts and chats.</p>
+                <Label htmlFor="bio">Short bio</Label>
+                <Textarea
+                  id="bio"
+                  value={bio}
+                  onChange={(e) => setBio(e.target.value.slice(0, 160))}
+                  placeholder="A sentence or two about yourself…"
+                  rows={3}
+                  className="text-base"
+                />
+                <p className="text-xs text-muted-foreground text-right">{bio.length}/160</p>
               </div>
-              <div className="grid gap-2">
-                <Label htmlFor="email">Email</Label>
-                <Input id="email" type="email" value={editing.email} onChange={(e) => setEditing((v) => ({ ...v, email: e.target.value }))} placeholder="you@example.com" />
-              </div>
-              <div className="grid gap-2 md:grid-cols-2">
-                <div className="grid gap-2">
-                  <Label htmlFor="phone">Phone</Label>
-                  <Input id="phone" value={editing.phone} onChange={(e) => setEditing((v) => ({ ...v, phone: e.target.value }))} placeholder="Optional" />
+              <details className="text-sm">
+                <summary className="cursor-pointer text-muted-foreground hover:text-foreground">Advanced (private — only you see these)</summary>
+                <div className="mt-3 grid gap-3">
+                  <div className="grid gap-2">
+                    <Label htmlFor="full_name">Full name</Label>
+                    <Input id="full_name" value={editing.full_name} onChange={(e) => setEditing((v) => ({ ...v, full_name: e.target.value }))} placeholder="Your name" />
+                  </div>
+                  <div className="grid gap-2">
+                    <Label htmlFor="email">Email</Label>
+                    <Input id="email" type="email" value={editing.email} onChange={(e) => setEditing((v) => ({ ...v, email: e.target.value }))} placeholder="you@example.com" />
+                  </div>
                 </div>
-                <div className="grid gap-2">
-                  <Label htmlFor="address">Address</Label>
-                  <Input id="address" value={editing.address} onChange={(e) => setEditing((v) => ({ ...v, address: e.target.value }))} placeholder="Optional" />
-                </div>
-              </div>
+              </details>
               <div>
-                <Button onClick={handleSave} disabled={loading}>{loading ? "Saving..." : "Save changes"}</Button>
+                <Button onClick={handleSave} disabled={loading} variant="hero" className="min-h-[44px]">
+                  {loading ? "Saving..." : "Save changes"}
+                </Button>
               </div>
             </div>
           </CardContent>
