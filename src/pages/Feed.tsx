@@ -355,12 +355,12 @@ const loadPosts = async () => {
         <link rel="canonical" href="/feed" />
       </Helmet>
 
-      <section className="surface-card p-6">
-        <h1 className="text-3xl font-bold">Community Feed</h1>
-        <p className="mt-2 text-muted-foreground">Post your thoughts anonymously and receive supportive comments.</p>
+      <section className="surface-card p-4 sm:p-6">
+        <h1 className="text-2xl sm:text-3xl font-bold">Community Feed</h1>
+        <p className="mt-2 text-muted-foreground text-sm sm:text-base">Post your thoughts anonymously and receive supportive comments.</p>
 
         {/* Composer */}
-        <div className="mt-6 rounded-lg border bg-background p-4">
+        <div className="mt-6 rounded-lg border bg-background p-3 sm:p-4">
           {!sessionUserId ? (
             <p className="text-muted-foreground">Please sign in to post and comment. You can still read the feed.</p>
           ) : null}
@@ -368,10 +368,25 @@ const loadPosts = async () => {
             placeholder="Share what's on your mind..."
             value={newPost}
             onChange={(e) => setNewPost(e.target.value)}
-            className="mt-2"
+            className="mt-2 text-base"
+            rows={3}
           />
-          <div className="mt-3 flex justify-end">
-            <Button variant="hero" onClick={handleCreatePost} disabled={!canPost || isChecking} aria-label="Publish post">
+          <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
+            <label className="flex items-center gap-2 text-sm text-muted-foreground cursor-pointer">
+              <Switch checked={contentWarning} onCheckedChange={setContentWarning} aria-label="Add content warning" />
+              <span className="inline-flex items-center gap-1">
+                <AlertTriangle className="h-3.5 w-3.5" />
+                Content warning
+              </span>
+            </label>
+            <Button
+              variant="hero"
+              size="lg"
+              onClick={handleCreatePost}
+              disabled={!canPost || isChecking}
+              aria-label="Publish post"
+              className="min-h-[44px]"
+            >
               {posting || isChecking ? "Posting..." : "Post"}
             </Button>
           </div>
