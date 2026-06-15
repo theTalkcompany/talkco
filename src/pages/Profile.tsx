@@ -67,16 +67,27 @@ const [editing, setEditing] = useState({
       }
       if (!mounted) return;
       setUserId(uid);
-      
-      // Load profile
-      const { data, error } = await supabase
-        .from("profiles")
-        .select("user_id, full_name, display_name, email, phone, address, avatar_url")
-        .eq("user_id", uid)
-        .maybeSingle();
-      if (error) {
-        console.error(error);
-        toast({ title: "Failed to load profile", description: error.message, variant: "destructive" });
+      setAccountCreatedAt(session?.user?.created_at ?? null);
+
+      // Load bio from localStorage
+      const localBio = localStorage.getItem(`talkco_bio_${uid}`) || "";
+      setBio(localBio);
+
+      // Load profile + stats in parallel
+      const [profileRes, postsRes, commentsRes] = await Promise.all([
+        supabase
+          .from("profiles")
+          .select("user_id, full_name, display_name, email, phone, address, avatar_url")
+          .eq("user_id", uid)
+          .maybeSingle(),
+        supabase.from("posts").select("id", { count: "exact", head: true }).eq("user_id", uid),
+        supabase.from("comments").select("id", { count: "exact", head: true }).eq("user_id", uid),
+      ]);
+
+      const data = profileRes.data;
+      if (profileRes.error) {
+        console.error(profileRes.error);
+        toast({ title: "Failed to load profile", description: profileRes.error.message, variant: "destructive" });
       }
       if (mounted) {
         setProfile(data as ProfileRow | null);
@@ -88,6 +99,8 @@ const [editing, setEditing] = useState({
           address: (data?.address as string) || "",
         });
         setAvatarUrl((data?.avatar_url as string) || null);
+        setPostCount(postsRes.count || 0);
+        setCommentCount(commentsRes.count || 0);
         setLoading(false);
       }
     };
