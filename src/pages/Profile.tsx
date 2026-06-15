@@ -12,6 +12,8 @@ import { useToast } from "@/components/ui/use-toast";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
   Shield, AlertTriangle, Heart, MessageCircle, Pencil, Lock, LayoutGrid, Rows3, Pin, Sparkles, Check,
   Flame, Lock as LockIcon, ChevronDown, Download, Mail, Key, Trash2, Bot, ArrowRight, Info,
