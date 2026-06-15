@@ -297,7 +297,9 @@ export default function Profile() {
   };
 
   const handlePasswordReset = async () => {
-    if (!editing.email) return toast({ title: "No email set" });
+    if (!editing.email || editing.email.endsWith("@talkco.app")) {
+      return toast({ title: "Connect your email to enable password reset", description: "Add a real email in Edit Profile → Advanced." });
+    }
     const { error } = await supabase.auth.resetPasswordForEmail(editing.email);
     if (error) toast({ title: "Couldn't send reset", description: error.message, variant: "destructive" });
     else toast({ title: "Reset email sent", description: "Check your inbox to set a new password." });
