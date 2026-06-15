@@ -343,36 +343,46 @@ const CommunityRooms = () => {
         </Dialog>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        {rooms.map((room) => (
-          <Card key={room.id} className="hover:shadow-md transition-shadow">
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <CardTitle className="text-lg">#{room.name}</CardTitle>
-                <Badge variant="secondary" className="flex items-center gap-1">
-                  <Users className="h-3 w-3" />
-                  {room.participant_count}
-                </Badge>
-              </div>
-              <CardDescription>
-                {room.description}
-                <div className="mt-2 flex items-center gap-2">
-                  <Badge variant="outline" className="text-xs">
-                    Ages {room.age_min}-{room.age_max}
-                  </Badge>
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        {rooms.map((room) => {
+          const empty = (room.participant_count ?? 0) === 0;
+          return (
+            <Card key={room.id} className="hover:shadow-md transition-shadow animate-fade-in">
+              <CardHeader>
+                <div className="flex items-center justify-between gap-2">
+                  <CardTitle className="text-lg">#{room.name}</CardTitle>
+                  {!empty && (
+                    <Badge variant="secondary" className="flex items-center gap-1 flex-shrink-0">
+                      <Users className="h-3 w-3" />
+                      {room.participant_count}
+                    </Badge>
+                  )}
                 </div>
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Button 
-                onClick={() => handleJoinRoom(room)}
-                className="w-full"
-              >
-                Join Room
-              </Button>
-            </CardContent>
-          </Card>
-        ))}
+                <CardDescription>
+                  {room.description}
+                  <div className="mt-2 flex items-center gap-2">
+                    <Badge variant="outline" className="text-xs">
+                      Ages {room.age_min}-{room.age_max}
+                    </Badge>
+                  </div>
+                  {empty && (
+                    <p className="mt-3 text-sm text-primary font-medium">
+                      ✨ Be the first — join the conversation
+                    </p>
+                  )}
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Button
+                  onClick={() => handleJoinRoom(room)}
+                  className="w-full min-h-[44px]"
+                >
+                  {empty ? "Start the conversation" : "Join Room"}
+                </Button>
+              </CardContent>
+            </Card>
+          );
+        })}
       </div>
       
       {rooms.length === 0 && (

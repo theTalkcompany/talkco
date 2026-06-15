@@ -6,7 +6,9 @@ import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { ReportDialog } from "@/components/feed/ReportDialog";
 import { useContentModeration } from "@/hooks/useContentModeration";
-import { Pencil, Trash2, Save, X, Flag } from "lucide-react";
+import { Pencil, Trash2, Save, X, Flag, AlertTriangle, EyeOff, Eye } from "lucide-react";
+import CommunityGuidelinesModal from "@/components/feed/CommunityGuidelinesModal";
+import { Switch } from "@/components/ui/switch";
 
 interface LikeRow { id: string; user_id: string }
 interface CommentRow { id: string; content: string; user_id: string; created_at: string }
@@ -49,6 +51,12 @@ const [reportDialog, setReportDialog] = useState<{
 const [editing, setEditing] = useState<{[key: string]: boolean}>({});
 const [editingContent, setEditingContent] = useState<{[key: string]: string}>({});
 const [deleting, setDeleting] = useState<{[key: string]: boolean}>({});
+const [contentWarning, setContentWarning] = useState(false);
+const [guidelinesOpen, setGuidelinesOpen] = useState(false);
+const [pendingPost, setPendingPost] = useState(false);
+const [revealed, setRevealed] = useState<Record<string, boolean>>({});
+
+const CW_MARKER = "⚠️ [Content warning]";
 
   useEffect(() => {
     const init = async () => {
@@ -97,6 +105,8 @@ const loadPosts = async () => {
 
   const canPost = useMemo(() => !!sessionUserId && newPost.trim().length > 0 && !posting, [sessionUserId, newPost, posting]);
 
+  const guidelinesKey = useMemo(() => sessionUserId ? `talkco_feed_guidelines_${sessionUserId}` : "", [sessionUserId]);
+
   const handleCreatePost = async () => {
     if (!sessionUserId) {
       toast({ title: "Sign in required", description: "Please sign in to share a post." });
@@ -104,29 +114,55 @@ const loadPosts = async () => {
     }
     const content = newPost.trim();
     if (!content) return;
-    
+
+    // Show one-time guidelines modal before first post
+    if (guidelinesKey && !localStorage.getItem(guidelinesKey)) {
+      setPendingPost(true);
+      setGuidelinesOpen(true);
+      return;
+    }
+
+    await actuallyPost(content);
+  };
+
+  const actuallyPost = async (content: string) => {
+    if (!sessionUserId) return;
     setPosting(true);
-    
-    // Create the post first
+    const finalContent = contentWarning ? `${CW_MARKER} ${content}` : content;
+
     const { data: newPostData, error } = await supabase
       .from("posts")
-      .insert({ content, user_id: sessionUserId })
+      .insert({ content: finalContent, user_id: sessionUserId })
       .select()
       .single();
-      
+
     if (error) {
       toast({ title: "Couldn't post", description: error.message, variant: "destructive" });
       setPosting(false);
       return;
     }
-    
-    // Then moderate the content
-    await moderateContent(content, sessionUserId, 'post', newPostData.id);
-    
+
+    await moderateContent(finalContent, sessionUserId, 'post', newPostData.id);
+
     setNewPost("");
+    setContentWarning(false);
     toast({ title: "Posted", description: "Your post is now live." });
     await loadPosts();
     setPosting(false);
+  };
+
+  const acceptGuidelines = async () => {
+    if (guidelinesKey) localStorage.setItem(guidelinesKey, "1");
+    setGuidelinesOpen(false);
+    if (pendingPost) {
+      setPendingPost(false);
+      await actuallyPost(newPost.trim());
+    }
+  };
+
+  const cancelGuidelines = () => {
+    setGuidelinesOpen(false);
+    setPendingPost(false);
   };
 
   const toggleLike = async (post: PostRow) => {
@@ -319,12 +355,12 @@ const loadPosts = async () => {
         <link rel="canonical" href="/feed" />
       </Helmet>
 
-      <section className="surface-card p-6">
-        <h1 className="text-3xl font-bold">Community Feed</h1>
-        <p className="mt-2 text-muted-foreground">Post your thoughts anonymously and receive supportive comments.</p>
+      <section className="surface-card p-4 sm:p-6">
+        <h1 className="text-2xl sm:text-3xl font-bold">Community Feed</h1>
+        <p className="mt-2 text-muted-foreground text-sm sm:text-base">Post your thoughts anonymously and receive supportive comments.</p>
 
         {/* Composer */}
-        <div className="mt-6 rounded-lg border bg-background p-4">
+        <div className="mt-6 rounded-lg border bg-background p-3 sm:p-4">
           {!sessionUserId ? (
             <p className="text-muted-foreground">Please sign in to post and comment. You can still read the feed.</p>
           ) : null}
@@ -332,10 +368,25 @@ const loadPosts = async () => {
             placeholder="Share what's on your mind..."
             value={newPost}
             onChange={(e) => setNewPost(e.target.value)}
-            className="mt-2"
+            className="mt-2 text-base"
+            rows={3}
           />
-          <div className="mt-3 flex justify-end">
-            <Button variant="hero" onClick={handleCreatePost} disabled={!canPost || isChecking} aria-label="Publish post">
+          <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
+            <label className="flex items-center gap-2 text-sm text-muted-foreground cursor-pointer">
+              <Switch checked={contentWarning} onCheckedChange={setContentWarning} aria-label="Add content warning" />
+              <span className="inline-flex items-center gap-1">
+                <AlertTriangle className="h-3.5 w-3.5" />
+                Content warning
+              </span>
+            </label>
+            <Button
+              variant="hero"
+              size="lg"
+              onClick={handleCreatePost}
+              disabled={!canPost || isChecking}
+              aria-label="Publish post"
+              className="min-h-[44px]"
+            >
               {posting || isChecking ? "Posting..." : "Post"}
             </Button>
           </div>
@@ -405,9 +456,42 @@ const loadPosts = async () => {
                         </Button>
                       </div>
                     </div>
-                  ) : (
-                    <p className="mt-2 text-foreground/90 whitespace-pre-wrap">{post.content}</p>
-                  )}
+                  ) : (() => {
+                    const hasCW = post.content.startsWith(CW_MARKER);
+                    const displayContent = hasCW ? post.content.slice(CW_MARKER.length).trim() : post.content;
+                    const isRevealed = revealed[post.id];
+                    if (hasCW && !isRevealed) {
+                      return (
+                        <div className="mt-2 rounded-md border border-dashed bg-muted/40 p-4 text-center">
+                          <p className="text-sm font-medium text-foreground/80 flex items-center justify-center gap-2">
+                            <AlertTriangle className="h-4 w-4 text-amber-500" />
+                            This post contains a content warning
+                          </p>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="mt-2"
+                            onClick={() => setRevealed((r) => ({ ...r, [post.id]: true }))}
+                          >
+                            <Eye className="h-3 w-3 mr-1" /> Show post
+                          </Button>
+                        </div>
+                      );
+                    }
+                    return (
+                      <div className="mt-2">
+                        {hasCW && (
+                          <button
+                            onClick={() => setRevealed((r) => ({ ...r, [post.id]: false }))}
+                            className="mb-2 inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
+                          >
+                            <EyeOff className="h-3 w-3" /> Hide content warning post
+                          </button>
+                        )}
+                        <p className="text-foreground/90 whitespace-pre-wrap">{displayContent}</p>
+                      </div>
+                    );
+                  })()}
                   <div className="mt-3 flex items-center gap-3 text-sm text-muted-foreground">
                     <button
                       className={`inline-flex items-center gap-1 transition-colors ${likedByMe ? "text-primary" : "hover:text-foreground"}`}
@@ -553,6 +637,12 @@ const loadPosts = async () => {
         reportedUserId={reportDialog.reportedUserId}
         reportedContent={reportDialog.reportedContent}
         contentType={reportDialog.contentType}
+      />
+
+      <CommunityGuidelinesModal
+        open={guidelinesOpen}
+        onAccept={acceptGuidelines}
+        onCancel={cancelGuidelines}
       />
     </>
   );

@@ -1,5 +1,5 @@
 import { NavLink } from "react-router-dom";
-import { MessageCircle, FileText, HelpCircle } from "lucide-react";
+import { MessageCircle, FileText, HelpCircle, Home, User } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 
 const MobileBottomNav = () => {
@@ -8,42 +8,33 @@ const MobileBottomNav = () => {
   if (!isMobile) return null;
 
   const navItems = [
-    {
-      to: "/feed",
-      label: "Feed",
-      icon: FileText,
-    },
-    {
-      to: "/chat",
-      label: "Chat",
-      icon: MessageCircle,
-    },
-    {
-      to: "/help",
-      label: "Get Help",
-      icon: HelpCircle,
-    },
+    { to: "/", label: "Home", icon: Home },
+    { to: "/feed", label: "Feed", icon: FileText },
+    { to: "/chat", label: "Chat", icon: MessageCircle },
+    { to: "/help", label: "Help", icon: HelpCircle },
+    { to: "/profile", label: "Me", icon: User },
   ];
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 bg-background/95 backdrop-blur-md border-t border-border/50 safe-area-pb">
-      <div className="flex items-center justify-around px-4 py-2">
+    <nav className="fixed bottom-0 left-0 right-0 z-50 bg-background/95 backdrop-blur-md border-t border-border/50 pb-[env(safe-area-inset-bottom)]">
+      <div className="flex items-center justify-around px-1 py-1">
         {navItems.map((item) => {
           const Icon = item.icon;
           return (
             <NavLink
               key={item.to}
               to={item.to}
+              end={item.to === "/"}
               className={({ isActive }) =>
-                `flex flex-col items-center justify-center py-2 px-4 rounded-lg transition-colors focus-ring ${
+                `flex flex-col items-center justify-center min-w-[56px] min-h-[56px] py-1.5 px-2 rounded-lg transition-colors focus-ring ${
                   isActive
                     ? "text-primary bg-primary/10"
                     : "text-muted-foreground hover:text-foreground hover:bg-accent/50"
                 }`
               }
             >
-              <Icon className="h-5 w-5 mb-1" />
-              <span className="text-xs font-medium">{item.label}</span>
+              <Icon className="h-5 w-5 mb-0.5" />
+              <span className="text-[10px] font-medium">{item.label}</span>
             </NavLink>
           );
         })}

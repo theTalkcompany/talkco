@@ -1,104 +1,116 @@
-import React from "react";
-
+import React, { useState } from "react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 interface AvatarPickerProps {
   builtIn?: string[];
   onSelect: (url: string) => void;
 }
 
-const SEEDS = [
-  "Alex","Bailey","Cameron","Dakota","Elliot","Finley","Gray","Harper",
-  "Indie","Jordan","Kendall","Logan","Morgan","Peyton","Quinn","River",
-  "Skyler","Taylor","Avery","Charlie","Rowan","Reese","Sam","Tatum",
-  "Blake","Casey","Drew","Emerson","Hayden","Jamie","Kai","London",
+const EMOJIS = [
+  "🌱","🌸","🌻","🌼","🌿","🍀","🌷","🌹","🌺","🌳",
+  "🦋","🐝","🐞","🐢","🐬","🐳","🐧","🦊","🦉","🦄",
+  "⭐","🌙","☀️","🌈","✨","💫","🔥","💧","🌊","🍃",
+  "❤️","💛","💚","💙","💜","🧡","🤍","🤎","💖","💝",
 ];
 
-// DiceBear v9 styles selection (broad variety)
-const DICEBEAR_STYLES = [
-  { key: "adventurer", label: "Adventurer" },
-  { key: "big-smile", label: "Big Smile" },
-  { key: "bottts", label: "Bottts" },
-  { key: "fun-emoji", label: "Fun Emoji" },
-  { key: "micah", label: "Micah" },
-  { key: "open-peeps", label: "Open Peeps" },
-  { key: "personas", label: "Personas" },
-  { key: "pixel-art", label: "Pixel Art" },
-  { key: "croodles", label: "Croodles" },
-  { key: "adventurer-neutral", label: "Adventurer Neutral" },
+const COLORS = [
+  "#FCA5A5","#FDBA74","#FCD34D","#86EFAC","#67E8F9","#93C5FD","#C4B5FD","#F0ABFC",
+  "#FB7185","#FB923C","#FACC15","#4ADE80","#22D3EE","#60A5FA","#A78BFA","#E879F9",
 ];
 
-const buildDicebearUrl = (style: string, seed: string, size = 128) =>
-  `https://api.dicebear.com/9.x/${style}/svg?seed=${encodeURIComponent(seed)}&size=${size}&backgroundType=gradientLinear,solid`;
-
-// Robohash (robots/monsters/cats)
-const buildRobohashUrl = (seed: string, set: string = "set1", size = 128) =>
-  `https://robohash.org/${encodeURIComponent(seed)}.png?set=${set}&size=${size}x${size}`;
-
-// OpenMoji (animals, vehicles)
-const OPENMOJI_VERSION = "14.0.0";
-const OPENMOJI_ANIMALS = [
-  "1F436","1F431","1F98A","1F43B","1F430","1F43C","1F42E","1F437","1F438","1F439","1F435","1F981","1F42F","1F992","1F418","1F98D","1F984","1F99A","1F99C","1F41F","1F420","1F421","1F422","1F433","1F40B"
-];
-const OPENMOJI_VEHICLES = [
-  "1F697","1F695","1F693","1F692","1F691","1F690","1F69A","1F69B","1F69C","1F6B2","1F3CE","1F6F4","1F6F5","1F6E9","1F6EB","1F685","1F686","1F68A","1F6A2","1F680"
-];
-const buildOpenmojiUrl = (code: string) =>
-  `https://cdn.jsdelivr.net/npm/openmoji@${OPENMOJI_VERSION}/color/svg/${code}.svg`;
+const buildEmojiDataUrl = (emoji: string, bg: string) => {
+  const svg = `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 128 128'>
+    <rect width='128' height='128' rx='24' fill='${bg}'/>
+    <text x='64' y='86' font-size='72' text-anchor='middle' font-family='Apple Color Emoji, Segoe UI Emoji, Noto Color Emoji, sans-serif'>${emoji}</text>
+  </svg>`;
+  return `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`;
+};
 
 export default function AvatarPicker({ builtIn = [], onSelect }: AvatarPickerProps) {
-  // Long list mode: aggregate avatars into a single grid (no category tabs)
+  const [selectedEmoji, setSelectedEmoji] = useState<string>("🌱");
+  const [selectedColor, setSelectedColor] = useState<string>(COLORS[3]);
 
-  const Grid = ({ children }: { children: React.ReactNode }) => (
-    <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-6 pt-2">
-      {children}
-    </div>
-  );
-
-  const Cell = ({ children, onClick, label }: { children: React.ReactNode; onClick: () => void; label: string }) => (
-    <button
-      onClick={onClick}
-      aria-label={label}
-      className="group inline-flex items-center justify-center rounded-lg border bg-background shadow-sm hover:shadow focus:outline-none focus:ring-2 focus:ring-ring transition"
-    >
-      <div className="h-20 w-20 aspect-square rounded-md overflow-hidden bg-background">
-        {children}
-      </div>
-    </button>
-  );
-
-  // Build a single long list of avatars
-  const urls: { url: string; alt: string }[] = [];
-  if (builtIn.length) {
-    for (const u of builtIn) urls.push({ url: u, alt: "Built-in avatar option" });
-  }
-  const styles = DICEBEAR_STYLES.slice(0, 3).map((s) => s.key);
-  for (const style of styles) {
-    for (const seed of SEEDS) {
-      urls.push({ url: buildDicebearUrl(style, seed), alt: `${style} avatar, seed ${seed}` });
-    }
-  }
-  for (const seed of SEEDS) {
-    urls.push({ url: buildRobohashUrl(seed, "set1"), alt: `Robohash robot, seed ${seed}` });
-  }
-  for (const code of OPENMOJI_ANIMALS.slice(0, 24)) {
-    urls.push({ url: buildOpenmojiUrl(code), alt: `OpenMoji ${code}` });
-  }
+  const confirmEmoji = () => {
+    onSelect(buildEmojiDataUrl(selectedEmoji, selectedColor));
+  };
 
   return (
-    <div className="max-h-[60vh] overflow-y-auto pr-1">
-      <Grid>
-        {urls.map((item, idx) => (
-          <Cell key={`${item.url}-${idx}`} onClick={() => onSelect(item.url)} label={`Select avatar ${idx + 1}`}>
-            <img
-              src={item.url}
-              alt={item.alt}
-              loading="lazy"
-              decoding="async"
-              className="h-full w-full object-contain"
-            />
-          </Cell>
-        ))}
-      </Grid>
-    </div>
+    <Tabs defaultValue="svg" className="w-full">
+      <TabsList className="grid w-full grid-cols-2">
+        <TabsTrigger value="svg">Illustrated</TabsTrigger>
+        <TabsTrigger value="emoji">Emoji + Colour</TabsTrigger>
+      </TabsList>
+
+      <TabsContent value="svg" className="mt-4">
+        <div className="max-h-[55vh] overflow-y-auto pr-1">
+          <div className="grid grid-cols-4 sm:grid-cols-6 gap-3">
+            {builtIn.map((url) => (
+              <button
+                key={url}
+                onClick={() => onSelect(url)}
+                className="inline-flex items-center justify-center rounded-lg border bg-background p-1 hover:shadow focus-ring transition"
+                aria-label="Choose avatar"
+              >
+                <img src={url} alt="Avatar option" className="h-16 w-16 object-contain" loading="lazy" />
+              </button>
+            ))}
+          </div>
+        </div>
+      </TabsContent>
+
+      <TabsContent value="emoji" className="mt-4">
+        <div className="space-y-4">
+          <div
+            className="mx-auto h-24 w-24 rounded-2xl flex items-center justify-center text-5xl shadow-elev animate-scale-in"
+            style={{ backgroundColor: selectedColor }}
+            aria-label="Preview"
+          >
+            {selectedEmoji}
+          </div>
+
+          <div>
+            <p className="text-xs font-medium text-muted-foreground mb-2">Choose an emoji</p>
+            <div className="grid grid-cols-8 gap-1 max-h-40 overflow-y-auto">
+              {EMOJIS.map((e) => (
+                <button
+                  key={e}
+                  onClick={() => setSelectedEmoji(e)}
+                  className={`h-9 w-9 rounded-md text-xl hover:bg-accent/40 focus-ring transition ${
+                    selectedEmoji === e ? "bg-primary/15 ring-2 ring-primary" : ""
+                  }`}
+                  aria-label={`Emoji ${e}`}
+                >
+                  {e}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div>
+            <p className="text-xs font-medium text-muted-foreground mb-2">Choose a colour</p>
+            <div className="grid grid-cols-8 gap-2">
+              {COLORS.map((c) => (
+                <button
+                  key={c}
+                  onClick={() => setSelectedColor(c)}
+                  className={`h-8 w-8 rounded-full border-2 focus-ring transition ${
+                    selectedColor === c ? "border-foreground scale-110" : "border-transparent"
+                  }`}
+                  style={{ backgroundColor: c }}
+                  aria-label={`Colour ${c}`}
+                />
+              ))}
+            </div>
+          </div>
+
+          <button
+            onClick={confirmEmoji}
+            className="w-full btn-hero shadow-glow"
+          >
+            Use this avatar
+          </button>
+        </div>
+      </TabsContent>
+    </Tabs>
   );
 }
