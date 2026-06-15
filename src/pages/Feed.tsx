@@ -456,9 +456,42 @@ const loadPosts = async () => {
                         </Button>
                       </div>
                     </div>
-                  ) : (
-                    <p className="mt-2 text-foreground/90 whitespace-pre-wrap">{post.content}</p>
-                  )}
+                  ) : (() => {
+                    const hasCW = post.content.startsWith(CW_MARKER);
+                    const displayContent = hasCW ? post.content.slice(CW_MARKER.length).trim() : post.content;
+                    const isRevealed = revealed[post.id];
+                    if (hasCW && !isRevealed) {
+                      return (
+                        <div className="mt-2 rounded-md border border-dashed bg-muted/40 p-4 text-center">
+                          <p className="text-sm font-medium text-foreground/80 flex items-center justify-center gap-2">
+                            <AlertTriangle className="h-4 w-4 text-amber-500" />
+                            This post contains a content warning
+                          </p>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="mt-2"
+                            onClick={() => setRevealed((r) => ({ ...r, [post.id]: true }))}
+                          >
+                            <Eye className="h-3 w-3 mr-1" /> Show post
+                          </Button>
+                        </div>
+                      );
+                    }
+                    return (
+                      <div className="mt-2">
+                        {hasCW && (
+                          <button
+                            onClick={() => setRevealed((r) => ({ ...r, [post.id]: false }))}
+                            className="mb-2 inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
+                          >
+                            <EyeOff className="h-3 w-3" /> Hide content warning post
+                          </button>
+                        )}
+                        <p className="text-foreground/90 whitespace-pre-wrap">{displayContent}</p>
+                      </div>
+                    );
+                  })()}
                   <div className="mt-3 flex items-center gap-3 text-sm text-muted-foreground">
                     <button
                       className={`inline-flex items-center gap-1 transition-colors ${likedByMe ? "text-primary" : "hover:text-foreground"}`}
