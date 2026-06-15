@@ -638,6 +638,12 @@ const loadPosts = async () => {
         reportedContent={reportDialog.reportedContent}
         contentType={reportDialog.contentType}
       />
+
+      <CommunityGuidelinesModal
+        open={guidelinesOpen}
+        onAccept={acceptGuidelines}
+        onCancel={cancelGuidelines}
+      />
     </>
   );
 };
