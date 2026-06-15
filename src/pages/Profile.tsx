@@ -541,29 +541,7 @@ export default function Profile() {
         </section>
       )}
 
-      {/* Preferences */}
-      {userId && (
-        <section className="mt-6 rounded-xl border bg-card p-4 animate-fade-in">
-          <h2 className="text-sm font-semibold mb-3">Your Preferences</h2>
-          <div className="divide-y">
-            {[
-              { key: "publicStreak" as const, label: "Show my streak publicly", desc: "Display your check-in streak on your profile." },
-              { key: "allowReplies" as const, label: "Allow others to reply to my posts", desc: "Turn off to disable replies on new posts." },
-              { key: "notifyReplies" as const, label: "Receive supportive reply notifications", desc: "Get notified when someone responds." },
-              { key: "publicTopics" as const, label: "Show my topic badges publicly", desc: "Display the topics you post about most." },
-              { key: "anonByDefault" as const, label: "Anonymous mode by default on all posts", desc: "Start every new post anonymous." },
-            ].map(row => (
-              <div key={row.key} className="flex items-center justify-between gap-3 py-3">
-                <div className="min-w-0">
-                  <p className="text-sm font-medium">{row.label}</p>
-                  <p className="text-xs text-muted-foreground">{row.desc}</p>
-                </div>
-                <Switch checked={prefs[row.key]} onCheckedChange={(v) => updatePref(row.key, v)} />
-              </div>
-            ))}
-          </div>
-        </section>
-      )}
+
 
       {/* Admin */}
       {isAdmin && (
