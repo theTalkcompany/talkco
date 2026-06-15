@@ -139,6 +139,8 @@ const [editing, setEditing] = useState({
           });
         if (error) throw error;
       }
+      // Save bio locally (no DB column required)
+      if (userId) localStorage.setItem(`talkco_bio_${userId}`, bio);
       toast({ title: "Profile saved" });
     } catch (err: any) {
       console.error(err);
