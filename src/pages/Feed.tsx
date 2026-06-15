@@ -51,6 +51,12 @@ const [reportDialog, setReportDialog] = useState<{
 const [editing, setEditing] = useState<{[key: string]: boolean}>({});
 const [editingContent, setEditingContent] = useState<{[key: string]: string}>({});
 const [deleting, setDeleting] = useState<{[key: string]: boolean}>({});
+const [contentWarning, setContentWarning] = useState(false);
+const [guidelinesOpen, setGuidelinesOpen] = useState(false);
+const [pendingPost, setPendingPost] = useState(false);
+const [revealed, setRevealed] = useState<Record<string, boolean>>({});
+
+const CW_MARKER = "⚠️ [Content warning]";
 
   useEffect(() => {
     const init = async () => {
