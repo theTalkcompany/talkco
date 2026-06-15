@@ -9,7 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/components/ui/use-toast";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from "@/components/ui/dialog";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+// Tabs import removed; AvatarPicker now provides its own tabs.
 import { Shield, AlertTriangle, Calendar, FileText, MessageCircle, Sparkles } from "lucide-react";
 import AvatarPicker from "@/components/profile/AvatarPicker";
 import MyPosts from "@/components/profile/MyPosts";
