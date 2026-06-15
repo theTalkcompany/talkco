@@ -6,7 +6,9 @@ import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { ReportDialog } from "@/components/feed/ReportDialog";
 import { useContentModeration } from "@/hooks/useContentModeration";
-import { Pencil, Trash2, Save, X, Flag } from "lucide-react";
+import { Pencil, Trash2, Save, X, Flag, AlertTriangle, EyeOff, Eye } from "lucide-react";
+import CommunityGuidelinesModal from "@/components/feed/CommunityGuidelinesModal";
+import { Switch } from "@/components/ui/switch";
 
 interface LikeRow { id: string; user_id: string }
 interface CommentRow { id: string; content: string; user_id: string; created_at: string }
