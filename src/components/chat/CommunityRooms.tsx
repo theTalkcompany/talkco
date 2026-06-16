@@ -389,6 +389,44 @@ const CommunityRooms = () => {
           No rooms yet. Be the first to create one.
         </div>
       )}
+
+      {/* Join — Room rules & guidelines agreement */}
+      <Dialog open={!!joinTarget} onOpenChange={(o) => { if (!o) { setJoinTarget(null); setJoinAgreed(false); } }}>
+        <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>#{joinTarget?.name}</DialogTitle>
+            <DialogDescription>Please read and agree before joining.</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3 text-sm">
+            <div className="p-3 rounded-md bg-primary/10">
+              <div className="font-medium mb-1">Room rules</div>
+              <p className="whitespace-pre-wrap text-muted-foreground">
+                {joinTarget?.rules?.trim() || "The room admin hasn't added specific rules. The Talk community guidelines below still apply."}
+              </p>
+            </div>
+            <div className="p-3 rounded-md bg-muted">
+              <div className="font-medium mb-1">Talk community guidelines</div>
+              <ul className="list-disc pl-5 space-y-1 text-muted-foreground">
+                <li>Be kind and supportive — no bullying or harassment.</li>
+                <li>No personal contact information or links to outside chats.</li>
+                <li>Don't give medical advice. Encourage professional help when needed.</li>
+                <li>If anyone is in crisis, use Get Help and call your local helpline.</li>
+                <li>Report anything that feels unsafe — admins review every report.</li>
+              </ul>
+            </div>
+            <label className="flex items-start gap-2 pt-1 cursor-pointer">
+              <Checkbox checked={joinAgreed} onCheckedChange={(v) => setJoinAgreed(!!v)} className="mt-0.5" />
+              <span>I have read and agree to these rules.</span>
+            </label>
+          </div>
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setJoinTarget(null)}>Cancel</Button>
+            <Button onClick={confirmJoin} disabled={!joinAgreed || joining}>
+              {joining ? "Joining…" : joinTarget?.privacy === "approval" ? "Send request" : "Join room"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
