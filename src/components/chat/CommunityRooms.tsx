@@ -66,6 +66,11 @@ const CommunityRooms = () => {
   const [loading, setLoading] = useState(true);
   const [showCreate, setShowCreate] = useState(false);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+  const [joinTarget, setJoinTarget] = useState<Room | null>(null);
+  const [joinAgreed, setJoinAgreed] = useState(false);
+  const [joining, setJoining] = useState(false);
+  const [showCreate, setShowCreate] = useState(false);
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const { toast } = useToast();
 
   // Create-room form
