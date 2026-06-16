@@ -22,9 +22,11 @@ import {
   AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import {
   ArrowLeft, Send, Users, Shield, MoreVertical, Crown, Flag, ChevronDown,
-  Pin, Megaphone, AlertTriangle, X, Check,
+  Pin, Megaphone, AlertTriangle, X, Check, BookOpen, Trash2, AlertCircle, UserMinus, Ban,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
