@@ -305,7 +305,10 @@ const WillowChat = () => {
                   }`}
                 >
                   {m.role === "assistant" ? (
-                    renderWillowMessage(m.content)
+                    <>
+                      <p className="text-[11px] font-medium opacity-70 mb-1">Willow</p>
+                      {renderWillowMessage(m.content)}
+                    </>
                   ) : (
                     <p className="whitespace-pre-wrap">{m.content}</p>
                   )}
