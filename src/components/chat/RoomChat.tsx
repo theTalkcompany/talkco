@@ -438,10 +438,23 @@ const RoomChat = ({ roomId, onLeave }: Props) => {
 
       {/* Pinned announcement */}
       {room.pinned_announcement && (
-        <div className="px-4 py-2 bg-primary/10 border-b flex items-start gap-2 text-sm">
-          <Pin className="h-4 w-4 mt-0.5 text-primary shrink-0" />
-          <div className="whitespace-pre-wrap">{room.pinned_announcement}</div>
+        <div className="px-4 py-2 bg-amber-50 dark:bg-amber-950/30 border-b border-amber-200 dark:border-amber-900 flex items-start gap-2 text-sm">
+          <Megaphone className="h-4 w-4 mt-0.5 text-amber-700 dark:text-amber-300 shrink-0" />
+          <div className="whitespace-pre-wrap text-amber-900 dark:text-amber-100">{room.pinned_announcement}</div>
         </div>
+      )}
+
+      {/* Collapsible rules reminder */}
+      {room.rules && (
+        <Collapsible defaultOpen className="border-b bg-primary/5">
+          <CollapsibleTrigger className="w-full px-4 py-2 flex items-center justify-between text-xs font-medium">
+            <span className="flex items-center gap-2"><BookOpen className="h-3.5 w-3.5" /> Room rules</span>
+            <ChevronDown className="h-3.5 w-3.5" />
+          </CollapsibleTrigger>
+          <CollapsibleContent className="px-4 pb-3 text-xs text-muted-foreground whitespace-pre-wrap">
+            {room.rules}
+          </CollapsibleContent>
+        </Collapsible>
       )}
 
       {/* Crisis banner */}
@@ -468,49 +481,84 @@ const RoomChat = ({ roomId, onLeave }: Props) => {
         {visibleMessages.map((m) => {
           const mine = m.user_id === me?.id;
           const author = participants.find((p) => p.user_id === m.user_id);
+          const name = displayName(m.profile);
+          const initial = name.charAt(0).toUpperCase();
           return (
-            <div key={m.id} className={`flex ${mine ? "justify-end" : "justify-start"}`}>
-              <div className="flex items-start gap-1 max-w-[85%]">
+            <div key={m.id} className={`flex ${mine ? "justify-end" : "justify-start"} group`}>
+              <div className={`flex items-start gap-2 max-w-[88%] ${mine ? "flex-row-reverse" : ""}`}>
+                <Avatar className="h-8 w-8 shrink-0">
+                  <AvatarImage src={m.profile?.avatar_url || undefined} alt={name} />
+                  <AvatarFallback className="text-xs">{initial}</AvatarFallback>
+                </Avatar>
                 <div className={`rounded-lg p-3 ${mine ? "bg-primary text-primary-foreground" : "bg-muted"} ${m.is_hidden ? "opacity-60 italic" : ""}`}>
-                  {!mine && (
-                    <div className="text-xs font-medium mb-1 flex items-center gap-1">
-                      {author?.role === "admin" && <Crown className="h-3 w-3 text-amber-500" />}
-                      {author?.role === "co_admin" && <Shield className="h-3 w-3" />}
-                      {displayName(m.profile)}
-                    </div>
-                  )}
+                  <div className="text-xs font-medium mb-1 flex items-center gap-1 flex-wrap">
+                    {author?.role === "admin" && <Crown className="h-3 w-3 text-amber-500" />}
+                    {author?.role === "co_admin" && <Shield className="h-3 w-3" />}
+                    <span>{name}</span>
+                    {author?.profile?.mood && (
+                      <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${mine ? "bg-primary-foreground/20" : "bg-background"}`}>
+                        {author.profile.mood}
+                      </span>
+                    )}
+                  </div>
                   {m.is_hidden && (
                     <div className="text-[10px] uppercase tracking-wide mb-1 opacity-70">Held for review</div>
                   )}
                   <div className="text-sm whitespace-pre-wrap break-words">{m.content}</div>
-                  <div className="text-xs mt-1 opacity-70">{format(new Date(m.created_at), "HH:mm")}</div>
+                  <div className="text-xs mt-1 opacity-70">{format(new Date(m.created_at), "PP · HH:mm")}</div>
                 </div>
-                {!mine && (
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="icon" className="h-6 w-6"><MoreVertical className="h-3 w-3" /></Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="start">
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="icon" className="h-6 w-6 opacity-60 hover:opacity-100">
+                      <MoreVertical className="h-3 w-3" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align={mine ? "end" : "start"}>
+                    {!mine && (
                       <DropdownMenuItem onClick={() => setReportTarget(m)}>
                         <Flag className="h-3.5 w-3.5 mr-2" /> Report message
                       </DropdownMenuItem>
-                      {isAdmin && m.is_hidden && (
-                        <DropdownMenuItem onClick={() => restoreMessage(m.id)}>Restore message</DropdownMenuItem>
-                      )}
-                      {isAdmin && !m.is_hidden && (
-                        <DropdownMenuItem onClick={() => supabase.from("room_messages").update({ is_hidden: true, hidden_reason: "admin_hide" } as any).eq("id", m.id).then(() => loadMessages())}>
-                          Hide message
+                    )}
+                    {isAdmin && !mine && (
+                      <>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem onClick={() => removeMessage(m.id)}>
+                          <Trash2 className="h-3.5 w-3.5 mr-2" /> Remove this message
                         </DropdownMenuItem>
-                      )}
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                )}
+                        {m.is_hidden ? (
+                          <DropdownMenuItem onClick={() => restoreMessage(m.id)}>Restore message</DropdownMenuItem>
+                        ) : (
+                          <DropdownMenuItem onClick={() => supabase.from("room_messages").update({ is_hidden: true, hidden_reason: "admin_hide" } as any).eq("id", m.id).then(() => loadMessages())}>
+                            Hide message
+                          </DropdownMenuItem>
+                        )}
+                        <DropdownMenuItem onClick={() => warnMember(m.user_id)}>
+                          <AlertCircle className="h-3.5 w-3.5 mr-2" /> Warn this member
+                        </DropdownMenuItem>
+                        {author && author.user_id !== me?.id && (
+                          <>
+                            <DropdownMenuItem onClick={() => setMemberAction({ p: author, type: "remove" })}>
+                              <UserMinus className="h-3.5 w-3.5 mr-2" /> Remove from room
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              className="text-destructive"
+                              onClick={() => setMemberAction({ p: author, type: "ban" })}
+                            >
+                              <Ban className="h-3.5 w-3.5 mr-2" /> Ban from room
+                            </DropdownMenuItem>
+                          </>
+                        )}
+                      </>
+                    )}
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </div>
             </div>
           );
         })}
         <div ref={messagesEndRef} />
       </div>
+
 
       {/* Input */}
       <div className={`p-4 border-t bg-background shrink-0 ${isMobile ? "pb-20" : "pb-4"}`}>
