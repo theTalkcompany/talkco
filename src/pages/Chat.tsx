@@ -91,10 +91,13 @@ const Chat = () => {
         )}
       </div>
       
-      <Tabs defaultValue="ai">
+      <Tabs defaultValue="ai" onValueChange={(v) => { if (v === "community") { setHasUnread(false); checkUnread(); } }}>
         <TabsList className="grid w-full max-w-md mx-auto grid-cols-2 h-12 bg-transparent p-1 gap-2">
           <TabsTrigger value="ai" className="btn-hero shadow-glow text-lg font-semibold py-3 px-6 rounded-md data-[state=active]:btn-hero data-[state=active]:shadow-glow">Willow</TabsTrigger>
-          <TabsTrigger value="community" className="btn-hero shadow-glow text-lg font-semibold py-3 px-6 rounded-md data-[state=active]:btn-hero data-[state=active]:shadow-glow">Community Rooms</TabsTrigger>
+          <TabsTrigger value="community" className="relative btn-hero shadow-glow text-lg font-semibold py-3 px-6 rounded-md data-[state=active]:btn-hero data-[state=active]:shadow-glow">
+            Community Rooms
+            {hasUnread && <span className="absolute top-1.5 right-2 h-2.5 w-2.5 rounded-full bg-red-500 ring-2 ring-background" aria-label="New messages" />}
+          </TabsTrigger>
         </TabsList>
         <TabsContent value="ai" className="mt-4">
           <article className="surface-card p-6">
