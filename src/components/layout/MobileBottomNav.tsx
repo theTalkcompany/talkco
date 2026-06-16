@@ -11,6 +11,7 @@ const MobileBottomNav = () => {
     { to: "/", label: "Home", icon: Home },
     { to: "/feed", label: "Feed", icon: FileText },
     { to: "/chat", label: "Chat", icon: MessageCircle },
+    { to: "/letters", label: "Letters", icon: Mail },
     { to: "/help", label: "Help", icon: HelpCircle },
     { to: "/profile", label: "Me", icon: User },
   ];
