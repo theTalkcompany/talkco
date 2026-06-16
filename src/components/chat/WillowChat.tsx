@@ -304,10 +304,11 @@ const WillowChat = () => {
                       : "bg-primary text-primary-foreground rounded-tr-sm"
                   }`}
                 >
-                  {m.role === "assistant" && (
-                    <p className="text-[11px] font-medium opacity-70 mb-0.5">Willow</p>
+                  {m.role === "assistant" ? (
+                    renderWillowMessage(m.content)
+                  ) : (
+                    <p className="whitespace-pre-wrap">{m.content}</p>
                   )}
-                  <p className="whitespace-pre-wrap">{m.content}</p>
                 </div>
                 <span className="text-[10px] text-muted-foreground mt-1 px-1">
                   {formatRelative(m.ts, now)}
