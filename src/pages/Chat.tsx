@@ -11,9 +11,13 @@ import CommunityRooms from "@/components/chat/CommunityRooms";
 const Chat = () => {
   const [isAdmin, setIsAdmin] = useState(false);
   const [showAdmin, setShowAdmin] = useState(false);
+  const [hasUnread, setHasUnread] = useState(false);
 
   useEffect(() => {
     checkAdminStatus();
+    checkUnread();
+    const t = setInterval(checkUnread, 30000);
+    return () => clearInterval(t);
   }, []);
 
   const checkAdminStatus = async () => {
@@ -25,6 +29,28 @@ const Chat = () => {
     } catch (error) {
       console.error('Error checking admin status:', error);
     }
+  };
+
+  const checkUnread = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+      const { data: parts } = await supabase
+        .from("room_participants")
+        .select("room_id, last_read_at")
+        .eq("user_id", user.id);
+      if (!parts || parts.length === 0) { setHasUnread(false); return; }
+      for (const p of parts as any[]) {
+        const { count } = await supabase
+          .from("room_messages")
+          .select("*", { count: "exact", head: true })
+          .eq("room_id", p.room_id)
+          .neq("user_id", user.id)
+          .gt("created_at", p.last_read_at);
+        if ((count || 0) > 0) { setHasUnread(true); return; }
+      }
+      setHasUnread(false);
+    } catch (e) { /* ignore */ }
   };
 
   if (showAdmin && isAdmin) {
@@ -65,10 +91,13 @@ const Chat = () => {
         )}
       </div>
       
-      <Tabs defaultValue="ai">
+      <Tabs defaultValue="ai" onValueChange={(v) => { if (v === "community") { setHasUnread(false); checkUnread(); } }}>
         <TabsList className="grid w-full max-w-md mx-auto grid-cols-2 h-12 bg-transparent p-1 gap-2">
           <TabsTrigger value="ai" className="btn-hero shadow-glow text-lg font-semibold py-3 px-6 rounded-md data-[state=active]:btn-hero data-[state=active]:shadow-glow">Willow</TabsTrigger>
-          <TabsTrigger value="community" className="btn-hero shadow-glow text-lg font-semibold py-3 px-6 rounded-md data-[state=active]:btn-hero data-[state=active]:shadow-glow">Community Rooms</TabsTrigger>
+          <TabsTrigger value="community" className="relative btn-hero shadow-glow text-lg font-semibold py-3 px-6 rounded-md data-[state=active]:btn-hero data-[state=active]:shadow-glow">
+            Community Rooms
+            {hasUnread && <span className="absolute top-1.5 right-2 h-2.5 w-2.5 rounded-full bg-red-500 ring-2 ring-background" aria-label="New messages" />}
+          </TabsTrigger>
         </TabsList>
         <TabsContent value="ai" className="mt-4">
           <article className="surface-card p-6">

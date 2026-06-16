@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
@@ -8,7 +8,7 @@ import {
   Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
 } from "@/components/ui/dialog";
 import {
-  Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger,
+  Sheet, SheetClose, SheetContent, SheetHeader, SheetTitle, SheetTrigger,
 } from "@/components/ui/sheet";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
@@ -22,11 +22,11 @@ import {
   AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import {
   ArrowLeft, Send, Users, Shield, MoreVertical, Crown, Flag, ChevronDown,
-  Pin, Megaphone, AlertTriangle, X, Check, BookOpen, Trash2, AlertCircle, UserMinus, Ban,
+  Megaphone, AlertTriangle, X, Check, BookOpen, Trash2, AlertCircle, UserMinus, Ban,
+  Search, LogOut, Smile,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
@@ -34,6 +34,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { format } from "date-fns";
 import { containsCrisisLanguage, detectCrisisLine } from "@/lib/crisisDetection";
 import { Link } from "react-router-dom";
+import MemberAvatar from "./MemberAvatar";
 
 interface Props { roomId: string; onLeave: () => void; }
 
@@ -58,6 +59,8 @@ interface Participant {
   agreed_to_guidelines: boolean;
   profile?: { display_name?: string; full_name?: string; email?: string; avatar_url?: string; mood?: string };
 }
+
+interface Reaction { id: string; message_id: string; user_id: string; emoji: string; }
 
 interface Message {
   id: string;
@@ -94,6 +97,8 @@ const REPORT_REASONS = [
   { value: "other", label: "Other" },
 ];
 
+const QUICK_REACTIONS = ["💜", "🤗", "💪", "🌟", "🫂"];
+
 const displayName = (p?: { display_name?: string; full_name?: string; email?: string }) => {
   if (!p) return "Anonymous";
   return p.display_name || p.full_name || p.email?.split("@")[0] || "Anonymous";
@@ -106,6 +111,7 @@ const RoomChat = ({ roomId, onLeave }: Props) => {
   const [me, setMe] = useState<{ id: string } | null>(null);
   const [myParticipant, setMyParticipant] = useState<Participant | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
+  const [reactions, setReactions] = useState<Reaction[]>([]);
   const [participants, setParticipants] = useState<Participant[]>([]);
   const [joinRequests, setJoinRequests] = useState<JoinRequest[]>([]);
   const [reports, setReports] = useState<Report[]>([]);
@@ -117,7 +123,14 @@ const RoomChat = ({ roomId, onLeave }: Props) => {
   const [reportReason, setReportReason] = useState("");
   const [memberAction, setMemberAction] = useState<{ p: Participant; type: "remove" | "ban" } | null>(null);
   const [showAdminPanel, setShowAdminPanel] = useState(false);
+  const [showSearch, setShowSearch] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [confirmLeave, setConfirmLeave] = useState(false);
+  const [typingNames, setTypingNames] = useState<string[]>([]);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
+  const typingTimeoutRef = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
+  const lastTypingSentRef = useRef(0);
 
   const crisisLine = useMemo(() => detectCrisisLine(), []);
   const isAdmin = !!myParticipant && (myParticipant.role === "admin" || myParticipant.role === "co_admin");
@@ -132,7 +145,11 @@ const RoomChat = ({ roomId, onLeave }: Props) => {
     const { data: r } = await supabase.from("rooms").select("*").eq("id", roomId).maybeSingle();
     if (r) setRoom(r as any);
 
-    await Promise.all([loadMessages(), loadParticipants(user.id), loadRequests(), loadReports()]);
+    await Promise.all([loadMessages(), loadParticipants(user.id), loadRequests(), loadReports(), loadReactions()]);
+    // Mark as read
+    await supabase.from("room_participants")
+      .update({ last_read_at: new Date().toISOString() } as any)
+      .eq("room_id", roomId).eq("user_id", user.id);
   };
 
   const loadMessages = async () => {
@@ -148,6 +165,11 @@ const RoomChat = ({ roomId, onLeave }: Props) => {
     );
     setMessages(withProfiles);
     setTimeout(() => messagesEndRef.current?.scrollIntoView({ behavior: "smooth" }), 100);
+  };
+
+  const loadReactions = async () => {
+    const { data } = await supabase.from("room_message_reactions").select("*").eq("room_id", roomId);
+    setReactions((data || []) as any);
   };
 
   const loadParticipants = async (userId?: string) => {
@@ -200,10 +222,31 @@ const RoomChat = ({ roomId, onLeave }: Props) => {
         () => loadRequests())
       .on("postgres_changes", { event: "*", schema: "public", table: "room_message_reports", filter: `room_id=eq.${roomId}` },
         () => loadReports())
+      .on("postgres_changes", { event: "*", schema: "public", table: "room_message_reactions", filter: `room_id=eq.${roomId}` },
+        () => loadReactions())
+      .on("broadcast", { event: "typing" }, ({ payload }: any) => {
+        if (!payload?.userId || !payload?.name) return;
+        if (payload.userId === me?.id) return;
+        setTypingNames((prev) => prev.includes(payload.name) ? prev : [...prev, payload.name]);
+        clearTimeout(typingTimeoutRef.current[payload.userId]);
+        typingTimeoutRef.current[payload.userId] = setTimeout(() => {
+          setTypingNames((prev) => prev.filter((n) => n !== payload.name));
+        }, 3000);
+      })
       .subscribe();
+    channelRef.current = ch;
     return () => { supabase.removeChannel(ch); };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [roomId]);
+
+  // ---- Typing broadcast ----
+  const broadcastTyping = useCallback(() => {
+    const now = Date.now();
+    if (now - lastTypingSentRef.current < 1500) return;
+    lastTypingSentRef.current = now;
+    const name = displayName(myParticipant?.profile);
+    channelRef.current?.send({ type: "broadcast", event: "typing", payload: { userId: me?.id, name } });
+  }, [me?.id, myParticipant?.profile]);
 
   // ---- Actions ----
   const sendMessage = async () => {
@@ -344,15 +387,49 @@ const RoomChat = ({ roomId, onLeave }: Props) => {
     toast({ title: "Room updated" });
   };
 
+  // Back arrow: simply close (keep membership)
+  const closeRoom = () => onLeave();
+
+  // Leave room: drop membership so they have to re-agree to rules
   const leaveRoom = async () => {
     if (myParticipant) {
       await supabase.from("room_participants").delete().eq("id", myParticipant.id);
     }
+    toast({ title: "You left the room" });
     onLeave();
   };
 
+  const toggleReaction = async (messageId: string, emoji: string) => {
+    if (!me) return;
+    const existing = reactions.find((r) => r.message_id === messageId && r.user_id === me.id && r.emoji === emoji);
+    if (existing) {
+      await supabase.from("room_message_reactions").delete().eq("id", existing.id);
+    } else {
+      await supabase.from("room_message_reactions").insert({
+        room_id: roomId, message_id: messageId, user_id: me.id, emoji,
+      } as any);
+    }
+    loadReactions();
+  };
+
   // ---- Render helpers ----
-  const visibleMessages = messages.filter((m) => !m.is_hidden || m.user_id === me?.id || isAdmin);
+  const reactionsByMessage = useMemo(() => {
+    const map: Record<string, Record<string, { count: number; mine: boolean }>> = {};
+    for (const r of reactions) {
+      map[r.message_id] = map[r.message_id] || {};
+      const entry = map[r.message_id][r.emoji] || { count: 0, mine: false };
+      entry.count += 1;
+      if (r.user_id === me?.id) entry.mine = true;
+      map[r.message_id][r.emoji] = entry;
+    }
+    return map;
+  }, [reactions, me?.id]);
+
+  const visibleMessages = messages.filter((m) => {
+    if (m.is_hidden && m.user_id !== me?.id && !isAdmin) return false;
+    if (searchQuery.trim()) return m.content.toLowerCase().includes(searchQuery.toLowerCase());
+    return true;
+  });
 
   if (!room) {
     return <div className="p-6 text-center text-muted-foreground">Loading room…</div>;
@@ -363,7 +440,7 @@ const RoomChat = ({ roomId, onLeave }: Props) => {
       {/* Header */}
       <div className="flex items-center justify-between p-4 border-b bg-background shrink-0">
         <div className="flex items-center gap-3 min-w-0">
-          <Button variant="ghost" size="sm" onClick={leaveRoom}><ArrowLeft className="h-4 w-4" /></Button>
+          <Button variant="ghost" size="sm" onClick={closeRoom}><ArrowLeft className="h-4 w-4" /></Button>
           <div className="min-w-0">
             <div className="flex items-center gap-2 flex-wrap">
               <h2 className="font-semibold truncate">#{room.name}</h2>
@@ -374,14 +451,25 @@ const RoomChat = ({ roomId, onLeave }: Props) => {
           </div>
         </div>
         <div className="flex items-center gap-1">
+          <Button variant="ghost" size="sm" onClick={() => setShowSearch((s) => !s)} aria-label="Search messages">
+            <Search className="h-4 w-4" />
+          </Button>
+
           <Sheet>
             <SheetTrigger asChild>
-              <Button variant="ghost" size="sm" className="gap-1">
+              <Button variant="ghost" size="sm" className="gap-1" aria-label="View members">
                 <Users className="h-4 w-4" /> <span className="text-xs">{participants.length}</span>
               </Button>
             </SheetTrigger>
-            <SheetContent side="right" className="w-80">
-              <SheetHeader><SheetTitle>Members</SheetTitle></SheetHeader>
+            <SheetContent side="right" className="w-80 sm:max-w-sm">
+              <SheetHeader>
+                <SheetTitle className="flex items-center justify-between">
+                  <span>Members · {participants.length}</span>
+                  <SheetClose asChild>
+                    <Button variant="ghost" size="icon" className="h-7 w-7"><X className="h-4 w-4" /></Button>
+                  </SheetClose>
+                </SheetTitle>
+              </SheetHeader>
               <div className="mt-4 space-y-2 overflow-y-auto max-h-[80vh]">
                 {participants.map((p) => {
                   const name = displayName(p.profile);
@@ -390,14 +478,11 @@ const RoomChat = ({ roomId, onLeave }: Props) => {
                     <Popover key={p.id}>
                       <div className="flex items-center justify-between gap-2 p-2 rounded-md bg-muted/50">
                         <PopoverTrigger asChild>
-                          <button className="flex items-center gap-2 min-w-0 flex-1 text-left">
-                            <Avatar className="h-8 w-8 shrink-0">
-                              <AvatarImage src={p.profile?.avatar_url || undefined} alt={name} />
-                              <AvatarFallback className="text-xs">{name.charAt(0).toUpperCase()}</AvatarFallback>
-                            </Avatar>
+                          <button className="flex items-center gap-3 min-w-0 flex-1 text-left">
+                            <MemberAvatar userId={p.user_id} name={name} avatarUrl={p.profile?.avatar_url} size="md" />
                             <div className="min-w-0">
                               <div className="text-sm font-medium truncate">{name}</div>
-                              <div className="flex items-center gap-1 text-[10px] text-muted-foreground">
+                              <div className="flex items-center gap-1 text-[10px] text-muted-foreground flex-wrap">
                                 <span>{roleBadge}</span>
                                 {p.profile?.mood && (
                                   <span className="px-1.5 py-0.5 rounded-full bg-background">{p.profile.mood}</span>
@@ -427,10 +512,7 @@ const RoomChat = ({ roomId, onLeave }: Props) => {
                       </div>
                       <PopoverContent side="left" className="w-64">
                         <div className="flex items-center gap-3">
-                          <Avatar className="h-12 w-12">
-                            <AvatarImage src={p.profile?.avatar_url || undefined} alt={name} />
-                            <AvatarFallback>{name.charAt(0).toUpperCase()}</AvatarFallback>
-                          </Avatar>
+                          <MemberAvatar userId={p.user_id} name={name} avatarUrl={p.profile?.avatar_url} size="lg" />
                           <div className="min-w-0">
                             <div className="font-medium truncate">{name}</div>
                             <div className="text-xs text-muted-foreground">{roleBadge}</div>
@@ -455,7 +537,6 @@ const RoomChat = ({ roomId, onLeave }: Props) => {
                   );
                 })}
               </div>
-
             </SheetContent>
           </Sheet>
 
@@ -469,8 +550,42 @@ const RoomChat = ({ roomId, onLeave }: Props) => {
               )}
             </Button>
           )}
+
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="icon" aria-label="Room options">
+                <MoreVertical className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={() => setShowSearch(true)}>
+                <Search className="h-4 w-4 mr-2" /> Search messages
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem className="text-destructive" onClick={() => setConfirmLeave(true)}>
+                <LogOut className="h-4 w-4 mr-2" /> Leave room
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
+
+      {/* Search bar */}
+      {showSearch && (
+        <div className="px-4 py-2 border-b bg-muted/30 flex items-center gap-2">
+          <Search className="h-4 w-4 text-muted-foreground" />
+          <Input
+            autoFocus
+            placeholder="Search this room…"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="h-8"
+          />
+          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => { setShowSearch(false); setSearchQuery(""); }}>
+            <X className="h-4 w-4" />
+          </Button>
+        </div>
+      )}
 
       {/* Pinned announcement */}
       {room.pinned_announcement && (
@@ -518,31 +633,76 @@ const RoomChat = ({ roomId, onLeave }: Props) => {
           const mine = m.user_id === me?.id;
           const author = participants.find((p) => p.user_id === m.user_id);
           const name = displayName(m.profile);
-          const initial = name.charAt(0).toUpperCase();
+          const msgReactions = reactionsByMessage[m.id] || {};
+          const reactionEntries = Object.entries(msgReactions);
           return (
             <div key={m.id} className={`flex ${mine ? "justify-end" : "justify-start"} group`}>
               <div className={`flex items-start gap-2 max-w-[88%] ${mine ? "flex-row-reverse" : ""}`}>
-                <Avatar className="h-8 w-8 shrink-0">
-                  <AvatarImage src={m.profile?.avatar_url || undefined} alt={name} />
-                  <AvatarFallback className="text-xs">{initial}</AvatarFallback>
-                </Avatar>
-                <div className={`rounded-lg p-3 ${mine ? "bg-primary text-primary-foreground" : "bg-muted"} ${m.is_hidden ? "opacity-60 italic" : ""}`}>
-                  <div className="text-xs font-medium mb-1 flex items-center gap-1 flex-wrap">
-                    {author?.role === "admin" && <Crown className="h-3 w-3 text-amber-500" />}
-                    {author?.role === "co_admin" && <Shield className="h-3 w-3" />}
-                    <span>{name}</span>
-                    {author?.profile?.mood && (
-                      <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${mine ? "bg-primary-foreground/20" : "bg-background"}`}>
-                        {author.profile.mood}
-                      </span>
+                <MemberAvatar userId={m.user_id} name={name} avatarUrl={m.profile?.avatar_url} size="sm" />
+                <div className="flex flex-col items-stretch gap-1">
+                  <div className={`rounded-lg p-3 ${mine ? "bg-primary text-primary-foreground" : "bg-muted"} ${m.is_hidden ? "opacity-60 italic" : ""}`}>
+                    <div className="text-xs font-medium mb-1 flex items-center gap-1 flex-wrap">
+                      {author?.role === "admin" && <Crown className="h-3 w-3 text-amber-500" />}
+                      {author?.role === "co_admin" && <Shield className="h-3 w-3" />}
+                      <span>{name}</span>
+                      {author?.profile?.mood && (
+                        <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${mine ? "bg-primary-foreground/20" : "bg-background"}`}>
+                          {author.profile.mood}
+                        </span>
+                      )}
+                    </div>
+                    {m.is_hidden && (
+                      <div className="text-[10px] uppercase tracking-wide mb-1 opacity-70">Held for review</div>
                     )}
+                    <div className="text-sm whitespace-pre-wrap break-words">{m.content}</div>
+                    <div className="text-xs mt-1 opacity-70">{format(new Date(m.created_at), "PP · HH:mm")}</div>
                   </div>
-                  {m.is_hidden && (
-                    <div className="text-[10px] uppercase tracking-wide mb-1 opacity-70">Held for review</div>
+
+                  {/* Reaction pills */}
+                  {reactionEntries.length > 0 && (
+                    <div className={`flex flex-wrap gap-1 ${mine ? "justify-end" : "justify-start"}`}>
+                      {reactionEntries.map(([emoji, info]) => (
+                        <button
+                          key={emoji}
+                          onClick={() => toggleReaction(m.id, emoji)}
+                          className={`text-xs px-2 py-0.5 rounded-full border transition ${
+                            info.mine ? "bg-primary/15 border-primary/40" : "bg-background border-border hover:bg-muted"
+                          }`}
+                        >
+                          {emoji} {info.count}
+                        </button>
+                      ))}
+                    </div>
                   )}
-                  <div className="text-sm whitespace-pre-wrap break-words">{m.content}</div>
-                  <div className="text-xs mt-1 opacity-70">{format(new Date(m.created_at), "PP · HH:mm")}</div>
                 </div>
+
+                {/* Quick reactions popover */}
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="ghost" size="icon"
+                      className="h-6 w-6 opacity-0 group-hover:opacity-70 hover:opacity-100 transition"
+                      aria-label="React"
+                    >
+                      <Smile className="h-3.5 w-3.5" />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-1.5" side="top">
+                    <div className="flex gap-1">
+                      {QUICK_REACTIONS.map((emoji) => (
+                        <button
+                          key={emoji}
+                          onClick={() => toggleReaction(m.id, emoji)}
+                          className="h-8 w-8 rounded-md hover:bg-accent text-lg transition"
+                          aria-label={`React ${emoji}`}
+                        >
+                          {emoji}
+                        </button>
+                      ))}
+                    </div>
+                  </PopoverContent>
+                </Popover>
+
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button variant="ghost" size="icon" className="h-6 w-6 opacity-60 hover:opacity-100">
@@ -550,38 +710,44 @@ const RoomChat = ({ roomId, onLeave }: Props) => {
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align={mine ? "end" : "start"}>
-                    {!mine && (
-                      <DropdownMenuItem onClick={() => setReportTarget(m)}>
-                        <Flag className="h-3.5 w-3.5 mr-2" /> Report message
+                    {mine ? (
+                      <DropdownMenuItem className="text-destructive" onClick={() => removeMessage(m.id)}>
+                        <Trash2 className="h-3.5 w-3.5 mr-2" /> Delete my message
                       </DropdownMenuItem>
-                    )}
-                    {isAdmin && !mine && (
+                    ) : (
                       <>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem onClick={() => removeMessage(m.id)}>
-                          <Trash2 className="h-3.5 w-3.5 mr-2" /> Remove this message
+                        <DropdownMenuItem onClick={() => setReportTarget(m)}>
+                          <Flag className="h-3.5 w-3.5 mr-2" /> Report message
                         </DropdownMenuItem>
-                        {m.is_hidden ? (
-                          <DropdownMenuItem onClick={() => restoreMessage(m.id)}>Restore message</DropdownMenuItem>
-                        ) : (
-                          <DropdownMenuItem onClick={() => supabase.from("room_messages").update({ is_hidden: true, hidden_reason: "admin_hide" } as any).eq("id", m.id).then(() => loadMessages())}>
-                            Hide message
-                          </DropdownMenuItem>
-                        )}
-                        <DropdownMenuItem onClick={() => warnMember(m.user_id)}>
-                          <AlertCircle className="h-3.5 w-3.5 mr-2" /> Warn this member
-                        </DropdownMenuItem>
-                        {author && author.user_id !== me?.id && (
+                        {isAdmin && (
                           <>
-                            <DropdownMenuItem onClick={() => setMemberAction({ p: author, type: "remove" })}>
-                              <UserMinus className="h-3.5 w-3.5 mr-2" /> Remove from room
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem onClick={() => removeMessage(m.id)}>
+                              <Trash2 className="h-3.5 w-3.5 mr-2" /> Remove this message
                             </DropdownMenuItem>
-                            <DropdownMenuItem
-                              className="text-destructive"
-                              onClick={() => setMemberAction({ p: author, type: "ban" })}
-                            >
-                              <Ban className="h-3.5 w-3.5 mr-2" /> Ban from room
+                            {m.is_hidden ? (
+                              <DropdownMenuItem onClick={() => restoreMessage(m.id)}>Restore message</DropdownMenuItem>
+                            ) : (
+                              <DropdownMenuItem onClick={() => supabase.from("room_messages").update({ is_hidden: true, hidden_reason: "admin_hide" } as any).eq("id", m.id).then(() => loadMessages())}>
+                                Hide message
+                              </DropdownMenuItem>
+                            )}
+                            <DropdownMenuItem onClick={() => warnMember(m.user_id)}>
+                              <AlertCircle className="h-3.5 w-3.5 mr-2" /> Warn this member
                             </DropdownMenuItem>
+                            {author && (
+                              <>
+                                <DropdownMenuItem onClick={() => setMemberAction({ p: author, type: "remove" })}>
+                                  <UserMinus className="h-3.5 w-3.5 mr-2" /> Remove from room
+                                </DropdownMenuItem>
+                                <DropdownMenuItem
+                                  className="text-destructive"
+                                  onClick={() => setMemberAction({ p: author, type: "ban" })}
+                                >
+                                  <Ban className="h-3.5 w-3.5 mr-2" /> Ban from room
+                                </DropdownMenuItem>
+                              </>
+                            )}
                           </>
                         )}
                       </>
@@ -592,16 +758,25 @@ const RoomChat = ({ roomId, onLeave }: Props) => {
             </div>
           );
         })}
+        {visibleMessages.length === 0 && searchQuery && (
+          <div className="text-center text-sm text-muted-foreground py-8">No messages match “{searchQuery}”.</div>
+        )}
         <div ref={messagesEndRef} />
       </div>
 
+      {/* Typing indicator */}
+      {typingNames.length > 0 && (
+        <div className="px-4 py-1 text-xs text-muted-foreground italic shrink-0">
+          {typingNames.length === 1 ? `${typingNames[0]} is typing…` : `${typingNames.length} people are typing…`}
+        </div>
+      )}
 
       {/* Input */}
       <div className={`p-4 border-t bg-background shrink-0 ${isMobile ? "pb-20" : "pb-4"}`}>
         <div className="flex gap-2">
           <Textarea
             value={newMessage}
-            onChange={(e) => setNewMessage(e.target.value)}
+            onChange={(e) => { setNewMessage(e.target.value); if (e.target.value) broadcastTyping(); }}
             onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendMessage(); } }}
             placeholder={myParticipant?.agreed_to_guidelines ? "Type your message…" : "Tap send to agree to the room guidelines first"}
             className="min-h-[60px] resize-none"
@@ -687,6 +862,24 @@ const RoomChat = ({ roomId, onLeave }: Props) => {
         </AlertDialogContent>
       </AlertDialog>
 
+      {/* Leave confirmation */}
+      <AlertDialog open={confirmLeave} onOpenChange={setConfirmLeave}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Leave this room?</AlertDialogTitle>
+            <AlertDialogDescription>
+              You'll be removed from the member list. To come back, you'll need to re-join and agree to the room rules again.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction className="bg-destructive hover:bg-destructive/90" onClick={leaveRoom}>
+              Leave room
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
       {/* Admin Panel Sheet */}
       <Sheet open={showAdminPanel} onOpenChange={setShowAdminPanel}>
         <SheetContent side="right" className="w-full sm:max-w-lg overflow-y-auto">
@@ -762,14 +955,17 @@ const RoomChat = ({ roomId, onLeave }: Props) => {
             <TabsContent value="members" className="space-y-2 mt-4">
               {participants.map((p) => (
                 <div key={p.id} className="flex items-center justify-between p-2 border rounded-md">
-                  <div className="text-sm">
-                    <div className="flex items-center gap-1 font-medium">
-                      {p.role === "admin" && <Crown className="h-3.5 w-3.5 text-amber-500" />}
-                      {p.role === "co_admin" && <Shield className="h-3.5 w-3.5" />}
-                      {displayName(p.profile)}
-                    </div>
-                    <div className="text-[10px] text-muted-foreground">
-                      Joined {format(new Date(p.joined_at), "PP")} · {p.role.replace("_", "-")}
+                  <div className="flex items-center gap-2 text-sm">
+                    <MemberAvatar userId={p.user_id} name={displayName(p.profile)} avatarUrl={p.profile?.avatar_url} size="sm" />
+                    <div>
+                      <div className="flex items-center gap-1 font-medium">
+                        {p.role === "admin" && <Crown className="h-3.5 w-3.5 text-amber-500" />}
+                        {p.role === "co_admin" && <Shield className="h-3.5 w-3.5" />}
+                        {displayName(p.profile)}
+                      </div>
+                      <div className="text-[10px] text-muted-foreground">
+                        Joined {format(new Date(p.joined_at), "PP")} · {p.role.replace("_", "-")}
+                      </div>
                     </div>
                   </div>
                   {p.user_id !== me?.id && (

@@ -452,6 +452,48 @@ export type Database = {
           },
         ]
       }
+      room_message_reactions: {
+        Row: {
+          created_at: string
+          emoji: string
+          id: string
+          message_id: string
+          room_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          emoji: string
+          id?: string
+          message_id: string
+          room_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          emoji?: string
+          id?: string
+          message_id?: string
+          room_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "room_message_reactions_message_id_fkey"
+            columns: ["message_id"]
+            isOneToOne: false
+            referencedRelation: "room_messages"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "room_message_reactions_room_id_fkey"
+            columns: ["room_id"]
+            isOneToOne: false
+            referencedRelation: "rooms"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       room_message_reports: {
         Row: {
           created_at: string
@@ -540,6 +582,7 @@ export type Database = {
           agreed_to_guidelines: boolean
           id: string
           joined_at: string
+          last_read_at: string
           role: string
           room_id: string
           user_id: string
@@ -549,6 +592,7 @@ export type Database = {
           agreed_to_guidelines?: boolean
           id?: string
           joined_at?: string
+          last_read_at?: string
           role?: string
           room_id: string
           user_id: string
@@ -558,6 +602,7 @@ export type Database = {
           agreed_to_guidelines?: boolean
           id?: string
           joined_at?: string
+          last_read_at?: string
           role?: string
           room_id?: string
           user_id?: string
