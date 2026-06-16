@@ -186,35 +186,60 @@ const CommunityRooms = () => {
       return;
     }
 
-    // Check existing membership
+    // Existing member who already agreed → enter directly
     const { data: existing } = await supabase
-      .from("room_participants").select("id").eq("room_id", room.id).eq("user_id", user.id).maybeSingle();
+      .from("room_participants").select("id, agreed_to_guidelines").eq("room_id", room.id).eq("user_id", user.id).maybeSingle();
 
-    if (existing) {
+    if (existing && (existing as any).agreed_to_guidelines) {
       setSelectedRoom(room);
       return;
     }
 
-    if (room.privacy === "open") {
-      const { error } = await supabase.from("room_participants").insert({
-        room_id: room.id, user_id: user.id, role: "member",
-      } as any);
-      if (error) {
-        toast({ title: "Error", description: error.message, variant: "destructive" });
+    // Otherwise show the rules + agreement modal
+    setJoinAgreed(false);
+    setJoinTarget(room);
+  };
+
+  const confirmJoin = async () => {
+    if (!joinTarget || !joinAgreed) return;
+    const room = joinTarget;
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+    setJoining(true);
+    try {
+      const { data: existing } = await supabase
+        .from("room_participants").select("id").eq("room_id", room.id).eq("user_id", user.id).maybeSingle();
+
+      if (existing) {
+        await supabase.from("room_participants")
+          .update({ agreed_to_guidelines: true, agreed_at: new Date().toISOString() } as any)
+          .eq("id", (existing as any).id);
+        setJoinTarget(null);
+        setSelectedRoom(room);
         return;
       }
-      setSelectedRoom(room);
-    } else {
-      // Approval required — send a request
-      const { error } = await supabase.from("room_join_requests").insert({
-        room_id: room.id, user_id: user.id, status: "pending",
-      } as any);
-      if (error && !error.message.includes("duplicate")) {
-        toast({ title: "Error", description: error.message, variant: "destructive" });
-        return;
+
+      if (room.privacy === "open") {
+        const { error } = await supabase.from("room_participants").insert({
+          room_id: room.id, user_id: user.id, role: "member",
+          agreed_to_guidelines: true, agreed_at: new Date().toISOString(),
+        } as any);
+        if (error) throw error;
+        setJoinTarget(null);
+        setSelectedRoom(room);
+      } else {
+        const { error } = await supabase.from("room_join_requests").insert({
+          room_id: room.id, user_id: user.id, status: "pending",
+        } as any);
+        if (error && !error.message.includes("duplicate")) throw error;
+        toast({ title: "Request sent", description: "The room admin will review your request." });
+        setJoinTarget(null);
+        fetchRooms();
       }
-      toast({ title: "Request sent", description: "The room admin will review your request." });
-      fetchRooms();
+    } catch (e: any) {
+      toast({ title: "Error", description: e.message, variant: "destructive" });
+    } finally {
+      setJoining(false);
     }
   };
 
