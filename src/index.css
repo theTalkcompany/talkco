@@ -56,6 +56,31 @@
     --gradient-soft: linear-gradient(180deg, hsl(var(--muted)) 0%, hsl(var(--background)) 100%);
     --shadow-elev: 0 10px 30px -10px hsl(var(--primary) / 0.25);
     --shadow-glow: 0 8px 24px hsl(var(--accent) / 0.35), 0 2px 8px hsl(var(--primary) / 0.25);
+
+    /* Letters to Strangers palette */
+    --letter-cream: 40 50% 96%;
+    --letter-lavender: 270 45% 92%;
+    --letter-ink: 230 35% 22%;
+    --gradient-letter: linear-gradient(135deg, hsl(var(--letter-lavender)) 0%, hsl(var(--letter-cream)) 100%);
+  }
+
+  /* Letter paper utility — cream background with subtle ruled lines */
+  .letter-paper {
+    background-color: hsl(var(--letter-cream));
+    background-image:
+      linear-gradient(transparent 0, transparent calc(1.75rem - 1px), hsl(var(--letter-ink) / 0.12) calc(1.75rem - 1px), hsl(var(--letter-ink) / 0.12) 1.75rem);
+    background-size: 100% 1.75rem;
+    color: hsl(var(--letter-ink));
+    box-shadow: 0 20px 50px -20px hsl(var(--letter-ink) / 0.25), 0 1px 0 hsl(var(--letter-ink) / 0.05) inset;
+  }
+
+  @keyframes envelope-flap {
+    0% { transform: rotateX(0deg); }
+    100% { transform: rotateX(-180deg); }
+  }
+  @keyframes letter-rise {
+    0% { transform: translateY(40%) scale(0.95); opacity: 0; }
+    100% { transform: translateY(0) scale(1); opacity: 1; }
   }
 
   .dark {

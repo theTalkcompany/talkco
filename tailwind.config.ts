@@ -61,7 +61,15 @@ export default {
 					'accent-foreground': 'hsl(var(--sidebar-accent-foreground))',
 					border: 'hsl(var(--sidebar-border))',
 					ring: 'hsl(var(--sidebar-ring))'
+				},
+				letter: {
+					cream: 'hsl(var(--letter-cream))',
+					lavender: 'hsl(var(--letter-lavender))',
+					ink: 'hsl(var(--letter-ink))'
 				}
+			},
+			fontFamily: {
+				handwriting: ['"Caveat"', '"Kalam"', 'cursive']
 			},
 			borderRadius: {
 				lg: 'var(--radius)',

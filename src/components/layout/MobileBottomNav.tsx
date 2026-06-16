@@ -1,5 +1,5 @@
 import { NavLink } from "react-router-dom";
-import { MessageCircle, FileText, HelpCircle, Home, User } from "lucide-react";
+import { MessageCircle, FileText, HelpCircle, Home, User, Mail } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 
 const MobileBottomNav = () => {
@@ -11,6 +11,7 @@ const MobileBottomNav = () => {
     { to: "/", label: "Home", icon: Home },
     { to: "/feed", label: "Feed", icon: FileText },
     { to: "/chat", label: "Chat", icon: MessageCircle },
+    { to: "/letters", label: "Letters", icon: Mail },
     { to: "/help", label: "Help", icon: HelpCircle },
     { to: "/profile", label: "Me", icon: User },
   ];

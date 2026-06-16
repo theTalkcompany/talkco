@@ -53,6 +53,9 @@ const Navbar = () => {
     to: "/chat",
     label: "Chat"
   }, {
+    to: "/letters",
+    label: "💌 Letters"
+  }, {
     to: "/help",
     label: "Get Help"
   }, {
