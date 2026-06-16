@@ -420,6 +420,25 @@ const Feed = () => {
       </Helmet>
 
       <section className="surface-card p-4 sm:p-6">
+        {/* Daily quote banner */}
+        {(() => {
+          const dq = getDailyLibraryQuote();
+          return (
+            <Link
+              to="/quotes"
+              className="block rounded-xl border bg-gradient-to-br from-violet-100/80 via-pink-100/70 to-amber-100/70 dark:from-violet-950/40 dark:via-pink-950/30 dark:to-amber-950/30 p-4 mb-4 hover:shadow-sm transition-shadow animate-fade-in"
+            >
+              <p className="text-[11px] uppercase tracking-wide font-semibold text-primary mb-1">
+                ✨ Quote of the day
+              </p>
+              <blockquote className="text-sm sm:text-base leading-relaxed text-foreground/90">
+                "{dq.text}"
+              </blockquote>
+              <cite className="block mt-1 text-xs text-muted-foreground not-italic">— {dq.author}</cite>
+            </Link>
+          );
+        })()}
+
         {/* Guidelines banner */}
         <div className="flex items-center gap-3 rounded-lg border bg-primary/5 px-3 py-2 text-sm">
           <ShieldCheck className="h-4 w-4 text-primary flex-shrink-0" />
@@ -431,6 +450,7 @@ const Feed = () => {
 
         <h1 className="mt-4 text-2xl sm:text-3xl font-bold">Community Feed</h1>
         <p className="mt-1 text-muted-foreground text-sm">A place to share what's on your mind — anonymously by default.</p>
+
 
         {/* Composer */}
         <div className="mt-5 rounded-xl border bg-background p-3 sm:p-4">
