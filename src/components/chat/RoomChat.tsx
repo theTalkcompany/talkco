@@ -382,44 +382,79 @@ const RoomChat = ({ roomId, onLeave }: Props) => {
             <SheetContent side="right" className="w-80">
               <SheetHeader><SheetTitle>Members</SheetTitle></SheetHeader>
               <div className="mt-4 space-y-2 overflow-y-auto max-h-[80vh]">
-                {participants.map((p) => (
-                  <div key={p.id} className="flex items-center justify-between gap-2 p-2 rounded-md bg-muted/50">
-                    <div className="min-w-0">
-                      <div className="flex items-center gap-1.5 text-sm font-medium truncate">
-                        {p.role === "admin" && <Crown className="h-3.5 w-3.5 text-amber-500" />}
-                        {p.role === "co_admin" && <Shield className="h-3.5 w-3.5 text-primary" />}
-                        <span className="truncate">{displayName(p.profile)}</span>
+                {participants.map((p) => {
+                  const name = displayName(p.profile);
+                  const roleBadge = p.role === "admin" ? "👑 Admin" : p.role === "co_admin" ? "🛡️ Co-admin" : "Member";
+                  return (
+                    <Popover key={p.id}>
+                      <div className="flex items-center justify-between gap-2 p-2 rounded-md bg-muted/50">
+                        <PopoverTrigger asChild>
+                          <button className="flex items-center gap-2 min-w-0 flex-1 text-left">
+                            <Avatar className="h-8 w-8 shrink-0">
+                              <AvatarImage src={p.profile?.avatar_url || undefined} alt={name} />
+                              <AvatarFallback className="text-xs">{name.charAt(0).toUpperCase()}</AvatarFallback>
+                            </Avatar>
+                            <div className="min-w-0">
+                              <div className="text-sm font-medium truncate">{name}</div>
+                              <div className="flex items-center gap-1 text-[10px] text-muted-foreground">
+                                <span>{roleBadge}</span>
+                                {p.profile?.mood && (
+                                  <span className="px-1.5 py-0.5 rounded-full bg-background">{p.profile.mood}</span>
+                                )}
+                              </div>
+                            </div>
+                          </button>
+                        </PopoverTrigger>
+                        {isAdmin && p.user_id !== me?.id && (
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="icon" className="h-7 w-7"><MoreVertical className="h-4 w-4" /></Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              {p.role === "member" && (
+                                <DropdownMenuItem onClick={() => promoteToCoAdmin(p)}>Promote to co-admin</DropdownMenuItem>
+                              )}
+                              <DropdownMenuItem onClick={() => warnMember(p.user_id)}>Warn this member</DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => setMemberAction({ p, type: "remove" })}>Remove from room</DropdownMenuItem>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem className="text-destructive" onClick={() => setMemberAction({ p, type: "ban" })}>
+                                Ban permanently
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        )}
                       </div>
-                      {p.profile?.mood && <div className="text-xs text-muted-foreground">{p.profile.mood}</div>}
-                      <div className="text-[10px] text-muted-foreground capitalize">{p.role.replace("_", "-")}</div>
-                    </div>
-                    {isAdmin && p.user_id !== me?.id && (
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="icon" className="h-7 w-7"><MoreVertical className="h-4 w-4" /></Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          {p.role === "member" && (
-                            <DropdownMenuItem onClick={() => promoteToCoAdmin(p)}>
-                              Promote to co-admin
-                            </DropdownMenuItem>
-                          )}
-                          <DropdownMenuItem onClick={() => setMemberAction({ p, type: "remove" })}>
-                            Remove from room
-                          </DropdownMenuItem>
-                          <DropdownMenuSeparator />
-                          <DropdownMenuItem
-                            className="text-destructive"
-                            onClick={() => setMemberAction({ p, type: "ban" })}
+                      <PopoverContent side="left" className="w-64">
+                        <div className="flex items-center gap-3">
+                          <Avatar className="h-12 w-12">
+                            <AvatarImage src={p.profile?.avatar_url || undefined} alt={name} />
+                            <AvatarFallback>{name.charAt(0).toUpperCase()}</AvatarFallback>
+                          </Avatar>
+                          <div className="min-w-0">
+                            <div className="font-medium truncate">{name}</div>
+                            <div className="text-xs text-muted-foreground">{roleBadge}</div>
+                            {p.profile?.mood && <div className="text-xs text-muted-foreground">Vibe: {p.profile.mood}</div>}
+                            <div className="text-[10px] text-muted-foreground">Joined {format(new Date(p.joined_at), "PP")}</div>
+                          </div>
+                        </div>
+                        {p.user_id !== me?.id && (
+                          <Button
+                            variant="outline" size="sm" className="w-full mt-3"
+                            onClick={() => {
+                              const lastMsg = [...messages].reverse().find((m) => m.user_id === p.user_id);
+                              if (lastMsg) setReportTarget(lastMsg);
+                              else toast({ title: "Nothing to report yet", description: "Report a specific message via its menu." });
+                            }}
                           >
-                            Ban permanently
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    )}
-                  </div>
-                ))}
+                            <Flag className="h-3.5 w-3.5 mr-2" /> Report this member
+                          </Button>
+                        )}
+                      </PopoverContent>
+                    </Popover>
+                  );
+                })}
               </div>
+
             </SheetContent>
           </Sheet>
 
