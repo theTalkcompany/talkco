@@ -16,6 +16,7 @@ import PrivacyPolicy from "./pages/PrivacyPolicy";
 import TermsOfService from "./pages/TermsOfService";
 import Contact from "./pages/Contact";
 import AppStoreCompliance from "./pages/AppStoreCompliance";
+import Letters from "./pages/Letters";
 import MainLayout from "./components/layout/MainLayout";
 
 const queryClient = new QueryClient();
