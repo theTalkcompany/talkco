@@ -66,6 +66,41 @@ const WillowAvatar = ({ size = "md" }: { size?: "sm" | "md" }) => (
   </Avatar>
 );
 
+type CrisisLine = { region: string; label: string; number: string; tel: string };
+
+const CRISIS_LINES: Record<string, CrisisLine> = {
+  UK: { region: "UK", label: "Samaritans", number: "116 123", tel: "116123" },
+  US: { region: "US", label: "Crisis Lifeline", number: "988", tel: "988" },
+  CA: { region: "Canada", label: "Talk Suicide Canada", number: "1-833-456-4566", tel: "18334564566" },
+  AU: { region: "Australia", label: "Lifeline", number: "13 11 14", tel: "131114" },
+  IE: { region: "Ireland", label: "Samaritans", number: "116 123", tel: "116123" },
+  NZ: { region: "NZ", label: "Lifeline Aotearoa", number: "0800 543 354", tel: "0800543354" },
+};
+
+function detectCrisisLine(): CrisisLine {
+  try {
+    const stored = localStorage.getItem("talkco_user_region");
+    if (stored && CRISIS_LINES[stored]) return CRISIS_LINES[stored];
+    const lang = (navigator.language || "en-GB").toUpperCase();
+    const region = lang.split("-")[1] || "GB";
+    const map: Record<string, string> = { GB: "UK", US: "US", CA: "CA", AU: "AU", IE: "IE", NZ: "NZ" };
+    return CRISIS_LINES[map[region]] || CRISIS_LINES.UK;
+  } catch {
+    return CRISIS_LINES.UK;
+  }
+}
+
+function renderWillowMessage(text: string) {
+  const paragraphs = text.split(/\n{2,}|\n/).map((p) => p.trim()).filter(Boolean);
+  return (
+    <div className="space-y-2">
+      {paragraphs.map((p, i) => (
+        <p key={i} className="whitespace-pre-wrap leading-relaxed">{p}</p>
+      ))}
+    </div>
+  );
+}
+
 const WillowChat = () => {
   const { toast } = useToast();
   const [messages, setMessages] = useState<ChatMessage[]>([
@@ -81,6 +116,7 @@ const WillowChat = () => {
   const sessionIdRef = useRef(`sess_${Date.now()}`);
   const bottomRef = useRef<HTMLDivElement | null>(null);
   const inputRef = useRef<HTMLTextAreaElement | null>(null);
+  const crisisLine = useMemo(() => detectCrisisLine(), []);
 
   // Tick to refresh relative timestamps
   useEffect(() => {
@@ -231,12 +267,20 @@ const WillowChat = () => {
                 <p className="text-muted-foreground mt-0.5">
                   If you're in crisis or thinking of hurting yourself, please reach out to a trained person right now.
                 </p>
-                <Link
-                  to="/help"
-                  className="inline-block mt-2 text-primary font-medium underline underline-offset-2"
+                <a
+                  href={`tel:${crisisLine.tel}`}
+                  className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground hover:opacity-90"
                 >
-                  Open Get Help →
-                </Link>
+                  📞 {crisisLine.region}: {crisisLine.number} — {crisisLine.label}
+                </a>
+                <div className="mt-2">
+                  <Link
+                    to="/help"
+                    className="text-primary font-medium underline underline-offset-2 text-xs"
+                  >
+                    Open Get Help →
+                  </Link>
+                </div>
               </div>
             </div>
           </div>
@@ -260,10 +304,14 @@ const WillowChat = () => {
                       : "bg-primary text-primary-foreground rounded-tr-sm"
                   }`}
                 >
-                  {m.role === "assistant" && (
-                    <p className="text-[11px] font-medium opacity-70 mb-0.5">Willow</p>
+                  {m.role === "assistant" ? (
+                    <>
+                      <p className="text-[11px] font-medium opacity-70 mb-1">Willow</p>
+                      {renderWillowMessage(m.content)}
+                    </>
+                  ) : (
+                    <p className="whitespace-pre-wrap">{m.content}</p>
                   )}
-                  <p className="whitespace-pre-wrap">{m.content}</p>
                 </div>
                 <span className="text-[10px] text-muted-foreground mt-1 px-1">
                   {formatRelative(m.ts, now)}
