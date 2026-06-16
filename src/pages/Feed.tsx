@@ -9,6 +9,7 @@ import { ReportDialog } from "@/components/feed/ReportDialog";
 import { useContentModeration } from "@/hooks/useContentModeration";
 import { Pencil, Trash2, Save, X, Flag, AlertTriangle, Eye, Heart, MessageCircle, ShieldCheck, Sparkles } from "lucide-react";
 import CommunityGuidelinesModal from "@/components/feed/CommunityGuidelinesModal";
+import { getDailyLibraryQuote } from "@/data/quoteLibrary";
 
 interface LikeRow { id: string; user_id: string }
 interface CommentRow { id: string; content: string; user_id: string; created_at: string }
