@@ -41,6 +41,7 @@ const App = () => (
               <Route path="/terms-of-service" element={<TermsOfService />} />
               <Route path="/contact" element={<Contact />} />
               <Route path="/app-store-compliance" element={<AppStoreCompliance />} />
+              <Route path="/letters" element={<Letters />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>
