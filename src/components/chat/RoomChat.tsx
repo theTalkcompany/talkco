@@ -692,21 +692,36 @@ const RoomChat = ({ roomId, onLeave }: Props) => {
               {reports.length === 0 && <p className="text-sm text-muted-foreground">No pending reports.</p>}
               {reports.map((rep) => {
                 const msg = messages.find((m) => m.id === rep.message_id);
+                const author = msg ? participants.find((p) => p.user_id === msg.user_id) : undefined;
                 return (
                   <div key={rep.id} className="p-3 rounded-md border space-y-2">
                     <div className="flex items-center justify-between">
                       <Badge variant="outline" className="text-xs capitalize">{rep.reason}</Badge>
                       <span className="text-[10px] text-muted-foreground">{format(new Date(rep.created_at), "PPp")}</span>
                     </div>
+                    {author && (
+                      <div className="text-[11px] text-muted-foreground">From: {displayName(author.profile)}</div>
+                    )}
                     <div className="text-sm p-2 bg-muted rounded">{msg?.content || "(message deleted)"}</div>
-                    <div className="flex gap-1 justify-end">
+                    <div className="flex flex-wrap gap-1 justify-end">
                       <Button size="sm" variant="outline" onClick={() => resolveReport(rep.id, false, rep.message_id)}>Dismiss</Button>
-                      <Button size="sm" variant="destructive" onClick={() => resolveReport(rep.id, true, rep.message_id)}>Hide message</Button>
+                      <Button size="sm" variant="outline" onClick={() => resolveReport(rep.id, true, rep.message_id)}>Remove message</Button>
+                      {author && author.user_id !== me?.id && (
+                        <>
+                          <Button size="sm" variant="outline" onClick={() => { warnMember(author.user_id); resolveReport(rep.id, false, rep.message_id); }}>
+                            <AlertCircle className="h-3 w-3 mr-1" /> Warn user
+                          </Button>
+                          <Button size="sm" variant="destructive" onClick={() => { setMemberAction({ p: author, type: "ban" }); resolveReport(rep.id, true, rep.message_id); }}>
+                            <Ban className="h-3 w-3 mr-1" /> Ban user
+                          </Button>
+                        </>
+                      )}
                     </div>
                   </div>
                 );
               })}
             </TabsContent>
+
 
             <TabsContent value="members" className="space-y-2 mt-4">
               {participants.map((p) => (
