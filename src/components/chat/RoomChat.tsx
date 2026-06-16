@@ -365,8 +365,9 @@ const RoomChat = ({ roomId, onLeave }: Props) => {
         <div className="flex items-center gap-3 min-w-0">
           <Button variant="ghost" size="sm" onClick={leaveRoom}><ArrowLeft className="h-4 w-4" /></Button>
           <div className="min-w-0">
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-wrap">
               <h2 className="font-semibold truncate">#{room.name}</h2>
+              {room.topic_tag && <Badge variant="outline" className="text-[10px]">#{room.topic_tag}</Badge>}
               {isAdmin && <Crown className="h-4 w-4 text-amber-500" aria-label="You are an admin" />}
             </div>
             <p className="text-sm text-muted-foreground truncate">{room.description}</p>
