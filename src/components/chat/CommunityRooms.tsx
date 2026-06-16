@@ -1,342 +1,294 @@
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Users, Plus } from "lucide-react";
+import { Label } from "@/components/ui/label";
+import {
+  Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger,
+} from "@/components/ui/dialog";
+import {
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+} from "@/components/ui/select";
+import { Users, Plus, Lock, Globe, Archive, Clock } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
+import { TOPIC_TAGS } from "@/lib/crisisDetection";
 import RoomChat from "./RoomChat";
 
 interface Room {
   id: string;
   name: string;
   description: string;
-  participant_count?: number;
-  created_by?: string;
+  created_by?: string | null;
   age_min: number;
   age_max: number;
+  age_band: "teen" | "adult" | "all";
+  topic_tag: string;
+  rules: string;
+  privacy: "open" | "approval";
+  is_archived: boolean;
+  last_activity_at: string;
+  participant_count?: number;
+  recent_count?: number;
+  reports_24h?: number;
+  pending_request?: boolean;
 }
+
+const AGE_BAND_LABEL: Record<Room["age_band"], string> = {
+  teen: "13–17",
+  adult: "18+",
+  all: "All ages",
+};
+
+const safetyFromReports = (n: number) => {
+  if (n >= 3) return { color: "bg-red-500", label: "Recent reports" };
+  if (n >= 1) return { color: "bg-amber-500", label: "Some reports" };
+  return { color: "bg-emerald-500", label: "Safe" };
+};
+
+const formatRelative = (iso: string): string => {
+  const d = new Date(iso).getTime();
+  const diff = Math.max(0, Date.now() - d);
+  const m = Math.floor(diff / 60000);
+  if (m < 1) return "just now";
+  if (m < 60) return `${m}m ago`;
+  const h = Math.floor(m / 60);
+  if (h < 24) return `${h}h ago`;
+  return `${Math.floor(h / 24)}d ago`;
+};
 
 const CommunityRooms = () => {
   const [rooms, setRooms] = useState<Room[]>([]);
   const [selectedRoom, setSelectedRoom] = useState<Room | null>(null);
   const [loading, setLoading] = useState(true);
-  const [showCreateRoom, setShowCreateRoom] = useState(false);
-  const [newRoomName, setNewRoomName] = useState("");
-  const [newRoomDescription, setNewRoomDescription] = useState("");
-  const [newRoomAgeMin, setNewRoomAgeMin] = useState("13");
-  const [newRoomAgeMax, setNewRoomAgeMax] = useState("99");
-  const [creating, setCreating] = useState(false);
+  const [showCreate, setShowCreate] = useState(false);
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const { toast } = useToast();
 
+  // Create-room form
+  const [form, setForm] = useState({
+    name: "",
+    description: "",
+    topic_tag: "general",
+    age_band: "all" as Room["age_band"],
+    rules: "",
+    privacy: "open" as Room["privacy"],
+  });
+  const [creating, setCreating] = useState(false);
+
   useEffect(() => {
+    supabase.auth.getUser().then(({ data }) => setCurrentUserId(data.user?.id ?? null));
     fetchRooms();
   }, []);
 
   const fetchRooms = async () => {
+    setLoading(true);
     try {
-      // Fetch rooms with participant counts
-      const { data: roomsData, error: roomsError } = await supabase
-        .from('rooms')
-        .select('*')
-        .order('name');
+      const { data: roomsData, error } = await supabase
+        .from("rooms")
+        .select("*")
+        .eq("is_archived", false)
+        .order("last_activity_at", { ascending: false });
+      if (error) throw error;
 
-      if (roomsError) throw roomsError;
+      const { data: { user } } = await supabase.auth.getUser();
+      const since24h = new Date(Date.now() - 24 * 3600 * 1000).toISOString();
+      const since10m = new Date(Date.now() - 10 * 60 * 1000).toISOString();
 
-      // Get participant counts for each room
-      const roomsWithCounts = await Promise.all(
-        (roomsData || []).map(async (room) => {
-          const { count } = await supabase
-            .from('room_participants')
-            .select('*', { count: 'exact', head: true })
-            .eq('room_id', room.id);
-
+      const enriched: Room[] = await Promise.all(
+        (roomsData || []).map(async (r: any) => {
+          const [{ count: pc }, { count: rc }, { count: reports }, pending] = await Promise.all([
+            supabase.from("room_participants").select("*", { count: "exact", head: true }).eq("room_id", r.id),
+            supabase.from("room_messages").select("*", { count: "exact", head: true }).eq("room_id", r.id).gte("created_at", since10m),
+            supabase.from("room_message_reports").select("*", { count: "exact", head: true }).eq("room_id", r.id).gte("created_at", since24h),
+            user
+              ? supabase.from("room_join_requests").select("status").eq("room_id", r.id).eq("user_id", user.id).eq("status", "pending").maybeSingle()
+              : Promise.resolve({ data: null }),
+          ]);
           return {
-            ...room,
-            participant_count: count || 0,
+            ...r,
+            participant_count: pc || 0,
+            recent_count: rc || 0,
+            reports_24h: reports || 0,
+            pending_request: !!(pending as any)?.data,
           };
         })
       );
-
-      setRooms(roomsWithCounts);
-    } catch (error) {
-      console.error('Error fetching rooms:', error);
-      toast({
-        title: "Error",
-        description: "Failed to load community rooms",
-        variant: "destructive",
-      });
+      setRooms(enriched);
+    } catch (e) {
+      console.error(e);
+      toast({ title: "Error", description: "Failed to load rooms", variant: "destructive" });
     } finally {
       setLoading(false);
     }
   };
 
   const createRoom = async () => {
-    if (!newRoomName.trim()) {
-      toast({
-        title: "Error",
-        description: "Room name is required",
-        variant: "destructive",
-      });
+    if (!form.name.trim()) {
+      toast({ title: "Name required", variant: "destructive" });
       return;
     }
-
-    const ageMin = parseInt(newRoomAgeMin);
-    const ageMax = parseInt(newRoomAgeMax);
-    
-    if (ageMin < 13 || ageMax > 99 || ageMin > ageMax) {
-      toast({
-        title: "Error", 
-        description: "Please enter a valid age range (13-99)",
-        variant: "destructive",
-      });
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      toast({ title: "Sign in required", variant: "destructive" });
       return;
     }
-
     setCreating(true);
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      
-      if (!user) {
-        toast({
-          title: "Authentication required",
-          description: "Please sign in to create rooms",
-          variant: "destructive",
-        });
-        return;
-      }
+      const ageRange = form.age_band === "teen"
+        ? { age_min: 13, age_max: 17 }
+        : form.age_band === "adult"
+        ? { age_min: 18, age_max: 99 }
+        : { age_min: 13, age_max: 99 };
 
-      const { error } = await supabase
-        .from('rooms')
-        .insert({
-          name: newRoomName.trim(),
-          description: newRoomDescription.trim(),
-          created_by: user.id,
-          age_min: ageMin,
-          age_max: ageMax,
-        });
-
+      const { error } = await supabase.from("rooms").insert({
+        name: form.name.trim(),
+        description: form.description.trim(),
+        created_by: user.id,
+        topic_tag: form.topic_tag,
+        age_band: form.age_band,
+        rules: form.rules.trim(),
+        privacy: form.privacy,
+        ...ageRange,
+      } as any);
       if (error) throw error;
 
-      setNewRoomName("");
-      setNewRoomDescription("");
-      setNewRoomAgeMin("13");
-      setNewRoomAgeMax("99");
-      setShowCreateRoom(false);
+      toast({ title: "Room created", description: "You're the room admin 👑" });
+      setShowCreate(false);
+      setForm({ name: "", description: "", topic_tag: "general", age_band: "all", rules: "", privacy: "open" });
       fetchRooms();
-      
-      toast({
-        title: "Success",
-        description: "Room created successfully!",
-      });
-    } catch (error) {
-      console.error('Error creating room:', error);
-      toast({
-        title: "Error",
-        description: "Failed to create room",
-        variant: "destructive",
-      });
+    } catch (e: any) {
+      console.error(e);
+      toast({ title: "Error", description: e.message || "Failed to create room", variant: "destructive" });
     } finally {
       setCreating(false);
     }
   };
 
-  const handleJoinRoom = async (room: Room) => {
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      
-      if (!user) {
-        toast({
-          title: "Authentication required",
-          description: "Please sign in to join community rooms",
-          variant: "destructive",
-        });
+  const handleJoin = async (room: Room) => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      toast({ title: "Sign in required", variant: "destructive" });
+      return;
+    }
+
+    // Check ban
+    const { data: ban } = await supabase
+      .from("room_bans").select("id").eq("room_id", room.id).eq("user_id", user.id).maybeSingle();
+    if (ban) {
+      toast({ title: "Access denied", description: "You're banned from this room.", variant: "destructive" });
+      return;
+    }
+
+    // Check existing membership
+    const { data: existing } = await supabase
+      .from("room_participants").select("id").eq("room_id", room.id).eq("user_id", user.id).maybeSingle();
+
+    if (existing) {
+      setSelectedRoom(room);
+      return;
+    }
+
+    if (room.privacy === "open") {
+      const { error } = await supabase.from("room_participants").insert({
+        room_id: room.id, user_id: user.id, role: "member",
+      } as any);
+      if (error) {
+        toast({ title: "Error", description: error.message, variant: "destructive" });
         return;
       }
-
-      // Check if user is admin
-      const isAdmin = user.email === 'talkco@outlook.com';
-      
-      if (!isAdmin) {
-        // Get user's profile to check age
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('date_of_birth')
-          .eq('user_id', user.id)
-          .maybeSingle();
-          
-        if (!profile?.date_of_birth) {
-          toast({
-            title: "Profile incomplete",
-            description: "Please update your date of birth in your profile to join rooms",
-            variant: "destructive",
-          });
-          return;
-        }
-        
-        // Calculate user's age
-        const birthDate = new Date(profile.date_of_birth);
-        const today = new Date();
-        let userAge = today.getFullYear() - birthDate.getFullYear();
-        const monthDiff = today.getMonth() - birthDate.getMonth();
-        if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
-          userAge--;
-        }
-        
-        // Check if user's age is within room's age range
-        if (userAge < room.age_min || userAge > room.age_max) {
-          toast({
-            title: "Age restriction",
-            description: `This room is for ages ${room.age_min}-${room.age_max}. You are ${userAge} years old.`,
-            variant: "destructive",
-          });
-          return;
-        }
-      }
-
-      // Check if already a participant
-      const { data: existingParticipant } = await supabase
-        .from('room_participants')
-        .select('id')
-        .eq('room_id', room.id)
-        .eq('user_id', user.id)
-        .maybeSingle();
-
-      if (!existingParticipant) {
-        // Join the room
-        const { error } = await supabase
-          .from('room_participants')
-          .insert({
-            room_id: room.id,
-            user_id: user.id,
-          });
-
-        if (error) throw error;
-      }
-
       setSelectedRoom(room);
-    } catch (error) {
-      console.error('Error joining room:', error);
-      toast({
-        title: "Error",
-        description: "Failed to join room",
-        variant: "destructive",
-      });
+    } else {
+      // Approval required — send a request
+      const { error } = await supabase.from("room_join_requests").insert({
+        room_id: room.id, user_id: user.id, status: "pending",
+      } as any);
+      if (error && !error.message.includes("duplicate")) {
+        toast({ title: "Error", description: error.message, variant: "destructive" });
+        return;
+      }
+      toast({ title: "Request sent", description: "The room admin will review your request." });
+      fetchRooms();
     }
   };
 
   if (selectedRoom) {
-    return (
-      <RoomChat 
-        room={selectedRoom} 
-        onLeaveRoom={() => setSelectedRoom(null)} 
-      />
-    );
+    return <RoomChat roomId={selectedRoom.id} onLeave={() => { setSelectedRoom(null); fetchRooms(); }} />;
   }
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center py-8">
-        <div className="text-muted-foreground">Loading community rooms...</div>
-      </div>
-    );
+    return <div className="text-center py-8 text-muted-foreground">Loading rooms…</div>;
   }
 
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center">
         <h3 className="text-lg font-semibold">Community Rooms</h3>
-        <Dialog open={showCreateRoom} onOpenChange={setShowCreateRoom}>
+        <Dialog open={showCreate} onOpenChange={setShowCreate}>
           <DialogTrigger asChild>
-            <Button variant="outline" size="sm">
-              <Plus className="h-4 w-4 mr-2" />
-              Create Room
-            </Button>
+            <Button variant="outline" size="sm"><Plus className="h-4 w-4 mr-2" />Create Room</Button>
           </DialogTrigger>
-          <DialogContent>
+          <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
             <DialogHeader>
-              <DialogTitle>Create New Room</DialogTitle>
-              <DialogDescription>
-                Create a new community room for others to join and get support.
-              </DialogDescription>
+              <DialogTitle>Create a Room</DialogTitle>
+              <DialogDescription>You'll become the room admin and set the rules.</DialogDescription>
             </DialogHeader>
-            <div className="space-y-4">
+            <div className="space-y-3">
               <div>
-                <label htmlFor="roomName" className="text-sm font-medium">
-                  Room Name
-                </label>
-                <Input
-                  id="roomName"
-                  value={newRoomName}
-                  onChange={(e) => setNewRoomName(e.target.value)}
-                  placeholder="Enter room name..."
-                  maxLength={50}
-                />
+                <Label>Room name</Label>
+                <Input value={form.name} maxLength={50} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="e.g. quiet-evenings" />
               </div>
               <div>
-                <label htmlFor="roomDescription" className="text-sm font-medium">
-                  Description
-                </label>
+                <Label>Short description</Label>
+                <Textarea value={form.description} maxLength={200} rows={2} onChange={(e) => setForm({ ...form, description: e.target.value })} />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <Label>Topic</Label>
+                  <Select value={form.topic_tag} onValueChange={(v) => setForm({ ...form, topic_tag: v })}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      {TOPIC_TAGS.map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label>Age range</Label>
+                  <Select value={form.age_band} onValueChange={(v: any) => setForm({ ...form, age_band: v })}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="teen">13–17</SelectItem>
+                      <SelectItem value="adult">18+</SelectItem>
+                      <SelectItem value="all">All ages</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <div>
+                <Label>Room rules</Label>
                 <Textarea
-                  id="roomDescription"
-                  value={newRoomDescription}
-                  onChange={(e) => setNewRoomDescription(e.target.value)}
-                  placeholder="Describe what this room is for..."
-                  maxLength={200}
-                  rows={3}
+                  value={form.rules} rows={3} maxLength={500}
+                  onChange={(e) => setForm({ ...form, rules: e.target.value })}
+                  placeholder="Be kind. No personal contact info. No medical advice."
                 />
               </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label htmlFor="ageMin" className="text-sm font-medium">
-                    Minimum Age
-                  </label>
-                  <Input
-                    id="ageMin"
-                    type="number"
-                    value={newRoomAgeMin}
-                    onChange={(e) => setNewRoomAgeMin(e.target.value)}
-                    min="13"
-                    max="99"
-                    placeholder="13"
-                  />
-                </div>
-                <div>
-                  <label htmlFor="ageMax" className="text-sm font-medium">
-                    Maximum Age
-                  </label>
-                  <Input
-                    id="ageMax"
-                    type="number"
-                    value={newRoomAgeMax}
-                    onChange={(e) => setNewRoomAgeMax(e.target.value)}
-                    min="13"
-                    max="99"
-                    placeholder="99"
-                  />
-                </div>
+              <div>
+                <Label>Privacy</Label>
+                <Select value={form.privacy} onValueChange={(v: any) => setForm({ ...form, privacy: v })}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="open">Open — anyone can join</SelectItem>
+                    <SelectItem value="approval">Approval required — you accept requests</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
-              <p className="text-xs text-muted-foreground">
-                Set the age range for users allowed to join this room. You can enter any room as admin.
-              </p>
-              <div className="flex gap-2">
-                <Button 
-                  onClick={createRoom} 
-                  disabled={creating}
-                  className="flex-1"
-                >
-                  {creating ? "Creating..." : "Create Room"}
+              <div className="flex gap-2 pt-2">
+                <Button onClick={createRoom} disabled={creating} className="flex-1">
+                  {creating ? "Creating…" : "Create Room"}
                 </Button>
-                <Button 
-                  variant="outline" 
-                  onClick={() => setShowCreateRoom(false)}
-                  className="flex-1"
-                >
-                  Cancel
-                </Button>
+                <Button variant="outline" onClick={() => setShowCreate(false)} className="flex-1">Cancel</Button>
               </div>
             </div>
           </DialogContent>
@@ -345,49 +297,67 @@ const CommunityRooms = () => {
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {rooms.map((room) => {
-          const empty = (room.participant_count ?? 0) === 0;
+          const safety = safetyFromReports(room.reports_24h || 0);
+          const active = (room.recent_count || 0) > 0;
+          const isMine = currentUserId && room.created_by === currentUserId;
           return (
             <Card key={room.id} className="hover:shadow-md transition-shadow animate-fade-in">
               <CardHeader>
                 <div className="flex items-center justify-between gap-2">
-                  <CardTitle className="text-lg">#{room.name}</CardTitle>
-                  {!empty && (
-                    <Badge variant="secondary" className="flex items-center gap-1 flex-shrink-0">
-                      <Users className="h-3 w-3" />
-                      {room.participant_count}
-                    </Badge>
-                  )}
-                </div>
-                <CardDescription>
-                  {room.description}
-                  <div className="mt-2 flex items-center gap-2">
-                    <Badge variant="outline" className="text-xs">
-                      Ages {room.age_min}-{room.age_max}
-                    </Badge>
+                  <div className="flex items-center gap-2 min-w-0">
+                    <span className={`h-2.5 w-2.5 rounded-full ${safety.color} flex-shrink-0`} title={safety.label} />
+                    <CardTitle className="text-lg truncate">#{room.name}</CardTitle>
                   </div>
-                  {empty && (
-                    <p className="mt-3 text-sm text-primary font-medium">
-                      ✨ Be the first — join the conversation
-                    </p>
-                  )}
+                  <Badge variant="secondary" className="flex items-center gap-1 flex-shrink-0">
+                    <Users className="h-3 w-3" />
+                    {room.participant_count}
+                  </Badge>
+                </div>
+                <CardDescription className="space-y-2">
+                  <div>{room.description}</div>
+                  <div className="flex flex-wrap items-center gap-1.5">
+                    <Badge variant="outline" className="text-xs">#{room.topic_tag}</Badge>
+                    <Badge variant="outline" className="text-xs">{AGE_BAND_LABEL[room.age_band]}</Badge>
+                    <Badge variant="outline" className="text-xs flex items-center gap-1">
+                      {room.privacy === "open" ? <Globe className="h-3 w-3" /> : <Lock className="h-3 w-3" />}
+                      {room.privacy === "open" ? "Open" : "Approval"}
+                    </Badge>
+                    {isMine && <Badge variant="outline" className="text-xs">👑 Yours</Badge>}
+                  </div>
+                  <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                    <Clock className="h-3 w-3" />
+                    {active ? (
+                      <span className="text-emerald-600 dark:text-emerald-400 font-medium">
+                        Active now · {room.recent_count} {room.recent_count === 1 ? "msg" : "msgs"}
+                      </span>
+                    ) : (
+                      <span>Last active {formatRelative(room.last_activity_at)}</span>
+                    )}
+                  </div>
                 </CardDescription>
               </CardHeader>
               <CardContent>
                 <Button
-                  onClick={() => handleJoinRoom(room)}
+                  onClick={() => handleJoin(room)}
+                  disabled={room.pending_request}
                   className="w-full min-h-[44px]"
+                  variant={room.pending_request ? "outline" : "default"}
                 >
-                  {empty ? "Start the conversation" : "Join Room"}
+                  {room.pending_request
+                    ? "Request pending…"
+                    : room.privacy === "approval"
+                    ? "Request to join"
+                    : "Join room"}
                 </Button>
               </CardContent>
             </Card>
           );
         })}
       </div>
-      
+
       {rooms.length === 0 && (
         <div className="text-center py-8 text-muted-foreground">
-          No community rooms available at the moment.
+          No rooms yet. Be the first to create one.
         </div>
       )}
     </div>
