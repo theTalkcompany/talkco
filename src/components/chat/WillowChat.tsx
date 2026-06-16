@@ -116,6 +116,7 @@ const WillowChat = () => {
   const sessionIdRef = useRef(`sess_${Date.now()}`);
   const bottomRef = useRef<HTMLDivElement | null>(null);
   const inputRef = useRef<HTMLTextAreaElement | null>(null);
+  const crisisLine = useMemo(() => detectCrisisLine(), []);
 
   // Tick to refresh relative timestamps
   useEffect(() => {
