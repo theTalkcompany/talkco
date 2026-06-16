@@ -6,11 +6,12 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import {
-  Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger,
+  Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger,
 } from "@/components/ui/dialog";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Users, Plus, Lock, Globe, Archive, Clock } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
@@ -65,6 +66,9 @@ const CommunityRooms = () => {
   const [loading, setLoading] = useState(true);
   const [showCreate, setShowCreate] = useState(false);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+  const [joinTarget, setJoinTarget] = useState<Room | null>(null);
+  const [joinAgreed, setJoinAgreed] = useState(false);
+  const [joining, setJoining] = useState(false);
   const { toast } = useToast();
 
   // Create-room form
@@ -182,35 +186,60 @@ const CommunityRooms = () => {
       return;
     }
 
-    // Check existing membership
+    // Existing member who already agreed → enter directly
     const { data: existing } = await supabase
-      .from("room_participants").select("id").eq("room_id", room.id).eq("user_id", user.id).maybeSingle();
+      .from("room_participants").select("id, agreed_to_guidelines").eq("room_id", room.id).eq("user_id", user.id).maybeSingle();
 
-    if (existing) {
+    if (existing && (existing as any).agreed_to_guidelines) {
       setSelectedRoom(room);
       return;
     }
 
-    if (room.privacy === "open") {
-      const { error } = await supabase.from("room_participants").insert({
-        room_id: room.id, user_id: user.id, role: "member",
-      } as any);
-      if (error) {
-        toast({ title: "Error", description: error.message, variant: "destructive" });
+    // Otherwise show the rules + agreement modal
+    setJoinAgreed(false);
+    setJoinTarget(room);
+  };
+
+  const confirmJoin = async () => {
+    if (!joinTarget || !joinAgreed) return;
+    const room = joinTarget;
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+    setJoining(true);
+    try {
+      const { data: existing } = await supabase
+        .from("room_participants").select("id").eq("room_id", room.id).eq("user_id", user.id).maybeSingle();
+
+      if (existing) {
+        await supabase.from("room_participants")
+          .update({ agreed_to_guidelines: true, agreed_at: new Date().toISOString() } as any)
+          .eq("id", (existing as any).id);
+        setJoinTarget(null);
+        setSelectedRoom(room);
         return;
       }
-      setSelectedRoom(room);
-    } else {
-      // Approval required — send a request
-      const { error } = await supabase.from("room_join_requests").insert({
-        room_id: room.id, user_id: user.id, status: "pending",
-      } as any);
-      if (error && !error.message.includes("duplicate")) {
-        toast({ title: "Error", description: error.message, variant: "destructive" });
-        return;
+
+      if (room.privacy === "open") {
+        const { error } = await supabase.from("room_participants").insert({
+          room_id: room.id, user_id: user.id, role: "member",
+          agreed_to_guidelines: true, agreed_at: new Date().toISOString(),
+        } as any);
+        if (error) throw error;
+        setJoinTarget(null);
+        setSelectedRoom(room);
+      } else {
+        const { error } = await supabase.from("room_join_requests").insert({
+          room_id: room.id, user_id: user.id, status: "pending",
+        } as any);
+        if (error && !error.message.includes("duplicate")) throw error;
+        toast({ title: "Request sent", description: "The room admin will review your request." });
+        setJoinTarget(null);
+        fetchRooms();
       }
-      toast({ title: "Request sent", description: "The room admin will review your request." });
-      fetchRooms();
+    } catch (e: any) {
+      toast({ title: "Error", description: e.message, variant: "destructive" });
+    } finally {
+      setJoining(false);
     }
   };
 
@@ -360,6 +389,44 @@ const CommunityRooms = () => {
           No rooms yet. Be the first to create one.
         </div>
       )}
+
+      {/* Join — Room rules & guidelines agreement */}
+      <Dialog open={!!joinTarget} onOpenChange={(o) => { if (!o) { setJoinTarget(null); setJoinAgreed(false); } }}>
+        <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>#{joinTarget?.name}</DialogTitle>
+            <DialogDescription>Please read and agree before joining.</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3 text-sm">
+            <div className="p-3 rounded-md bg-primary/10">
+              <div className="font-medium mb-1">Room rules</div>
+              <p className="whitespace-pre-wrap text-muted-foreground">
+                {joinTarget?.rules?.trim() || "The room admin hasn't added specific rules. The Talk community guidelines below still apply."}
+              </p>
+            </div>
+            <div className="p-3 rounded-md bg-muted">
+              <div className="font-medium mb-1">Talk community guidelines</div>
+              <ul className="list-disc pl-5 space-y-1 text-muted-foreground">
+                <li>Be kind and supportive — no bullying or harassment.</li>
+                <li>No personal contact information or links to outside chats.</li>
+                <li>Don't give medical advice. Encourage professional help when needed.</li>
+                <li>If anyone is in crisis, use Get Help and call your local helpline.</li>
+                <li>Report anything that feels unsafe — admins review every report.</li>
+              </ul>
+            </div>
+            <label className="flex items-start gap-2 pt-1 cursor-pointer">
+              <Checkbox checked={joinAgreed} onCheckedChange={(v) => setJoinAgreed(!!v)} className="mt-0.5" />
+              <span>I have read and agree to these rules.</span>
+            </label>
+          </div>
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setJoinTarget(null)}>Cancel</Button>
+            <Button onClick={confirmJoin} disabled={!joinAgreed || joining}>
+              {joining ? "Joining…" : joinTarget?.privacy === "approval" ? "Send request" : "Join room"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
