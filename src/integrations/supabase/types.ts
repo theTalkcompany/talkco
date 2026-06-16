@@ -158,6 +158,51 @@ export type Database = {
         }
         Relationships: []
       }
+      letters: {
+        Row: {
+          author_id: string
+          body: string
+          closing: string | null
+          created_at: string
+          delivered_at: string | null
+          delivered_to: string | null
+          flagged_keywords: string[] | null
+          id: string
+          opening: string
+          status: string
+          updated_at: string
+          word_count: number
+        }
+        Insert: {
+          author_id: string
+          body: string
+          closing?: string | null
+          created_at?: string
+          delivered_at?: string | null
+          delivered_to?: string | null
+          flagged_keywords?: string[] | null
+          id?: string
+          opening?: string
+          status?: string
+          updated_at?: string
+          word_count?: number
+        }
+        Update: {
+          author_id?: string
+          body?: string
+          closing?: string | null
+          created_at?: string
+          delivered_at?: string | null
+          delivered_to?: string | null
+          flagged_keywords?: string[] | null
+          id?: string
+          opening?: string
+          status?: string
+          updated_at?: string
+          word_count?: number
+        }
+        Relationships: []
+      }
       likes: {
         Row: {
           created_at: string
@@ -671,6 +716,35 @@ export type Database = {
         }
         Relationships: []
       }
+      saved_letters: {
+        Row: {
+          id: string
+          letter_id: string
+          saved_at: string
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          letter_id: string
+          saved_at?: string
+          user_id: string
+        }
+        Update: {
+          id?: string
+          letter_id?: string
+          saved_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "saved_letters_letter_id_fkey"
+            columns: ["letter_id"]
+            isOneToOne: false
+            referencedRelation: "letters"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       security_events: {
         Row: {
           created_at: string | null
@@ -824,6 +898,29 @@ export type Database = {
     }
     Functions: {
       calculate_age: { Args: { birth_date: string }; Returns: number }
+      claim_random_letter: {
+        Args: never
+        Returns: {
+          author_id: string
+          body: string
+          closing: string | null
+          created_at: string
+          delivered_at: string | null
+          delivered_to: string | null
+          flagged_keywords: string[] | null
+          id: string
+          opening: string
+          status: string
+          updated_at: string
+          word_count: number
+        }
+        SetofOptions: {
+          from: "*"
+          to: "letters"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       cleanup_old_security_events: { Args: never; Returns: undefined }
       detect_suspicious_ips: {
         Args: never
