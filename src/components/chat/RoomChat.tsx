@@ -316,6 +316,22 @@ const RoomChat = ({ roomId, onLeave }: Props) => {
     toast({ title: "Announcement updated" });
   };
 
+  const warnMember = async (userId: string) => {
+    const target = participants.find((p) => p.user_id === userId);
+    const name = displayName(target?.profile);
+    await supabase.from("room_messages").insert({
+      room_id: roomId, user_id: me!.id,
+      content: `⚠️ Warning to ${name} from a room admin — please review the room rules. Repeated issues may lead to removal or a ban.`,
+    } as any);
+    toast({ title: "Warning posted", description: `${name} has been warned in the room.` });
+  };
+
+  const removeMessage = async (messageId: string) => {
+    await supabase.from("room_messages").delete().eq("id", messageId);
+    toast({ title: "Message removed" });
+    loadMessages();
+  };
+
   const archiveRoom = async () => {
     await supabase.from("rooms").update({ is_archived: true } as any).eq("id", roomId);
     toast({ title: "Room archived" });
