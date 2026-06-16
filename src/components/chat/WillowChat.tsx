@@ -267,12 +267,20 @@ const WillowChat = () => {
                 <p className="text-muted-foreground mt-0.5">
                   If you're in crisis or thinking of hurting yourself, please reach out to a trained person right now.
                 </p>
-                <Link
-                  to="/help"
-                  className="inline-block mt-2 text-primary font-medium underline underline-offset-2"
+                <a
+                  href={`tel:${crisisLine.tel}`}
+                  className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground hover:opacity-90"
                 >
-                  Open Get Help →
-                </Link>
+                  📞 {crisisLine.region}: {crisisLine.number} — {crisisLine.label}
+                </a>
+                <div className="mt-2">
+                  <Link
+                    to="/help"
+                    className="text-primary font-medium underline underline-offset-2 text-xs"
+                  >
+                    Open Get Help →
+                  </Link>
+                </div>
               </div>
             </div>
           </div>
