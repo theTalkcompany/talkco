@@ -101,6 +101,7 @@ serve(async (req) => {
 
     await resend.emails.send({
       from: FROM,
+      reply_to: "talkco@outlook.com",
       to: [REVIEWER_EMAIL],
       subject: flagged
         ? "🚨 Crisis-flagged letter needs review — Talk"
