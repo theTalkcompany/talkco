@@ -30,17 +30,30 @@ export default function LetterComposer({ userId, onSent }: Props) {
   const send = async () => {
     setSending(true);
     const flagged = containsCrisisLanguage(`${body} ${closing}`);
-    const { error } = await supabase.from("letters").insert({
-      author_id: userId,
-      opening: opening.trim() || "Dear Stranger,",
-      body: body.trim(),
-      closing: closing.trim() || null,
-    });
-    setSending(false);
+    const { data: inserted, error } = await supabase
+      .from("letters")
+      .insert({
+        author_id: userId,
+        opening: opening.trim() || "Dear Stranger,",
+        body: body.trim(),
+        closing: closing.trim() || null,
+      })
+      .select("id")
+      .single();
     if (error) {
+      setSending(false);
       toast({ title: "Couldn't send", description: error.message, variant: "destructive" });
       return;
     }
+
+    // Fire-and-forget moderation email
+    if (inserted?.id) {
+      supabase.functions.invoke("submit-letter-review", {
+        body: { letterId: inserted.id },
+      }).catch((e) => console.error("submit-letter-review failed", e));
+    }
+
+    setSending(false);
     setSent(true);
     if (flagged) {
       toast({

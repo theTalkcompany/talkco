@@ -8,3 +8,9 @@ verify_jwt = true
 
 [functions.ensure-demo-user]
 verify_jwt = false
+
+[functions.moderate-letter]
+verify_jwt = false
+
+[functions.submit-letter-review]
+verify_jwt = true
