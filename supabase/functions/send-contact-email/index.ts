@@ -53,7 +53,8 @@ const handler = async (req: Request): Promise<Response> => {
 
     // Send confirmation email to the user
     const userEmailResponse = await resend.emails.send({
-      from: "Talk Support <onboarding@resend.dev>",
+      from: "Talk Support <letters@thetalkcompany.co.uk>",
+      reply_to: "talkco@outlook.com",
       to: [email],
       subject: "We received your message - Talk Support",
       html: `
