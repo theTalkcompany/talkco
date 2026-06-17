@@ -115,6 +115,7 @@ serve(async (req) => {
     if (writerEmail) {
       await resend.emails.send({
         from: FROM,
+        reply_to: "talkco@outlook.com",
         to: [writerEmail],
         subject: "Your letter has been sealed 💌",
         html: `<div style="font-family:Georgia,serif;color:#3b3024;background:#faf7f2;padding:32px">
