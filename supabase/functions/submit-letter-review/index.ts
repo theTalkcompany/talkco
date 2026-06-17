@@ -50,7 +50,7 @@ serve(async (req) => {
     const { data: letter, error: letterErr } = await admin
       .from("letters").select("*").eq("id", letterId).single();
     if (letterErr || !letter) throw letterErr ?? new Error("Letter not found");
-    if (letter.author_id !== claims.claims.sub) {
+    if (letter.author_id !== callerId) {
       return new Response(JSON.stringify({ error: "Forbidden" }), {
         status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
