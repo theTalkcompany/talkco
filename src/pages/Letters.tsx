@@ -75,7 +75,54 @@ export default function Letters() {
             <p className="font-handwriting text-2xl text-letter-ink/80 mt-3">
               Write a letter for a stranger who needs it.<br />Request one when you do.
             </p>
+            {waitingCount !== null && (
+              <p className="mt-4 text-sm text-letter-ink/70">
+                💌 {waitingCount} {waitingCount === 1 ? "letter" : "letters"} waiting to be read
+              </p>
+            )}
           </header>
+
+          {/* Warm explanation banner with envelope watermark */}
+          <section className="relative max-w-3xl mx-auto mb-10">
+            <Card className="relative overflow-hidden bg-letter-cream border-letter-ink/10 px-6 py-8 sm:px-10 sm:py-10 text-center">
+              <Mail
+                className="pointer-events-none absolute -right-6 -bottom-6 h-48 w-48 text-letter-ink/5"
+                aria-hidden="true"
+              />
+              <p className="font-handwriting italic text-xl sm:text-2xl text-letter-ink/90 leading-relaxed relative">
+                Sometimes the kindest words come from people who don't know you at all.
+                Letters to Strangers is a space where anyone can write an anonymous
+                letter — words of hope, something that helped them through a hard
+                time, or simply a reminder that someone out there cares. When
+                someone needs a letter, one is chosen at random and delivered to
+                them. <br />
+                <span className="text-letter-ink">One person writes. One person receives. Nobody knows who the other is.</span>
+              </p>
+            </Card>
+          </section>
+
+          {/* How it works */}
+          <section className="max-w-4xl mx-auto mb-12">
+            <h2 className="text-center text-sm uppercase tracking-widest text-letter-ink/60 mb-6">How it works</h2>
+            <ol className="grid gap-4 sm:grid-cols-3">
+              {[
+                { icon: Feather, title: "Someone writes a letter from the heart" },
+                { icon: Clock, title: "It waits in the mailbox" },
+                { icon: Sparkles, title: "A stranger opens it when they need it most" },
+              ].map((s, i) => (
+                <li key={i}>
+                  <Card className="h-full p-5 bg-letter-cream/70 border-letter-ink/10 text-center">
+                    <div className="mx-auto w-10 h-10 rounded-full bg-letter-lavender/70 flex items-center justify-center mb-3">
+                      <s.icon className="h-5 w-5 text-letter-ink" />
+                    </div>
+                    <p className="text-xs font-medium text-letter-ink/60 mb-1">Step {i + 1}</p>
+                    <p className="font-handwriting text-xl text-letter-ink leading-snug">{s.title}</p>
+                  </Card>
+                </li>
+              ))}
+            </ol>
+          </section>
+
 
           <Tabs value={tab} onValueChange={setTab} className="max-w-4xl mx-auto">
             <TabsList className="grid grid-cols-3 w-full max-w-md mx-auto bg-letter-cream/70 border border-letter-ink/10">
