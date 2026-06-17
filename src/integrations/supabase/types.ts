@@ -897,6 +897,52 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      admin_list_pending_letters: {
+        Args: never
+        Returns: {
+          author_id: string
+          body: string
+          closing: string | null
+          created_at: string
+          delivered_at: string | null
+          delivered_to: string | null
+          flagged_keywords: string[] | null
+          id: string
+          opening: string
+          status: string
+          updated_at: string
+          word_count: number
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "letters"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
+      admin_moderate_letter: {
+        Args: { _action: string; _letter_id: string }
+        Returns: {
+          author_id: string
+          body: string
+          closing: string | null
+          created_at: string
+          delivered_at: string | null
+          delivered_to: string | null
+          flagged_keywords: string[] | null
+          id: string
+          opening: string
+          status: string
+          updated_at: string
+          word_count: number
+        }
+        SetofOptions: {
+          from: "*"
+          to: "letters"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       calculate_age: { Args: { birth_date: string }; Returns: number }
       claim_random_letter: {
         Args: never
@@ -931,6 +977,7 @@ export type Database = {
           unique_users: number
         }[]
       }
+      get_letters_stats: { Args: never; Returns: Json }
       get_masked_profile: { Args: { target_user_id: string }; Returns: Json }
       get_user_warnings_count: { Args: { user_id: string }; Returns: number }
       has_role: {
@@ -941,6 +988,7 @@ export type Database = {
         Returns: boolean
       }
       is_admin: { Args: { _user_id: string }; Returns: boolean }
+      is_letters_reviewer: { Args: never; Returns: boolean }
       is_room_admin: {
         Args: { _room_id: string; _user_id: string }
         Returns: boolean

@@ -5,13 +5,14 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Mail, PenLine, Inbox, Heart } from "lucide-react";
+import { Mail, PenLine, Inbox, Heart, Feather, Clock, Sparkles } from "lucide-react";
 import LetterComposer from "@/components/letters/LetterComposer";
 import LetterReceiver from "@/components/letters/LetterReceiver";
 import MyLetters from "@/components/letters/MyLetters";
 
 export default function Letters() {
   const [userId, setUserId] = useState<string | null>(null);
+  const [waitingCount, setWaitingCount] = useState<number | null>(null);
   const [checked, setChecked] = useState(false);
   const [tab, setTab] = useState("home");
   const navigate = useNavigate();
@@ -26,6 +27,20 @@ export default function Letters() {
     });
     return () => sub.subscription.unsubscribe();
   }, []);
+
+  useEffect(() => {
+    const fetchCount = async () => {
+      const { data } = await supabase.rpc("get_letters_stats");
+      if (data && typeof data === "object") {
+        const s = data as { available?: number };
+        setWaitingCount(s.available ?? 0);
+      }
+    };
+    fetchCount();
+    const t = setInterval(fetchCount, 30000);
+    return () => clearInterval(t);
+  }, []);
+
 
   if (checked && !userId) {
     return (
