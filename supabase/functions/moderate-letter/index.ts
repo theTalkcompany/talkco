@@ -119,7 +119,7 @@ const handler = async (req: Request): Promise<Response> => {
   if (error || !tok) {
     return new Response(
       page("Invalid link", "This moderation link is not valid.", "⚠️", "red"),
-      { status: 404, headers: { "Content-Type": "text/html", ...corsHeaders } },
+      { status: 200, headers: { "Content-Type": "text/html", ...corsHeaders } },
     );
   }
 
