@@ -8,7 +8,7 @@ const corsHeaders = {
 };
 
 const REVIEWER_EMAIL = "talkco@outlook.com";
-const FROM = "Talk Letters <onboarding@resend.dev>";
+const FROM = "Talk Letters <letters@thetalkcompany.co.uk>";
 
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
