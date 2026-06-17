@@ -158,6 +158,41 @@ export type Database = {
         }
         Relationships: []
       }
+      letter_moderation_tokens: {
+        Row: {
+          action: string
+          created_at: string
+          id: string
+          letter_id: string
+          token: string
+          used_at: string | null
+        }
+        Insert: {
+          action: string
+          created_at?: string
+          id?: string
+          letter_id: string
+          token: string
+          used_at?: string | null
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          id?: string
+          letter_id?: string
+          token?: string
+          used_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "letter_moderation_tokens_letter_id_fkey"
+            columns: ["letter_id"]
+            isOneToOne: false
+            referencedRelation: "letters"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       letters: {
         Row: {
           author_id: string
