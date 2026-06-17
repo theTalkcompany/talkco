@@ -32,14 +32,17 @@ ${message ? `<p>${message}</p>` : ""}
 </html>`;
 };
 
-const htmlResponse = (body: string, status = 200) => {
-  const headers = new Headers();
-  headers.set("Content-Type", "text/html; charset=utf-8");
-  headers.set("Access-Control-Allow-Origin", "*");
-  headers.set("Access-Control-Allow-Headers", "authorization, x-client-info, apikey, content-type");
-  headers.set("Cache-Control", "no-store");
-  return new Response(body, { status, headers });
-};
+const htmlResponse = (body: string, status = 200) =>
+  new Response(body, {
+    status,
+    headers: {
+      "content-type": "text/html; charset=utf-8",
+      "access-control-allow-origin": "*",
+      "access-control-allow-headers": "authorization, x-client-info, apikey, content-type",
+      "cache-control": "no-store",
+      "x-content-type-options": "nosniff",
+    },
+  });
 
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") {
