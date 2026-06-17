@@ -17,6 +17,7 @@ import TermsOfService from "./pages/TermsOfService";
 import Contact from "./pages/Contact";
 import AppStoreCompliance from "./pages/AppStoreCompliance";
 import Letters from "./pages/Letters";
+import AdminLetters from "./pages/AdminLetters";
 import MainLayout from "./components/layout/MainLayout";
 
 const queryClient = new QueryClient();
@@ -42,6 +43,7 @@ const App = () => (
               <Route path="/contact" element={<Contact />} />
               <Route path="/app-store-compliance" element={<AppStoreCompliance />} />
               <Route path="/letters" element={<Letters />} />
+              <Route path="/admin/letters" element={<AdminLetters />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>

@@ -115,14 +115,17 @@ export default function LetterComposer({ userId, onSent }: Props) {
       <aside className="space-y-4">
         <Card className="p-5 bg-letter-lavender/40 border-letter-lavender">
           <div className="flex items-center gap-2 text-letter-ink font-semibold mb-2">
-            <Lightbulb className="h-4 w-4" /> Some ideas
+            <Lightbulb className="h-4 w-4" /> Not sure what to write?
           </div>
-          <p className="text-sm text-letter-ink/80 leading-relaxed">
-            Write about something that helped you through a hard time, something
-            you wish someone had told you, or simply words of hope for someone
-            you'll never meet.
-          </p>
+          <p className="text-sm text-letter-ink/80 leading-relaxed mb-2">Try:</p>
+          <ul className="text-sm text-letter-ink/80 leading-relaxed space-y-1.5 list-disc list-inside marker:text-letter-ink/40">
+            <li>something that helped you through a hard time</li>
+            <li>words you wish someone had said to you</li>
+            <li>a small moment of joy you want to share</li>
+            <li>or simply — <em>I see you, and you matter.</em></li>
+          </ul>
         </Card>
+
         <Card className="p-5 bg-letter-cream border-letter-ink/10">
           <p className="text-xs text-letter-ink/70 leading-relaxed">
             Letters are anonymous and delivered to one stranger. Please don't
