@@ -29,7 +29,8 @@ const handler = async (req: Request): Promise<Response> => {
 
     // Send email to the company
     const companyEmailResponse = await resend.emails.send({
-      from: "Talk Contact Form <onboarding@resend.dev>",
+      from: "Talk Contact Form <letters@thetalkcompany.co.uk>",
+      reply_to: "talkco@outlook.com",
       to: ["talkco@outlook.com"],
       subject: `Contact Form: ${subject}`,
       html: `
@@ -52,7 +53,8 @@ const handler = async (req: Request): Promise<Response> => {
 
     // Send confirmation email to the user
     const userEmailResponse = await resend.emails.send({
-      from: "Talk Support <onboarding@resend.dev>",
+      from: "Talk Support <letters@thetalkcompany.co.uk>",
+      reply_to: "talkco@outlook.com",
       to: [email],
       subject: "We received your message - Talk Support",
       html: `

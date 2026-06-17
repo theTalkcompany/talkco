@@ -8,7 +8,7 @@ const corsHeaders = {
 };
 
 const REVIEWER_EMAIL = "talkco@outlook.com";
-const FROM = "Talk Letters <onboarding@resend.dev>";
+const FROM = "Talk Letters <letters@thetalkcompany.co.uk>";
 
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
@@ -101,6 +101,7 @@ serve(async (req) => {
 
     await resend.emails.send({
       from: FROM,
+      reply_to: "talkco@outlook.com",
       to: [REVIEWER_EMAIL],
       subject: flagged
         ? "🚨 Crisis-flagged letter needs review — Talk"
@@ -114,6 +115,7 @@ serve(async (req) => {
     if (writerEmail) {
       await resend.emails.send({
         from: FROM,
+        reply_to: "talkco@outlook.com",
         to: [writerEmail],
         subject: "Your letter has been sealed 💌",
         html: `<div style="font-family:Georgia,serif;color:#3b3024;background:#faf7f2;padding:32px">

@@ -128,7 +128,8 @@ serve(async (req: Request): Promise<Response> => {
     `;
 
     const { error } = await resend.emails.send({
-      from: "Talk <onboarding@resend.dev>",
+      from: "Talk <letters@thetalkcompany.co.uk>",
+      reply_to: "talkco@outlook.com",
       to: [email],
       subject: "Welcome to Talk - Your Mental Wellness Journey Begins!",
       html,
