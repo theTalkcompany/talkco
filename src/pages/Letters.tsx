@@ -147,15 +147,18 @@ export default function Letters() {
                   <Button className="mt-5">Start writing</Button>
                 </Card>
 
-                <Card className="p-8 bg-letter-lavender/60 border-letter-ink/10 hover:shadow-lg transition-shadow">
+                <Card
+                  className="p-8 bg-letter-lavender/60 border-letter-ink/10 hover:shadow-lg transition-shadow cursor-pointer"
+                  onClick={() => navigate("/letters/open")}
+                >
                   <Inbox className="h-8 w-8 text-letter-ink mb-3" />
                   <h2 className="font-handwriting text-3xl text-letter-ink">I need a letter</h2>
                   <p className="text-sm text-letter-ink/80 mt-2">
                     Open one anonymous letter, written for someone like you.
                   </p>
-                  <div className="mt-5">
-                    {userId && <LetterReceiver userId={userId} onWriteBack={() => setTab("write")} />}
-                  </div>
+                  <Button className="mt-5" onClick={(e) => { e.stopPropagation(); navigate("/letters/open"); }}>
+                    <Mail className="h-4 w-4" /> I need a letter
+                  </Button>
                 </Card>
               </div>
 
