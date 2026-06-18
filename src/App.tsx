@@ -19,6 +19,7 @@ import AppStoreCompliance from "./pages/AppStoreCompliance";
 import Letters from "./pages/Letters";
 import AdminLetters from "./pages/AdminLetters";
 import LetterModerated from "./pages/LetterModerated";
+import LetterOpen from "./pages/LetterOpen";
 import MainLayout from "./components/layout/MainLayout";
 
 const queryClient = new QueryClient();
