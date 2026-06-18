@@ -1,13 +1,12 @@
 import { useEffect, useState } from "react";
 import { Helmet } from "react-helmet-async";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Mail, PenLine, Inbox, Heart, Feather, Clock, Sparkles } from "lucide-react";
 import LetterComposer from "@/components/letters/LetterComposer";
-import LetterReceiver from "@/components/letters/LetterReceiver";
 import MyLetters from "@/components/letters/MyLetters";
 
 export default function Letters() {
