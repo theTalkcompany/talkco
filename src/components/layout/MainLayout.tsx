@@ -48,6 +48,16 @@ const MainLayout = ({ children }: { children: ReactNode }) => {
   }, [location.pathname]);
 
   const showFooter = location.pathname !== "/feed" && location.pathname !== "/chat";
+  const immersive = location.pathname === "/letters/open";
+
+  if (immersive) {
+    return (
+      <div className="min-h-screen">
+        <SecurityMonitor />
+        {children}
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex flex-col glow-field overflow-x-hidden" onMouseMove={onMouseMove}>
