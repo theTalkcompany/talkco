@@ -47,6 +47,7 @@ const App = () => (
               <Route path="/letters" element={<Letters />} />
               <Route path="/admin/letters" element={<AdminLetters />} />
               <Route path="/letters/moderated" element={<LetterModerated />} />
+              <Route path="/letters/open" element={<LetterOpen />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>
