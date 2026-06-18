@@ -13,8 +13,14 @@ export default function Letters() {
   const [userId, setUserId] = useState<string | null>(null);
   const [waitingCount, setWaitingCount] = useState<number | null>(null);
   const [checked, setChecked] = useState(false);
-  const [tab, setTab] = useState("home");
+  const [searchParams] = useSearchParams();
+  const [tab, setTab] = useState(searchParams.get("tab") || "home");
   const navigate = useNavigate();
+
+  useEffect(() => {
+    const t = searchParams.get("tab");
+    if (t) setTab(t);
+  }, [searchParams]);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
