@@ -236,6 +236,16 @@ export default function LetterOpen() {
           <X className="h-4 w-4" /> Close
         </button>
 
+        {showSkip && stage !== "reading" && stage !== "empty" && stage !== "unauth" && (
+          <button
+            onClick={skipToLetter}
+            className="absolute top-5 right-20 text-letter-ink/50 hover:text-letter-ink text-sm z-50 underline-offset-4 hover:underline"
+          >
+            Skip
+          </button>
+        )}
+
+
         {stage === "unauth" && (
           <div className="text-center max-w-md">
             <Mail className="mx-auto h-12 w-12 text-letter-ink/40 mb-4" />
