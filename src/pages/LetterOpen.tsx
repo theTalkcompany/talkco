@@ -30,15 +30,18 @@ export default function LetterOpen() {
   const [userId, setUserId] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
   const [visibleLines, setVisibleLines] = useState(0);
+  const [showSkip, setShowSkip] = useState(false);
 
-  // Fetch letter
+  // Fetch letter immediately (independent of animation)
   useEffect(() => {
     let cancelled = false;
+    console.log("[LetterOpen] fetching letter…");
     (async () => {
       const { data: sessionData } = await supabase.auth.getSession();
       const uid = sessionData.session?.user?.id ?? null;
       if (cancelled) return;
       if (!uid) {
+        console.log("[LetterOpen] no session — unauth");
         setStage("unauth");
         return;
       }
@@ -58,13 +61,14 @@ export default function LetterOpen() {
         return;
       }
 
-      // RPC may return single object or array depending on PostgREST
       const row = Array.isArray(data) ? data[0] : data;
       if (!row || !row.body) {
+        console.log("[LetterOpen] no letter available — empty state");
         setStage("empty");
         return;
       }
 
+      console.log("[LetterOpen] letter fetched:", row.id);
       setLetter({
         id: row.id,
         opening: row.opening ?? "Dear Stranger,",
@@ -77,17 +81,56 @@ export default function LetterOpen() {
     };
   }, [toast]);
 
-  // Drive animation stages once letter is loaded
+  // Drive animation stages — fires ONCE on mount, independent of `stage` updates
   useEffect(() => {
-    if (!letter || stage !== "loading") return;
-    const t1 = setTimeout(() => setStage("flap"), 2000);
-    const t2 = setTimeout(() => setStage("rising"), 3000);
-    const t3 = setTimeout(() => setStage("transition"), 4500);
-    const t4 = setTimeout(() => setStage("reading"), 5400);
-    return () => {
-      [t1, t2, t3, t4].forEach(clearTimeout);
-    };
-  }, [letter, stage]);
+    const timers: ReturnType<typeof setTimeout>[] = [];
+    timers.push(setTimeout(() => setShowSkip(true), 1500));
+    timers.push(setTimeout(() => {
+      console.log("[LetterOpen] stage: flap");
+      setStage((s) => (s === "loading" ? "flap" : s));
+    }, 2000));
+    timers.push(setTimeout(() => {
+      console.log("[LetterOpen] stage: rising");
+      setStage((s) => (s === "loading" || s === "flap" ? "rising" : s));
+    }, 3000));
+    timers.push(setTimeout(() => {
+      console.log("[LetterOpen] stage: transition");
+      setStage((s) =>
+        s === "loading" || s === "flap" || s === "rising" ? "transition" : s
+      );
+    }, 4500));
+    timers.push(setTimeout(() => {
+      console.log("[LetterOpen] stage: reading (scheduled)");
+      setStage((s) =>
+        s === "empty" || s === "unauth" || s === "reading" ? s : "reading"
+      );
+    }, 5400));
+    // Hard safety net: never freeze longer than 6.5s
+    timers.push(setTimeout(() => {
+      console.log("[LetterOpen] safety net — forcing reading");
+      setStage((s) => (s === "empty" || s === "unauth" ? s : "reading"));
+    }, 6500));
+    return () => timers.forEach(clearTimeout);
+  }, []);
+
+  // If we hit "reading" with no letter, fall back to empty after a short grace
+  useEffect(() => {
+    if (stage !== "reading") return;
+    if (letter) {
+      console.log("[LetterOpen] displaying letter");
+      return;
+    }
+    console.log("[LetterOpen] reading stage but no letter — grace period");
+    const t = setTimeout(() => {
+      if (!letter) setStage("empty");
+    }, 1500);
+    return () => clearTimeout(t);
+  }, [stage, letter]);
+
+  const skipToLetter = () => {
+    console.log("[LetterOpen] user skipped animation");
+    if (stage !== "empty" && stage !== "unauth") setStage("reading");
+  };
 
   // Split body into lines for staggered fade-in
   const lines = useMemo(() => {
