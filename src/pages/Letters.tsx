@@ -1,21 +1,26 @@
 import { useEffect, useState } from "react";
 import { Helmet } from "react-helmet-async";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Mail, PenLine, Inbox, Heart, Feather, Clock, Sparkles } from "lucide-react";
 import LetterComposer from "@/components/letters/LetterComposer";
-import LetterReceiver from "@/components/letters/LetterReceiver";
 import MyLetters from "@/components/letters/MyLetters";
 
 export default function Letters() {
   const [userId, setUserId] = useState<string | null>(null);
   const [waitingCount, setWaitingCount] = useState<number | null>(null);
   const [checked, setChecked] = useState(false);
-  const [tab, setTab] = useState("home");
+  const [searchParams] = useSearchParams();
+  const [tab, setTab] = useState(searchParams.get("tab") || "home");
   const navigate = useNavigate();
+
+  useEffect(() => {
+    const t = searchParams.get("tab");
+    if (t) setTab(t);
+  }, [searchParams]);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
@@ -142,15 +147,18 @@ export default function Letters() {
                   <Button className="mt-5">Start writing</Button>
                 </Card>
 
-                <Card className="p-8 bg-letter-lavender/60 border-letter-ink/10 hover:shadow-lg transition-shadow">
+                <Card
+                  className="p-8 bg-letter-lavender/60 border-letter-ink/10 hover:shadow-lg transition-shadow cursor-pointer"
+                  onClick={() => navigate("/letters/open")}
+                >
                   <Inbox className="h-8 w-8 text-letter-ink mb-3" />
                   <h2 className="font-handwriting text-3xl text-letter-ink">I need a letter</h2>
                   <p className="text-sm text-letter-ink/80 mt-2">
                     Open one anonymous letter, written for someone like you.
                   </p>
-                  <div className="mt-5">
-                    {userId && <LetterReceiver userId={userId} onWriteBack={() => setTab("write")} />}
-                  </div>
+                  <Button className="mt-5" onClick={(e) => { e.stopPropagation(); navigate("/letters/open"); }}>
+                    <Mail className="h-4 w-4" /> I need a letter
+                  </Button>
                 </Card>
               </div>
 

@@ -19,6 +19,7 @@ import AppStoreCompliance from "./pages/AppStoreCompliance";
 import Letters from "./pages/Letters";
 import AdminLetters from "./pages/AdminLetters";
 import LetterModerated from "./pages/LetterModerated";
+import LetterOpen from "./pages/LetterOpen";
 import MainLayout from "./components/layout/MainLayout";
 
 const queryClient = new QueryClient();
@@ -46,6 +47,7 @@ const App = () => (
               <Route path="/letters" element={<Letters />} />
               <Route path="/admin/letters" element={<AdminLetters />} />
               <Route path="/letters/moderated" element={<LetterModerated />} />
+              <Route path="/letters/open" element={<LetterOpen />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>
