@@ -159,14 +159,15 @@ const Auth = () => {
     }
 
     // Enhanced input validation
-    if (!email.trim() || !password.trim() || !phone.trim() || !fullName.trim() || !address.trim()) {
+    if (!email.trim() || !password.trim()) {
       toast({
         title: "Validation error",
-        description: "All fields are required",
+        description: "Email and password are required",
         variant: "destructive"
       });
       return;
     }
+
 
     // Email format validation
     if (!validateEmail(email.trim())) {
