@@ -3,13 +3,12 @@ import { Helmet } from "react-helmet-async";
 import { Link, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
-import { sanitizeEmail, sanitizeText, sanitizePhone, validatePassword, validateEmail, createRateLimiter } from "@/utils/inputSanitizer";
+import { sanitizeEmail, sanitizeText, validatePassword, validateEmail, createRateLimiter } from "@/utils/inputSanitizer";
 import "./auth-styles.css";
+
 const Auth = () => {
   const navigate = useNavigate();
-  const {
-    toast
-  } = useToast();
+  const { toast } = useToast();
 
   // Rate limiting for auth attempts
   const loginRateLimiter = useMemo(() => createRateLimiter(5, 15 * 60 * 1000), []); // 5 attempts per 15 minutes
@@ -28,18 +27,15 @@ const Auth = () => {
   const [termsAccepted, setTermsAccepted] = useState(false);
   const [privacyAccepted, setPrivacyAccepted] = useState(false);
 
-
   // Keep session listener - only for existing users
   useEffect(() => {
-    supabase.auth.getSession().then(({
-      data: {
-        session
-      }
-    }) => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
       if (session) navigate("/");
     });
   }, [navigate]);
+
   const redirectUrl = useMemo(() => `${window.location.origin}/`, []);
+
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
     if (loading) return;
@@ -72,12 +68,10 @@ const Auth = () => {
       });
       return;
     }
+
     setLoading(true);
     try {
-      const {
-        error,
-        data
-      } = await supabase.auth.signInWithPassword({
+      const { error, data } = await supabase.auth.signInWithPassword({
         email: sanitizeEmail(email),
         password
       });
@@ -143,6 +137,7 @@ const Auth = () => {
       setLoading(false);
     }
   };
+
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
     if (loading) return;
@@ -167,7 +162,6 @@ const Auth = () => {
       });
       return;
     }
-
 
     // Email format validation
     if (!validateEmail(email.trim())) {
@@ -223,7 +217,7 @@ const Auth = () => {
     const today = new Date();
     let age = today.getFullYear() - birthDate.getFullYear();
     const monthDiff = today.getMonth() - birthDate.getMonth();
-    if (monthDiff < 0 || monthDiff === 0 && today.getDate() < birthDate.getDate()) {
+    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
       age--;
     }
     if (age < 13) {
@@ -294,7 +288,6 @@ const Auth = () => {
             onConflict: "user_id"
           });
 
-          
           if (profileError) {
             console.error('Profile creation error:', profileError);
             toast({
@@ -306,7 +299,7 @@ const Auth = () => {
         } catch (profileError) {
           console.error('Failed to create profile:', profileError);
           toast({
-            title: "Profile creation failed", 
+            title: "Profile creation failed",
             description: "Your account was created but profile setup failed. You can update your profile later.",
             variant: "destructive"
           });
@@ -327,6 +320,7 @@ const Auth = () => {
           console.error('Failed to log security event:', logError);
         }
       }
+
       try {
         await supabase.functions.invoke("send-welcome-email", {
           body: {
@@ -365,65 +359,52 @@ const Auth = () => {
 
   // Success screen component
   if (showSuccess) {
-    return <>
+    return (
+      <>
         <Helmet>
           <title>Welcome to Talk!</title>
         </Helmet>
         <div className="auth-login">
-          <div className="auth-container" style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center'
-        }}>
-            <div style={{
-            textAlign: 'center',
-            padding: '40px'
-          }}>
-              <h1 style={{
-              fontSize: '48px',
-              marginBottom: '20px',
-              color: '#7494ec'
-            }}>🎉</h1>
-              <h1 style={{
-              fontSize: '36px',
-              marginBottom: '16px',
-              color: '#333'
-            }}>Thank You!</h1>
-              <p style={{
-              fontSize: '18px',
-              marginBottom: '24px',
-              color: '#666'
-            }}>
+          <div className="auth-blob blob-1" aria-hidden="true" />
+          <div className="auth-blob blob-2" aria-hidden="true" />
+          <div className="auth-blob blob-3" aria-hidden="true" />
+          <div className="auth-container" style={{ justifyContent: 'center' }}>
+            <div className="auth-success-card">
+              <h1 style={{ fontSize: '48px', marginBottom: '16px' }}>🎉</h1>
+              <h2 style={{ fontSize: '32px', marginBottom: '12px', color: 'hsl(222.2 84% 4.9%)', fontWeight: 700 }}>
+                Thank You!
+              </h2>
+              <p style={{ fontSize: '16px', marginBottom: '16px', color: 'hsl(215.4 16.3% 46.9%)' }}>
                 Your account has been created successfully.
               </p>
-              <p style={{
-              fontSize: '16px',
-              marginBottom: '32px',
-              color: '#666'
-            }}>
+              <p style={{ fontSize: '15px', marginBottom: '32px', color: 'hsl(215.4 16.3% 46.9%)' }}>
                 You can now log in with your credentials.
               </p>
-              <button className="auth-btn" onClick={() => {
-              setShowSuccess(false);
-              setActive(false); // Switch to login form
-              setEmail("");
-              setPassword("");
-              setFullName("");
-              setDateOfBirth("");
-
-              setTermsAccepted(false);
-              setPrivacyAccepted(false);
-            }} style={{
-              width: '200px'
-            }}>
+              <button
+                className="auth-btn"
+                onClick={() => {
+                  setShowSuccess(false);
+                  setActive(false); // Switch to login form
+                  setEmail("");
+                  setPassword("");
+                  setFullName("");
+                  setDateOfBirth("");
+                  setTermsAccepted(false);
+                  setPrivacyAccepted(false);
+                }}
+                style={{ width: '200px' }}
+              >
                 Go to Login
               </button>
             </div>
           </div>
         </div>
-      </>;
+      </>
+    );
   }
-  return <>
+
+  return (
+    <>
       <Helmet>
         <title>Login & Sign Up — Talk</title>
         <meta name="description" content="Beautiful login and signup for Talk, secured by Supabase with profiles and RLS." />
@@ -431,195 +412,249 @@ const Auth = () => {
       </Helmet>
 
       <div className="auth-login">
-        <div className={`auth-container ${active ? "active" : ""}`}>
-          {/* Forms panel */}
-          <div className="auth-form-box login">
-            <div style={{
-            width: "100%"
-          }}>
-              <h1>Good to see you again 💜</h1>
-              <p>Log in to continue your conversation.</p>
+        <div className="auth-blob blob-1" aria-hidden="true" />
+        <div className="auth-blob blob-2" aria-hidden="true" />
+        <div className="auth-blob blob-3" aria-hidden="true" />
 
-              <form className="auth-form" onSubmit={handleSignIn}>
-                <div className="auth-input-box">
-                  <input type="email" placeholder="Email" value={email} onChange={e => setEmail(e.target.value)} required autoComplete="email" />
-                </div>
-                <div className="auth-input-box">
-                  <input type="password" placeholder="Password" value={password} onChange={e => setPassword(e.target.value)} required autoComplete="current-password" />
-                </div>
-                <div className="forgot-link">
-                  <Link to="#">Forgot your password?</Link>
-                </div>
-                <button type="submit" className="auth-btn" disabled={loading}>
-                  {loading ? "Logging in…" : "Log in"}
+        <div className="auth-container">
+          {/* Left side: welcome text floating on the gradient */}
+          <div className="auth-welcome-panel" aria-live="polite">
+            {active ? (
+              <>
+                <h1>Welcome Back!</h1>
+                <p>To keep connected, please log in with your personal info.</p>
+                <button type="button" className="auth-btn auth-btn-ghost" onClick={() => setActive(false)}>
+                  Log in
                 </button>
-
-
-                <p style={{
-                marginTop: 16,
-                fontSize: 13
-              }}>
-                  New here? <button type="button" onClick={() => setActive(true)} style={{
-                  color: "#7494ec",
-                  background: "transparent",
-                  border: 0,
-                  cursor: "pointer"
-                }}>Create an account</button>
-                </p>
-                <p style={{
-                marginTop: 8,
-                fontSize: 12
-              }}>
-                  <Link to="/" style={{
-                  color: "#333"
-                }}>Back Home</Link>
-                </p>
-              </form>
-            </div>
+              </>
+            ) : (
+              <>
+                <h1>Hello, Friend!</h1>
+                <p>Enter your details and start a journey of healing.</p>
+                <button type="button" className="auth-btn auth-btn-ghost" onClick={() => setActive(true)}>
+                  Sign up
+                </button>
+              </>
+            )}
           </div>
 
-          <div className="auth-form-box register">
-            <div style={{
-            width: "100%"
-          }}>
-              <h1>Create account</h1>
-              <p>A safe space, just for you. No judgement, ever.</p>
-              <form className="auth-form" onSubmit={handleSignUp}>
-                <div className="auth-input-box">
-                  <input type="email" placeholder="Email" value={email} onChange={e => setEmail(e.target.value)} required autoComplete="email" />
-                </div>
-                <div className="auth-input-box">
-                  <input type="password" placeholder="Password" value={password} onChange={e => setPassword(e.target.value)} required autoComplete="new-password" />
-                </div>
-                <div className="auth-input-box">
-                  <input placeholder="Full Name (optional)" value={fullName} onChange={e => setFullName(e.target.value)} autoComplete="name" />
-                </div>
-                <div className="auth-input-box">
-                  <select
-                    value={dateOfBirth ? dateOfBirth.split('-')[0] : ''}
-                    onChange={e => setDateOfBirth(e.target.value ? `${e.target.value}-01-01` : '')}
-                    required
-                    className="auth-select"
-                  >
-                    <option value="">Select Year of Birth</option>
-                    {Array.from({ length: 100 }, (_, i) => {
-                      const year = new Date().getFullYear() - 13 - i;
-                      return <option key={year} value={year}>{year}</option>;
-                    })}
-                  </select>
-                  <label style={{
-                    fontSize: '11px',
-                    color: 'hsl(215.4 16.3% 46.9%)',
-                    marginTop: '4px',
-                    display: 'block',
-                    textAlign: 'left'
-                  }}>
-                    Year of Birth (for age verification only)
-                  </label>
-                </div>
-                <div>
+          {/* Floating white form card */}
+          <div className="auth-card">
+            <div className={`auth-card-track ${active ? "active" : ""}`}>
+              {/* Login panel */}
+              <div className="auth-form-panel">
+                <h1>Good to see you again 💜</h1>
+                <p>Log in to continue your conversation.</p>
 
-                  
-                  {/* Terms and Privacy Agreement */}
-                  <div style={{
-                  margin: '16px 0 20px 0'
-                }}>
-                    <div style={{
-                    display: 'flex',
-                    alignItems: 'flex-start',
-                    gap: '8px',
-                    marginBottom: '8px'
-                  }}>
-                      <input type="checkbox" id="terms-checkbox" checked={termsAccepted} onChange={e => setTermsAccepted(e.target.checked)} className="auth-checkbox" required />
-                      <label htmlFor="terms-checkbox" style={{
-                      fontSize: '13px',
+                <form className="auth-form" onSubmit={handleSignIn}>
+                  <div className="auth-input-box">
+                    <input
+                      type="email"
+                      placeholder="Email"
+                      value={email}
+                      onChange={e => setEmail(e.target.value)}
+                      required
+                      autoComplete="email"
+                    />
+                  </div>
+                  <div className="auth-input-box">
+                    <input
+                      type="password"
+                      placeholder="Password"
+                      value={password}
+                      onChange={e => setPassword(e.target.value)}
+                      required
+                      autoComplete="current-password"
+                    />
+                  </div>
+                  <div className="forgot-link">
+                    <Link to="#">Forgot your password?</Link>
+                  </div>
+                  <button type="submit" className="auth-btn" disabled={loading}>
+                    {loading ? "Logging in…" : "Log in"}
+                  </button>
+
+                  <p style={{ marginTop: 16, fontSize: 13, textAlign: 'center' }}>
+                    New here?{' '}
+                    <button
+                      type="button"
+                      onClick={() => setActive(true)}
+                      style={{ color: "hsl(262 83% 58%)", background: "transparent", border: 0, cursor: "pointer" }}
+                    >
+                      Create an account
+                    </button>
+                  </p>
+                  <p style={{ marginTop: 8, fontSize: 12, textAlign: 'center' }}>
+                    <Link to="/" style={{ color: "hsl(215.4 16.3% 46.9%)" }}>
+                      Back Home
+                    </Link>
+                  </p>
+                </form>
+              </div>
+
+              {/* Sign up panel */}
+              <div className="auth-form-panel">
+                <h1>Create account</h1>
+                <p>A safe space, just for you. No judgement, ever.</p>
+
+                <form className="auth-form" onSubmit={handleSignUp}>
+                  <div className="auth-input-box">
+                    <input
+                      type="email"
+                      placeholder="Email"
+                      value={email}
+                      onChange={e => setEmail(e.target.value)}
+                      required
+                      autoComplete="email"
+                    />
+                  </div>
+                  <div className="auth-input-box">
+                    <input
+                      type="password"
+                      placeholder="Password"
+                      value={password}
+                      onChange={e => setPassword(e.target.value)}
+                      required
+                      autoComplete="new-password"
+                    />
+                  </div>
+                  <div className="auth-input-box">
+                    <input
+                      placeholder="Full Name (optional)"
+                      value={fullName}
+                      onChange={e => setFullName(e.target.value)}
+                      autoComplete="name"
+                    />
+                  </div>
+                  <div className="auth-input-box">
+                    <select
+                      value={dateOfBirth ? dateOfBirth.split('-')[0] : ''}
+                      onChange={e => setDateOfBirth(e.target.value ? `${e.target.value}-01-01` : '')}
+                      required
+                      className="auth-select"
+                    >
+                      <option value="">Select Year of Birth</option>
+                      {Array.from({ length: 100 }, (_, i) => {
+                        const year = new Date().getFullYear() - 13 - i;
+                        return <option key={year} value={year}>{year}</option>;
+                      })}
+                    </select>
+                    <label style={{
+                      fontSize: '11px',
                       color: 'hsl(215.4 16.3% 46.9%)',
-                      cursor: 'pointer',
-                      lineHeight: '1.3'
+                      marginTop: '4px',
+                      display: 'block',
+                      textAlign: 'left'
                     }}>
+                      Year of Birth (for age verification only)
+                    </label>
+                  </div>
+
+                  {/* Terms and Privacy Agreement */}
+                  <div style={{ margin: '16px 0 20px 0' }}>
+                    <div style={{
+                      display: 'flex',
+                      alignItems: 'flex-start',
+                      gap: '8px',
+                      marginBottom: '8px'
+                    }}>
+                      <input
+                        type="checkbox"
+                        id="terms-checkbox"
+                        checked={termsAccepted}
+                        onChange={e => setTermsAccepted(e.target.checked)}
+                        className="auth-checkbox"
+                        required
+                      />
+                      <label htmlFor="terms-checkbox" style={{
+                        fontSize: '13px',
+                        color: 'hsl(215.4 16.3% 46.9%)',
+                        cursor: 'pointer',
+                        lineHeight: '1.3'
+                      }}>
                         I agree to the{' '}
                         <Link to="/terms-of-service" target="_blank" style={{
-                        color: 'hsl(262 83% 58%)',
-                        textDecoration: 'underline'
-                      }}>
+                          color: 'hsl(262 83% 58%)',
+                          textDecoration: 'underline'
+                        }}>
                           Terms of Service
                         </Link>
                       </label>
                     </div>
-                    
+
                     <div style={{
-                    display: 'flex',
-                    alignItems: 'flex-start',
-                    gap: '8px'
-                  }}>
-                      <input type="checkbox" id="privacy-checkbox" checked={privacyAccepted} onChange={e => setPrivacyAccepted(e.target.checked)} className="auth-checkbox" required />
-                      <label htmlFor="privacy-checkbox" style={{
-                      fontSize: '13px',
-                      color: 'hsl(215.4 16.3% 46.9%)',
-                      cursor: 'pointer',
-                      lineHeight: '1.3'
+                      display: 'flex',
+                      alignItems: 'flex-start',
+                      gap: '8px'
                     }}>
+                      <input
+                        type="checkbox"
+                        id="privacy-checkbox"
+                        checked={privacyAccepted}
+                        onChange={e => setPrivacyAccepted(e.target.checked)}
+                        className="auth-checkbox"
+                        required
+                      />
+                      <label htmlFor="privacy-checkbox" style={{
+                        fontSize: '13px',
+                        color: 'hsl(215.4 16.3% 46.9%)',
+                        cursor: 'pointer',
+                        lineHeight: '1.3'
+                      }}>
                         I agree to the{' '}
                         <Link to="/privacy-policy" target="_blank" style={{
-                        color: 'hsl(262 83% 58%)',
-                        textDecoration: 'underline'
-                      }}>
+                          color: 'hsl(262 83% 58%)',
+                          textDecoration: 'underline'
+                        }}>
                           Privacy Policy
                         </Link>
                       </label>
                     </div>
                   </div>
-                  
-                  <button type="submit" className="auth-btn" disabled={loading || !termsAccepted || !privacyAccepted} style={{
-                  marginTop: '16px',
-                  marginBottom: '16px',
-                  fontSize: '16px',
-                  fontWeight: '600',
-                  height: '50px'
-                }}>
+
+                  <button
+                    type="submit"
+                    className="auth-btn"
+                    disabled={loading || !termsAccepted || !privacyAccepted}
+                    style={{
+                      marginTop: '4px',
+                      marginBottom: '8px',
+                      fontSize: '16px',
+                      fontWeight: '600',
+                      height: '50px'
+                    }}
+                  >
                     {loading ? "Creating Account…" : "Create Account"}
                   </button>
-                  
-                  <p style={{
-                  marginTop: 12,
-                  fontSize: 13,
-                  textAlign: 'center'
-                }}>
-                    Already have an account? <button type="button" onClick={() => setActive(false)} style={{
-                    color: "hsl(262 83% 58%)",
-                    background: "transparent",
-                    border: 0,
-                    cursor: "pointer",
-                    textDecoration: 'underline'
-                  }}>Log in</button>
-                  </p>
-                  
-                </div>
-                
-                
-              </form>
-            </div>
-          </div>
 
-          {/* Toggle panels */}
-          <div className="auth-toggle-box">
-            <div className="auth-toggle-panel toggle-left">
-              <h1>Hello, Friend!</h1>
-              <p>Enter your details and start a journey of healing.</p>
-              <button className="auth-btn" onClick={() => setActive(true)}>
-                Sign up
-              </button>
-            </div>
-            <div className="auth-toggle-panel toggle-right">
-              <h1>Welcome Back!</h1>
-              <p>To keep connected, please log in with your personal info.</p>
-              <button className="auth-btn" onClick={() => setActive(false)}>
-                Log in
-              </button>
+                  <p style={{
+                    marginTop: 12,
+                    fontSize: 13,
+                    textAlign: 'center'
+                  }}>
+                    Already have an account?{' '}
+                    <button
+                      type="button"
+                      onClick={() => setActive(false)}
+                      style={{
+                        color: "hsl(262 83% 58%)",
+                        background: "transparent",
+                        border: 0,
+                        cursor: "pointer",
+                        textDecoration: 'underline'
+                      }}
+                    >
+                      Log in
+                    </button>
+                  </p>
+                </form>
+              </div>
             </div>
           </div>
         </div>
       </div>
-    </>;
+    </>
+  );
 };
+
 export default Auth;
