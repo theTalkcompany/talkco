@@ -23,12 +23,11 @@ const Auth = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [fullName, setFullName] = useState("");
-  const [phone, setPhone] = useState("");
-  const [address, setAddress] = useState("");
   const [dateOfBirth, setDateOfBirth] = useState("");
   const [loading, setLoading] = useState(false);
   const [termsAccepted, setTermsAccepted] = useState(false);
   const [privacyAccepted, setPrivacyAccepted] = useState(false);
+
 
   // Keep session listener - only for existing users
   useEffect(() => {
@@ -160,14 +159,15 @@ const Auth = () => {
     }
 
     // Enhanced input validation
-    if (!email.trim() || !password.trim() || !phone.trim() || !fullName.trim() || !address.trim()) {
+    if (!email.trim() || !password.trim()) {
       toast({
         title: "Validation error",
-        description: "All fields are required",
+        description: "Email and password are required",
         variant: "destructive"
       });
       return;
     }
+
 
     // Email format validation
     if (!validateEmail(email.trim())) {
@@ -238,8 +238,7 @@ const Auth = () => {
     // Sanitize inputs
     const sanitizedEmail = sanitizeEmail(email);
     const sanitizedFullName = sanitizeText(fullName, 100);
-    const sanitizedPhone = sanitizePhone(phone);
-    const sanitizedAddress = sanitizeText(address, 200);
+
     setLoading(true);
     let data: any = null;
     try {
@@ -290,12 +289,11 @@ const Auth = () => {
             user_id: data.user.id,
             email: data.user.email ?? sanitizedEmail,
             full_name: sanitizedFullName,
-            phone: sanitizedPhone,
-            address: sanitizedAddress,
             date_of_birth: dateOfBirth
           }, {
             onConflict: "user_id"
           });
+
           
           if (profileError) {
             console.error('Profile creation error:', profileError);
@@ -411,9 +409,8 @@ const Auth = () => {
               setEmail("");
               setPassword("");
               setFullName("");
-              setPhone("");
-              setAddress("");
               setDateOfBirth("");
+
               setTermsAccepted(false);
               setPrivacyAccepted(false);
             }} style={{
@@ -440,8 +437,9 @@ const Auth = () => {
             <div style={{
             width: "100%"
           }}>
-              <h1>Welcome back</h1>
+              <h1>Good to see you again 💜</h1>
               <p>Log in to continue your conversation.</p>
+
               <form className="auth-form" onSubmit={handleSignIn}>
                 <div className="auth-input-box">
                   <input type="email" placeholder="Email" value={email} onChange={e => setEmail(e.target.value)} required autoComplete="email" />
@@ -455,43 +453,8 @@ const Auth = () => {
                 <button type="submit" className="auth-btn" disabled={loading}>
                   {loading ? "Logging in…" : "Log in"}
                 </button>
-                <button
-                  type="button"
-                  className="auth-btn"
-                  disabled={loading}
-                  onClick={async () => {
-                    if (loading) return;
-                    setLoading(true);
-                    try {
-                      const { data, error } = await supabase.functions.invoke(
-                        "ensure-demo-user",
-                      );
-                      if (error || !data?.email) throw error ?? new Error("Demo unavailable");
-                      const { error: signInErr } = await supabase.auth.signInWithPassword({
-                        email: data.email,
-                        password: data.password,
-                      });
-                      if (signInErr) throw signInErr;
-                      toast({ title: "Demo login", description: "Signed in as Demo User." });
-                    } catch (err: any) {
-                      toast({
-                        title: "Demo login failed",
-                        description: err?.message ?? "Please try again",
-                        variant: "destructive",
-                      });
-                    } finally {
-                      setLoading(false);
-                    }
-                  }}
-                  style={{
-                    marginTop: 10,
-                    background: "transparent",
-                    color: "#7494ec",
-                    border: "2px solid #7494ec",
-                  }}
-                >
-                  Use Demo Login
-                </button>
+
+
                 <p style={{
                 marginTop: 16,
                 fontSize: 13
@@ -520,63 +483,42 @@ const Auth = () => {
             width: "100%"
           }}>
               <h1>Create account</h1>
-              <p>Join Talk and keep your info private.</p>
-              <form className="auth-form" onSubmit={handleSignUp} style={{
-              width: '100%',
-              height: 'auto'
-            }}>
-                <div style={{
-                paddingTop: '20px'
-              }}>
-                  <div className="auth-input-box" style={{
-                  margin: '12px 0'
-                }}>
-                    <input type="email" placeholder="Email" value={email} onChange={e => setEmail(e.target.value)} required autoComplete="email" />
-                  </div>
-                  <div className="auth-input-box" style={{
-                  margin: '12px 0'
-                }}>
-                    <input type="password" placeholder="Password" value={password} onChange={e => setPassword(e.target.value)} required autoComplete="new-password" />
-                  </div>
-                  <div className="auth-input-box" style={{
-                  margin: '12px 0'
-                }}>
-                    <input placeholder="Full Name" value={fullName} onChange={e => setFullName(e.target.value)} required />
-                  </div>
-                  <div className="auth-input-box" style={{
-                  margin: '12px 0'
-                }}>
-                    <select
-                      value={dateOfBirth ? dateOfBirth.split('-')[0] : ''}
-                      onChange={e => setDateOfBirth(e.target.value ? `${e.target.value}-01-01` : '')}
-                      required
-                      style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid #ccc', background: 'white' }}
-                    >
-                      <option value="">Select Year of Birth</option>
-                      {Array.from({ length: 100 }, (_, i) => {
-                        const year = new Date().getFullYear() - 13 - i;
-                        return <option key={year} value={year}>{year}</option>;
-                      })}
-                    </select>
-                    <label style={{
+              <p>A safe space, just for you. No judgement, ever.</p>
+              <form className="auth-form" onSubmit={handleSignUp}>
+                <div className="auth-input-box">
+                  <input type="email" placeholder="Email" value={email} onChange={e => setEmail(e.target.value)} required autoComplete="email" />
+                </div>
+                <div className="auth-input-box">
+                  <input type="password" placeholder="Password" value={password} onChange={e => setPassword(e.target.value)} required autoComplete="new-password" />
+                </div>
+                <div className="auth-input-box">
+                  <input placeholder="Full Name (optional)" value={fullName} onChange={e => setFullName(e.target.value)} autoComplete="name" />
+                </div>
+                <div className="auth-input-box">
+                  <select
+                    value={dateOfBirth ? dateOfBirth.split('-')[0] : ''}
+                    onChange={e => setDateOfBirth(e.target.value ? `${e.target.value}-01-01` : '')}
+                    required
+                    className="auth-select"
+                  >
+                    <option value="">Select Year of Birth</option>
+                    {Array.from({ length: 100 }, (_, i) => {
+                      const year = new Date().getFullYear() - 13 - i;
+                      return <option key={year} value={year}>{year}</option>;
+                    })}
+                  </select>
+                  <label style={{
                     fontSize: '11px',
                     color: 'hsl(215.4 16.3% 46.9%)',
-                    marginTop: '2px',
-                    display: 'block'
+                    marginTop: '4px',
+                    display: 'block',
+                    textAlign: 'left'
                   }}>
-                      Year of Birth (Required, for age verification only)
-                    </label>
-                  </div>
-                  <div className="auth-input-box" style={{
-                  margin: '12px 0'
-                }}>
-                    <input placeholder="Phone Number" value={phone} onChange={e => setPhone(e.target.value)} required />
-                  </div>
-                  <div className="auth-input-box" style={{
-                  margin: '12px 0'
-                }}>
-                    <input placeholder="Address" value={address} onChange={e => setAddress(e.target.value)} required />
-                  </div>
+                    Year of Birth (for age verification only)
+                  </label>
+                </div>
+                <div>
+
                   
                   {/* Terms and Privacy Agreement */}
                   <div style={{
