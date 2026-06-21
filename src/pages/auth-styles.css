@@ -286,3 +286,27 @@
     font-size: 30px;
   }
 }
+
+/* Match select to input styling for consistency */
+.auth-input-box .auth-select {
+  width: 100%;
+  padding: 13px 20px;
+  background: hsl(210 40% 96.1%);
+  border-radius: 8px;
+  border: 1px solid hsl(214.3 31.8% 91.4%);
+  outline: none;
+  font-size: 16px;
+  color: hsl(222.2 84% 4.9%);
+  font-weight: 500;
+  font-family: "Poppins", sans-serif;
+  transition: border-color 0.2s ease;
+  appearance: none;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'><path fill='%23666' d='M6 8L0 0h12z'/></svg>");
+  background-repeat: no-repeat;
+  background-position: right 16px center;
+}
+
+.auth-input-box .auth-select:focus {
+  border-color: hsl(262 83% 58%);
+  box-shadow: 0 0 0 3px hsl(262 83% 58% / 0.1);
+}
