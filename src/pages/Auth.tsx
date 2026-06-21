@@ -289,12 +289,11 @@ const Auth = () => {
             user_id: data.user.id,
             email: data.user.email ?? sanitizedEmail,
             full_name: sanitizedFullName,
-            phone: sanitizedPhone,
-            address: sanitizedAddress,
             date_of_birth: dateOfBirth
           }, {
             onConflict: "user_id"
           });
+
           
           if (profileError) {
             console.error('Profile creation error:', profileError);
