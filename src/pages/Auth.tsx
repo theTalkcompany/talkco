@@ -453,43 +453,8 @@ const Auth = () => {
                 <button type="submit" className="auth-btn" disabled={loading}>
                   {loading ? "Logging in…" : "Log in"}
                 </button>
-                <button
-                  type="button"
-                  className="auth-btn"
-                  disabled={loading}
-                  onClick={async () => {
-                    if (loading) return;
-                    setLoading(true);
-                    try {
-                      const { data, error } = await supabase.functions.invoke(
-                        "ensure-demo-user",
-                      );
-                      if (error || !data?.email) throw error ?? new Error("Demo unavailable");
-                      const { error: signInErr } = await supabase.auth.signInWithPassword({
-                        email: data.email,
-                        password: data.password,
-                      });
-                      if (signInErr) throw signInErr;
-                      toast({ title: "Demo login", description: "Signed in as Demo User." });
-                    } catch (err: any) {
-                      toast({
-                        title: "Demo login failed",
-                        description: err?.message ?? "Please try again",
-                        variant: "destructive",
-                      });
-                    } finally {
-                      setLoading(false);
-                    }
-                  }}
-                  style={{
-                    marginTop: 10,
-                    background: "transparent",
-                    color: "#7494ec",
-                    border: "2px solid #7494ec",
-                  }}
-                >
-                  Use Demo Login
-                </button>
+
+
                 <p style={{
                 marginTop: 16,
                 fontSize: 13
