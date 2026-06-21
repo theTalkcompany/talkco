@@ -409,9 +409,8 @@ const Auth = () => {
               setEmail("");
               setPassword("");
               setFullName("");
-              setPhone("");
-              setAddress("");
               setDateOfBirth("");
+
               setTermsAccepted(false);
               setPrivacyAccepted(false);
             }} style={{
