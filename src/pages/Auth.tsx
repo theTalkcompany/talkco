@@ -437,8 +437,9 @@ const Auth = () => {
             <div style={{
             width: "100%"
           }}>
-              <h1>Welcome back</h1>
+              <h1>Good to see you again 💜</h1>
               <p>Log in to continue your conversation.</p>
+
               <form className="auth-form" onSubmit={handleSignIn}>
                 <div className="auth-input-box">
                   <input type="email" placeholder="Email" value={email} onChange={e => setEmail(e.target.value)} required autoComplete="email" />
