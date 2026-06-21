@@ -483,63 +483,42 @@ const Auth = () => {
             width: "100%"
           }}>
               <h1>Create account</h1>
-              <p>Join Talk and keep your info private.</p>
-              <form className="auth-form" onSubmit={handleSignUp} style={{
-              width: '100%',
-              height: 'auto'
-            }}>
-                <div style={{
-                paddingTop: '20px'
-              }}>
-                  <div className="auth-input-box" style={{
-                  margin: '12px 0'
-                }}>
-                    <input type="email" placeholder="Email" value={email} onChange={e => setEmail(e.target.value)} required autoComplete="email" />
-                  </div>
-                  <div className="auth-input-box" style={{
-                  margin: '12px 0'
-                }}>
-                    <input type="password" placeholder="Password" value={password} onChange={e => setPassword(e.target.value)} required autoComplete="new-password" />
-                  </div>
-                  <div className="auth-input-box" style={{
-                  margin: '12px 0'
-                }}>
-                    <input placeholder="Full Name" value={fullName} onChange={e => setFullName(e.target.value)} required />
-                  </div>
-                  <div className="auth-input-box" style={{
-                  margin: '12px 0'
-                }}>
-                    <select
-                      value={dateOfBirth ? dateOfBirth.split('-')[0] : ''}
-                      onChange={e => setDateOfBirth(e.target.value ? `${e.target.value}-01-01` : '')}
-                      required
-                      style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid #ccc', background: 'white' }}
-                    >
-                      <option value="">Select Year of Birth</option>
-                      {Array.from({ length: 100 }, (_, i) => {
-                        const year = new Date().getFullYear() - 13 - i;
-                        return <option key={year} value={year}>{year}</option>;
-                      })}
-                    </select>
-                    <label style={{
+              <p>A safe space, just for you. No judgement, ever.</p>
+              <form className="auth-form" onSubmit={handleSignUp}>
+                <div className="auth-input-box">
+                  <input type="email" placeholder="Email" value={email} onChange={e => setEmail(e.target.value)} required autoComplete="email" />
+                </div>
+                <div className="auth-input-box">
+                  <input type="password" placeholder="Password" value={password} onChange={e => setPassword(e.target.value)} required autoComplete="new-password" />
+                </div>
+                <div className="auth-input-box">
+                  <input placeholder="Full Name (optional)" value={fullName} onChange={e => setFullName(e.target.value)} autoComplete="name" />
+                </div>
+                <div className="auth-input-box">
+                  <select
+                    value={dateOfBirth ? dateOfBirth.split('-')[0] : ''}
+                    onChange={e => setDateOfBirth(e.target.value ? `${e.target.value}-01-01` : '')}
+                    required
+                    className="auth-select"
+                  >
+                    <option value="">Select Year of Birth</option>
+                    {Array.from({ length: 100 }, (_, i) => {
+                      const year = new Date().getFullYear() - 13 - i;
+                      return <option key={year} value={year}>{year}</option>;
+                    })}
+                  </select>
+                  <label style={{
                     fontSize: '11px',
                     color: 'hsl(215.4 16.3% 46.9%)',
-                    marginTop: '2px',
-                    display: 'block'
+                    marginTop: '4px',
+                    display: 'block',
+                    textAlign: 'left'
                   }}>
-                      Year of Birth (Required, for age verification only)
-                    </label>
-                  </div>
-                  <div className="auth-input-box" style={{
-                  margin: '12px 0'
-                }}>
-                    <input placeholder="Phone Number" value={phone} onChange={e => setPhone(e.target.value)} required />
-                  </div>
-                  <div className="auth-input-box" style={{
-                  margin: '12px 0'
-                }}>
-                    <input placeholder="Address" value={address} onChange={e => setAddress(e.target.value)} required />
-                  </div>
+                    Year of Birth (for age verification only)
+                  </label>
+                </div>
+                <div>
+
                   
                   {/* Terms and Privacy Agreement */}
                   <div style={{
