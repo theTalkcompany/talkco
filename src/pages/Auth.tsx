@@ -238,8 +238,7 @@ const Auth = () => {
     // Sanitize inputs
     const sanitizedEmail = sanitizeEmail(email);
     const sanitizedFullName = sanitizeText(fullName, 100);
-    const sanitizedPhone = sanitizePhone(phone);
-    const sanitizedAddress = sanitizeText(address, 200);
+
     setLoading(true);
     let data: any = null;
     try {
