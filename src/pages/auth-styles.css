@@ -20,7 +20,8 @@
   background: linear-gradient(135deg, hsl(262 56% 52%) 0%, hsl(270 70% 60%) 35%, hsl(280 75% 68%) 70%, hsl(255 90% 77%) 100%);
   background-size: 200% 200%;
   animation: gradientShift 15s ease infinite;
-  overflow: hidden;
+  overflow-x: hidden;
+  overflow-y: auto;
 }
 
 @keyframes gradientShift {
