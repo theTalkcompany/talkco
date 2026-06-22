@@ -250,8 +250,20 @@ const Auth = () => {
   const strengthLabel = pwStrength ? pwStrength.charAt(0).toUpperCase() + pwStrength.slice(1) : "";
 
   const reqStyle = (ok: boolean): React.CSSProperties => ({
-    fontSize: 12, color: ok ? "#10b981" : "hsl(215.4 16.3% 46.9%)", display: "flex", alignItems: "center", gap: 4,
+    color: ok ? "#10b981" : "hsl(215.4 16.3% 46.9%)",
   });
+
+  const dobSelectStyle: React.CSSProperties = {
+    width: "100%",
+    height: 40,
+    padding: "0 10px",
+    background: "hsl(210 40% 96.1%)",
+    borderRadius: 10,
+    border: "1px solid hsl(214.3 31.8% 91.4%)",
+    fontSize: 13,
+    fontFamily: "Poppins, sans-serif",
+    color: "hsl(222.2 84% 4.9%)",
+  };
 
   return (
     <>
