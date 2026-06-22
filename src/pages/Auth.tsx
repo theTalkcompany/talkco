@@ -250,8 +250,20 @@ const Auth = () => {
   const strengthLabel = pwStrength ? pwStrength.charAt(0).toUpperCase() + pwStrength.slice(1) : "";
 
   const reqStyle = (ok: boolean): React.CSSProperties => ({
-    fontSize: 12, color: ok ? "#10b981" : "hsl(215.4 16.3% 46.9%)", display: "flex", alignItems: "center", gap: 4,
+    color: ok ? "#10b981" : "hsl(215.4 16.3% 46.9%)",
   });
+
+  const dobSelectStyle: React.CSSProperties = {
+    width: "100%",
+    height: 40,
+    padding: "0 10px",
+    background: "hsl(210 40% 96.1%)",
+    borderRadius: 10,
+    border: "1px solid hsl(214.3 31.8% 91.4%)",
+    fontSize: 13,
+    fontFamily: "Poppins, sans-serif",
+    color: "hsl(222.2 84% 4.9%)",
+  };
 
   return (
     <>
@@ -324,21 +336,20 @@ const Auth = () => {
                   <div className="auth-input-box">
                     <input type="password" placeholder="Password" value={password} onChange={e => setPassword(e.target.value)} required autoComplete="new-password" />
                     {password.length > 0 && (
-                      <div style={{ marginTop: 8 }}>
-                        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
-                          <div style={{ flex: 1, height: 4, background: "hsl(214.3 31.8% 91.4%)", borderRadius: 2, overflow: "hidden" }}>
-                            <div style={{ width: `${(pwScore / 3) * 100}%`, height: "100%", background: strengthColor, transition: "all 0.2s" }} />
-                          </div>
-                          <span style={{ fontSize: 11, color: strengthColor, fontWeight: 600, minWidth: 50, textAlign: "right" }}>{strengthLabel}</span>
+                      <div className="pw-strength-wrap" tabIndex={0}>
+                        <div className="pw-strength-bar">
+                          <span style={{ width: `${(pwScore / 3) * 100}%`, background: strengthColor }} />
                         </div>
-                        <div style={{ display: "flex", flexWrap: "wrap", gap: 12 }}>
-                          <span style={reqStyle(pwLen)}>{pwLen ? "✓" : "✗"} 8+ characters</span>
-                          <span style={reqStyle(pwNum)}>{pwNum ? "✓" : "✗"} One number</span>
-                          <span style={reqStyle(pwCap)}>{pwCap ? "✓" : "✗"} One capital letter</span>
+                        <div className="pw-strength-label" style={{ color: strengthColor }}>{strengthLabel}</div>
+                        <div className="pw-requirements">
+                          <div className="pw-req" style={reqStyle(pwLen)}>{pwLen ? "✓" : "✗"} 8+ characters</div>
+                          <div className="pw-req" style={reqStyle(pwNum)}>{pwNum ? "✓" : "✗"} One number</div>
+                          <div className="pw-req" style={reqStyle(pwCap)}>{pwCap ? "✓" : "✗"} One capital letter</div>
                         </div>
                       </div>
                     )}
                   </div>
+
 
                   <div className="auth-input-box">
                     <input type="password" placeholder="Confirm password" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} required autoComplete="new-password" />
@@ -383,21 +394,18 @@ const Auth = () => {
                     </label>
                   </div>
 
-                  <div style={{ margin: "14px 0" }}>
-                    <label style={{ fontSize: 13, color: 'hsl(215.4 16.3% 46.9%)', display: 'block', marginBottom: 6 }}>Date of birth</label>
-                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1.4fr 1fr", gap: 8 }}>
-                      <select className="auth-select" value={dobDay} onChange={e => setDobDay(e.target.value)} required
-                        style={{ width: "100%", padding: "13px 12px", background: "hsl(210 40% 96.1%)", borderRadius: 10, border: "1px solid hsl(214.3 31.8% 91.4%)", fontSize: 14, fontFamily: "Poppins, sans-serif", color: "hsl(222.2 84% 4.9%)" }}>
+                  <div style={{ margin: "4px 0 12px" }}>
+                    <label style={{ fontSize: 12, color: 'hsl(215.4 16.3% 46.9%)', display: 'block', marginBottom: 4 }}>Date of birth</label>
+                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1.3fr 1fr", gap: 8 }}>
+                      <select className="auth-select" value={dobDay} onChange={e => setDobDay(e.target.value)} required style={dobSelectStyle}>
                         <option value="">Day</option>
                         {dayOptions.map(d => <option key={d} value={d}>{d}</option>)}
                       </select>
-                      <select className="auth-select" value={dobMonth} onChange={e => setDobMonth(e.target.value)} required
-                        style={{ width: "100%", padding: "13px 12px", background: "hsl(210 40% 96.1%)", borderRadius: 10, border: "1px solid hsl(214.3 31.8% 91.4%)", fontSize: 14, fontFamily: "Poppins, sans-serif", color: "hsl(222.2 84% 4.9%)" }}>
+                      <select className="auth-select" value={dobMonth} onChange={e => setDobMonth(e.target.value)} required style={dobSelectStyle}>
                         <option value="">Month</option>
                         {MONTHS.map((m, i) => <option key={m} value={i + 1}>{m}</option>)}
                       </select>
-                      <select className="auth-select" value={dobYear} onChange={e => setDobYear(e.target.value)} required
-                        style={{ width: "100%", padding: "13px 12px", background: "hsl(210 40% 96.1%)", borderRadius: 10, border: "1px solid hsl(214.3 31.8% 91.4%)", fontSize: 14, fontFamily: "Poppins, sans-serif", color: "hsl(222.2 84% 4.9%)" }}>
+                      <select className="auth-select" value={dobYear} onChange={e => setDobYear(e.target.value)} required style={dobSelectStyle}>
                         <option value="">Year</option>
                         {yearOptions.map(y => <option key={y} value={y}>{y}</option>)}
                       </select>
