@@ -173,8 +173,13 @@ const Auth = () => {
         options: { emailRedirectTo: redirectUrl },
       });
       if (error) {
+        const lower = error.message.toLowerCase();
         let msg = error.message;
-        if (error.message.includes("already registered")) msg = "An account with this email already exists. Please try logging in instead.";
+        if (lower.includes("already registered") || lower.includes("already been registered") || lower.includes("user already")) {
+          msg = "An account with this email already exists. Please try logging in instead.";
+        } else if (lower.includes("password") || lower.includes("pwned") || lower.includes("leaked") || lower.includes("weak")) {
+          msg = "Your password must be at least 8 characters and include a capital letter, a number, and a special character (like ! or @).";
+        }
         toast({ title: "Sign up failed", description: msg, variant: "destructive" });
         return;
       }
