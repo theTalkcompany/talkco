@@ -1023,6 +1023,7 @@ export type Database = {
         Returns: boolean
       }
       is_admin: { Args: { _user_id: string }; Returns: boolean }
+      is_display_name_available: { Args: { _name: string }; Returns: boolean }
       is_letters_reviewer: { Args: never; Returns: boolean }
       is_room_admin: {
         Args: { _room_id: string; _user_id: string }
