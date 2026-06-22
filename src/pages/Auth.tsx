@@ -74,9 +74,10 @@ const Auth = () => {
   const pwLen = password.length >= 8;
   const pwNum = /\d/.test(password);
   const pwCap = /[A-Z]/.test(password);
-  const pwScore = [pwLen, pwNum, pwCap].filter(Boolean).length;
-  const pwStrength = pwScore === 0 ? null : pwScore === 1 ? "weak" : pwScore === 2 ? "good" : "strong";
-  const pwValid = pwLen && pwNum && pwCap;
+  const pwSpecial = /[!@#$%^&*()_\-+=[\]{};':"\\|,.<>/?`~]/.test(password);
+  const pwScore = [pwLen, pwNum, pwCap, pwSpecial].filter(Boolean).length;
+  const pwStrength = pwScore === 0 ? null : pwScore <= 2 ? "weak" : pwScore === 3 ? "good" : "strong";
+  const pwValid = pwLen && pwNum && pwCap && pwSpecial;
   const pwMatch = password.length > 0 && password === confirmPassword;
 
   const dobValid = dobDay && dobMonth && dobYear;
