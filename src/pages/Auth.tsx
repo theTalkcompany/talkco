@@ -336,21 +336,20 @@ const Auth = () => {
                   <div className="auth-input-box">
                     <input type="password" placeholder="Password" value={password} onChange={e => setPassword(e.target.value)} required autoComplete="new-password" />
                     {password.length > 0 && (
-                      <div style={{ marginTop: 8 }}>
-                        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
-                          <div style={{ flex: 1, height: 4, background: "hsl(214.3 31.8% 91.4%)", borderRadius: 2, overflow: "hidden" }}>
-                            <div style={{ width: `${(pwScore / 3) * 100}%`, height: "100%", background: strengthColor, transition: "all 0.2s" }} />
-                          </div>
-                          <span style={{ fontSize: 11, color: strengthColor, fontWeight: 600, minWidth: 50, textAlign: "right" }}>{strengthLabel}</span>
+                      <div className="pw-strength-wrap" tabIndex={0}>
+                        <div className="pw-strength-bar">
+                          <span style={{ width: `${(pwScore / 3) * 100}%`, background: strengthColor }} />
                         </div>
-                        <div style={{ display: "flex", flexWrap: "wrap", gap: 12 }}>
-                          <span style={reqStyle(pwLen)}>{pwLen ? "✓" : "✗"} 8+ characters</span>
-                          <span style={reqStyle(pwNum)}>{pwNum ? "✓" : "✗"} One number</span>
-                          <span style={reqStyle(pwCap)}>{pwCap ? "✓" : "✗"} One capital letter</span>
+                        <div className="pw-strength-label" style={{ color: strengthColor }}>{strengthLabel}</div>
+                        <div className="pw-requirements">
+                          <div className="pw-req" style={reqStyle(pwLen)}>{pwLen ? "✓" : "✗"} 8+ characters</div>
+                          <div className="pw-req" style={reqStyle(pwNum)}>{pwNum ? "✓" : "✗"} One number</div>
+                          <div className="pw-req" style={reqStyle(pwCap)}>{pwCap ? "✓" : "✗"} One capital letter</div>
                         </div>
                       </div>
                     )}
                   </div>
+
 
                   <div className="auth-input-box">
                     <input type="password" placeholder="Confirm password" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} required autoComplete="new-password" />
