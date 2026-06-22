@@ -344,13 +344,14 @@ const Auth = () => {
                     {password.length > 0 && (
                       <div className="pw-strength-wrap" tabIndex={0}>
                         <div className="pw-strength-bar">
-                          <span style={{ width: `${(pwScore / 3) * 100}%`, background: strengthColor }} />
+                          <span style={{ width: `${(pwScore / 4) * 100}%`, background: strengthColor }} />
                         </div>
                         <div className="pw-strength-label" style={{ color: strengthColor }}>{strengthLabel}</div>
                         <div className="pw-requirements">
                           <div className="pw-req" style={reqStyle(pwLen)}>{pwLen ? "✓" : "✗"} 8+ characters</div>
-                          <div className="pw-req" style={reqStyle(pwNum)}>{pwNum ? "✓" : "✗"} One number</div>
                           <div className="pw-req" style={reqStyle(pwCap)}>{pwCap ? "✓" : "✗"} One capital letter</div>
+                          <div className="pw-req" style={reqStyle(pwNum)}>{pwNum ? "✓" : "✗"} One number</div>
+                          <div className="pw-req" style={reqStyle(pwSpecial)}>{pwSpecial ? "✓" : "✗"} One special character (! @ # …)</div>
                         </div>
                       </div>
                     )}
