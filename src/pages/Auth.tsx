@@ -74,9 +74,10 @@ const Auth = () => {
   const pwLen = password.length >= 8;
   const pwNum = /\d/.test(password);
   const pwCap = /[A-Z]/.test(password);
-  const pwScore = [pwLen, pwNum, pwCap].filter(Boolean).length;
-  const pwStrength = pwScore === 0 ? null : pwScore === 1 ? "weak" : pwScore === 2 ? "good" : "strong";
-  const pwValid = pwLen && pwNum && pwCap;
+  const pwSpecial = /[!@#$%^&*()_\-+=[\]{};':"\\|,.<>/?`~]/.test(password);
+  const pwScore = [pwLen, pwNum, pwCap, pwSpecial].filter(Boolean).length;
+  const pwStrength = pwScore === 0 ? null : pwScore <= 2 ? "weak" : pwScore === 3 ? "good" : "strong";
+  const pwValid = pwLen && pwNum && pwCap && pwSpecial;
   const pwMatch = password.length > 0 && password === confirmPassword;
 
   const dobValid = dobDay && dobMonth && dobYear;
@@ -172,8 +173,13 @@ const Auth = () => {
         options: { emailRedirectTo: redirectUrl },
       });
       if (error) {
+        const lower = error.message.toLowerCase();
         let msg = error.message;
-        if (error.message.includes("already registered")) msg = "An account with this email already exists. Please try logging in instead.";
+        if (lower.includes("already registered") || lower.includes("already been registered") || lower.includes("user already")) {
+          msg = "An account with this email already exists. Please try logging in instead.";
+        } else if (lower.includes("password") || lower.includes("pwned") || lower.includes("leaked") || lower.includes("weak")) {
+          msg = "Your password must be at least 8 characters and include a capital letter, a number, and a special character (like ! or @).";
+        }
         toast({ title: "Sign up failed", description: msg, variant: "destructive" });
         return;
       }
@@ -338,13 +344,14 @@ const Auth = () => {
                     {password.length > 0 && (
                       <div className="pw-strength-wrap" tabIndex={0}>
                         <div className="pw-strength-bar">
-                          <span style={{ width: `${(pwScore / 3) * 100}%`, background: strengthColor }} />
+                          <span style={{ width: `${(pwScore / 4) * 100}%`, background: strengthColor }} />
                         </div>
                         <div className="pw-strength-label" style={{ color: strengthColor }}>{strengthLabel}</div>
                         <div className="pw-requirements">
                           <div className="pw-req" style={reqStyle(pwLen)}>{pwLen ? "✓" : "✗"} 8+ characters</div>
-                          <div className="pw-req" style={reqStyle(pwNum)}>{pwNum ? "✓" : "✗"} One number</div>
                           <div className="pw-req" style={reqStyle(pwCap)}>{pwCap ? "✓" : "✗"} One capital letter</div>
+                          <div className="pw-req" style={reqStyle(pwNum)}>{pwNum ? "✓" : "✗"} One number</div>
+                          <div className="pw-req" style={reqStyle(pwSpecial)}>{pwSpecial ? "✓" : "✗"} One special character (! @ # …)</div>
                         </div>
                       </div>
                     )}
