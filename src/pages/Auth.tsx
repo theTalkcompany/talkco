@@ -394,21 +394,18 @@ const Auth = () => {
                     </label>
                   </div>
 
-                  <div style={{ margin: "14px 0" }}>
-                    <label style={{ fontSize: 13, color: 'hsl(215.4 16.3% 46.9%)', display: 'block', marginBottom: 6 }}>Date of birth</label>
-                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1.4fr 1fr", gap: 8 }}>
-                      <select className="auth-select" value={dobDay} onChange={e => setDobDay(e.target.value)} required
-                        style={{ width: "100%", padding: "13px 12px", background: "hsl(210 40% 96.1%)", borderRadius: 10, border: "1px solid hsl(214.3 31.8% 91.4%)", fontSize: 14, fontFamily: "Poppins, sans-serif", color: "hsl(222.2 84% 4.9%)" }}>
+                  <div style={{ margin: "4px 0 12px" }}>
+                    <label style={{ fontSize: 12, color: 'hsl(215.4 16.3% 46.9%)', display: 'block', marginBottom: 4 }}>Date of birth</label>
+                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1.3fr 1fr", gap: 8 }}>
+                      <select className="auth-select" value={dobDay} onChange={e => setDobDay(e.target.value)} required style={dobSelectStyle}>
                         <option value="">Day</option>
                         {dayOptions.map(d => <option key={d} value={d}>{d}</option>)}
                       </select>
-                      <select className="auth-select" value={dobMonth} onChange={e => setDobMonth(e.target.value)} required
-                        style={{ width: "100%", padding: "13px 12px", background: "hsl(210 40% 96.1%)", borderRadius: 10, border: "1px solid hsl(214.3 31.8% 91.4%)", fontSize: 14, fontFamily: "Poppins, sans-serif", color: "hsl(222.2 84% 4.9%)" }}>
+                      <select className="auth-select" value={dobMonth} onChange={e => setDobMonth(e.target.value)} required style={dobSelectStyle}>
                         <option value="">Month</option>
                         {MONTHS.map((m, i) => <option key={m} value={i + 1}>{m}</option>)}
                       </select>
-                      <select className="auth-select" value={dobYear} onChange={e => setDobYear(e.target.value)} required
-                        style={{ width: "100%", padding: "13px 12px", background: "hsl(210 40% 96.1%)", borderRadius: 10, border: "1px solid hsl(214.3 31.8% 91.4%)", fontSize: 14, fontFamily: "Poppins, sans-serif", color: "hsl(222.2 84% 4.9%)" }}>
+                      <select className="auth-select" value={dobYear} onChange={e => setDobYear(e.target.value)} required style={dobSelectStyle}>
                         <option value="">Year</option>
                         {yearOptions.map(y => <option key={y} value={y}>{y}</option>)}
                       </select>
