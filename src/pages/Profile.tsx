@@ -94,6 +94,8 @@ export default function Profile() {
   const [editOpen, setEditOpen] = useState(false);
   const [avatarOpen, setAvatarOpen] = useState(false);
   const [accountOpen, setAccountOpen] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   const [editing, setEditing] = useState({ full_name: "", display_name: "", email: "", phone: "", address: "" });
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
