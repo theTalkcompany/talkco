@@ -6,6 +6,7 @@ import { useState, useEffect } from "react";
 import { Heart, MessageCircle, Shield, Users, Zap, ArrowRight } from "lucide-react";
 import { DailyQuoteModal } from "@/components/DailyQuoteModal";
 import { supabase } from "@/integrations/supabase/client";
+import akerLogo from "@/assets/aker-logo.png.asset.json";
 
 const Index = () => {
   const [quote, setQuote] = useState<Quote | null>(null);
