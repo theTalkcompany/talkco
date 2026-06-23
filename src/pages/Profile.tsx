@@ -11,6 +11,7 @@ import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/components/ui/use-toast";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription, DialogFooter } from "@/components/ui/dialog";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -94,6 +95,8 @@ export default function Profile() {
   const [editOpen, setEditOpen] = useState(false);
   const [avatarOpen, setAvatarOpen] = useState(false);
   const [accountOpen, setAccountOpen] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   const [editing, setEditing] = useState({ full_name: "", display_name: "", email: "", phone: "", address: "" });
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
@@ -331,12 +334,25 @@ export default function Profile() {
     else toast({ title: "Reset email sent", description: "Check your inbox to set a new password." });
   };
 
-  const handleDeleteAccount = () => {
-    if (!confirm("This will permanently delete your account and all data. Continue?")) return;
-    toast({
-      title: "Request received",
-      description: "To finalise deletion, please contact support@talkco.uk. Your data will be removed within 30 days.",
-    });
+  const handleDeleteAccount = () => setDeleteOpen(true);
+
+  const confirmDeleteAccount = async () => {
+    if (deleting) return;
+    setDeleting(true);
+    try {
+      const { error } = await supabase.functions.invoke("delete-account");
+      if (error) {
+        toast({ title: "Couldn't delete account", description: error.message, variant: "destructive" });
+        setDeleting(false);
+        return;
+      }
+      await supabase.auth.signOut();
+      toast({ title: "Account deleted", description: "Your account and data have been permanently removed." });
+      window.location.href = "/auth";
+    } catch (e: any) {
+      toast({ title: "Couldn't delete account", description: e?.message ?? "Unexpected error", variant: "destructive" });
+      setDeleting(false);
+    }
   };
 
   const canonical = useMemo(() => `${window.location.origin}/profile`, []);
@@ -690,6 +706,28 @@ export default function Profile() {
           <AvatarPicker builtIn={presetAvatars} onSelect={choosePreset} />
         </DialogContent>
       </Dialog>
+
+      {/* Delete account confirmation */}
+      <AlertDialog open={deleteOpen} onOpenChange={(o) => { if (!deleting) setDeleteOpen(o); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete your account?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure? This will permanently delete your account and all your data. This cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleting}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(e) => { e.preventDefault(); confirmDeleteAccount(); }}
+              disabled={deleting}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {deleting ? "Deleting…" : "Yes, delete my account"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 }
