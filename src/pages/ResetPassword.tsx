@@ -15,18 +15,55 @@ const ResetPassword = () => {
   const [done, setDone] = useState(false);
 
   useEffect(() => {
-    // Supabase auto-processes the recovery token in the URL hash.
-    // We listen for PASSWORD_RECOVERY or an existing session.
     const { data: sub } = supabase.auth.onAuthStateChange((event, session) => {
       if (event === "PASSWORD_RECOVERY" || (event === "SIGNED_IN" && session)) {
         setHasRecoverySession(true);
       }
     });
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session) setHasRecoverySession(true);
-    });
+
+    (async () => {
+      try {
+        // 1) Handle tokens in the URL hash (#access_token=...&refresh_token=...&type=recovery)
+        const rawHash = window.location.hash || "";
+        const hash = rawHash.startsWith("#") ? rawHash.substring(1) : rawHash;
+        const hashParams = new URLSearchParams(hash);
+        const access_token = hashParams.get("access_token");
+        const refresh_token = hashParams.get("refresh_token");
+        const hashError = hashParams.get("error_description") || hashParams.get("error");
+
+        if (access_token && refresh_token) {
+          const { data, error } = await supabase.auth.setSession({ access_token, refresh_token });
+          if (!error && data.session) {
+            setHasRecoverySession(true);
+          } else if (error) {
+            toast({ title: "Reset link invalid or expired", description: error.message, variant: "destructive" });
+          }
+          window.history.replaceState(null, "", window.location.pathname);
+        } else if (hashError) {
+          toast({ title: "Reset link invalid or expired", description: hashError, variant: "destructive" });
+          window.history.replaceState(null, "", window.location.pathname);
+        } else {
+          // 2) Handle PKCE-style ?code=... links
+          const url = new URL(window.location.href);
+          const code = url.searchParams.get("code");
+          if (code) {
+            const { data, error } = await supabase.auth.exchangeCodeForSession(code);
+            if (!error && data.session) setHasRecoverySession(true);
+            url.searchParams.delete("code");
+            window.history.replaceState(null, "", url.pathname + (url.search || ""));
+          }
+        }
+
+        // 3) Fallback: any existing session
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session) setHasRecoverySession(true);
+      } catch (err) {
+        console.error("Reset password init error:", err);
+      }
+    })();
+
     return () => { sub.subscription.unsubscribe(); };
-  }, []);
+  }, [toast]);
 
   const pwLen = password.length >= 8;
   const pwCap = /[A-Z]/.test(password);
