@@ -314,7 +314,7 @@ const Auth = () => {
                   <div className="auth-input-box">
                     <input type="password" placeholder="Password" value={password} onChange={e => setPassword(e.target.value)} required autoComplete="current-password" />
                   </div>
-                  <div className="forgot-link"><Link to="#">Forgot your password?</Link></div>
+                  <div className="forgot-link"><Link to="/forgot-password">Forgot your password?</Link></div>
                   <button type="submit" className="auth-btn" disabled={loading}>{loading ? "Logging in…" : "Log in"}</button>
                   <p style={{ marginTop: 16, fontSize: 13, textAlign: 'center' }}>
                     New here?{' '}
