@@ -151,7 +151,7 @@ const Index = () => {
                 Gymwear & Streetwear with a purpose
               </p>
               <p className="text-sm sm:text-base opacity-90 leading-relaxed mb-5 max-w-2xl">
-                AKER Clothing is a UK-based gymwear and streetwear brand built around mental health awareness. With every purchase, AKER donates £1 to mental health charities — because looking after yourself starts from the outside in. Wear it with purpose.
+                AKER Clothing is a UK-based gymwear and streetwear brand built around mental health awareness, each design is with mental health in mind. With every purchase, AKER donates £1 to mental health charities — because looking after yourself starts from the outside in. Wear it with purpose.
               </p>
               <a
                 href="https://akerclothing.co.uk/"
