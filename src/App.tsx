@@ -11,6 +11,8 @@ import Chat from "./pages/Chat";
 import Help from "./pages/Help";
 import Quotes from "./pages/Quotes";
 import Auth from "./pages/Auth";
+import ForgotPassword from "./pages/ForgotPassword";
+import ResetPassword from "./pages/ResetPassword";
 import Profile from "./pages/Profile";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import TermsOfService from "./pages/TermsOfService";
