@@ -153,17 +153,16 @@ const Index = () => {
               <p className="text-sm sm:text-base opacity-90 leading-relaxed mb-5 max-w-2xl">
                 AKER Clothing is a UK-based gymwear and streetwear brand built around mental health awareness. With every purchase, AKER donates £1 to mental health charities — because looking after yourself starts from the outside in. Wear it with purpose.
               </p>
-              <Button variant="hero" asChild className="rounded-full min-h-[44px]">
-                <a
-                  href="https://www.akerclothing.co.uk"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="focus-ring"
-                >
-                  Visit AKER
-                  <ArrowRight className="ml-2 h-4 w-4" />
-                </a>
-              </Button>
+              <a
+                href="https://www.akerclothing.co.uk"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center justify-center gap-2 rounded-full bg-white text-primary hover:bg-white/90 font-semibold px-6 py-3 min-h-[44px] transition-colors focus-ring"
+              >
+                Visit AKER
+                <ArrowRight className="h-4 w-4" />
+              </a>
+
             </div>
           </div>
         </article>
