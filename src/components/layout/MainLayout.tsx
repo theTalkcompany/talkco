@@ -37,7 +37,7 @@ const MainLayout = ({ children }: { children: ReactNode }) => {
 
   useEffect(() => {
     if (sessionExists === null) return;
-    const publicRoutes = ["/", "/auth", "/privacy-policy", "/terms-of-service", "/contact", "/app-store-compliance"];
+    const publicRoutes = ["/", "/auth", "/forgot-password", "/reset-password", "/privacy-policy", "/terms-of-service", "/contact", "/app-store-compliance"];
     const isPublicRoute = publicRoutes.includes(location.pathname);
     if (!sessionExists && !isPublicRoute) navigate("/auth");
     if (sessionExists && location.pathname === "/auth") navigate("/");
