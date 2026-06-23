@@ -333,12 +333,25 @@ export default function Profile() {
     else toast({ title: "Reset email sent", description: "Check your inbox to set a new password." });
   };
 
-  const handleDeleteAccount = () => {
-    if (!confirm("This will permanently delete your account and all data. Continue?")) return;
-    toast({
-      title: "Request received",
-      description: "To finalise deletion, please contact support@talkco.uk. Your data will be removed within 30 days.",
-    });
+  const handleDeleteAccount = () => setDeleteOpen(true);
+
+  const confirmDeleteAccount = async () => {
+    if (deleting) return;
+    setDeleting(true);
+    try {
+      const { error } = await supabase.functions.invoke("delete-account");
+      if (error) {
+        toast({ title: "Couldn't delete account", description: error.message, variant: "destructive" });
+        setDeleting(false);
+        return;
+      }
+      await supabase.auth.signOut();
+      toast({ title: "Account deleted", description: "Your account and data have been permanently removed." });
+      window.location.href = "/auth";
+    } catch (e: any) {
+      toast({ title: "Couldn't delete account", description: e?.message ?? "Unexpected error", variant: "destructive" });
+      setDeleting(false);
+    }
   };
 
   const canonical = useMemo(() => `${window.location.origin}/profile`, []);
