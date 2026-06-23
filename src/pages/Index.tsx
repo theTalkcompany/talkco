@@ -131,8 +131,47 @@ const Index = () => {
         </div>
       </section>
 
+      {/* In Partnership With */}
+      <section className="mb-8 animate-fade-in">
+        <p className="text-center text-xs sm:text-sm uppercase tracking-[0.2em] text-muted-foreground mb-4">
+          In Partnership With
+        </p>
+        <article className="rounded-2xl bg-gradient-primary p-6 sm:p-10 shadow-glow">
+          <div className="flex flex-col md:flex-row items-center gap-6 md:gap-10">
+            <div className="flex-shrink-0 bg-white/95 rounded-xl px-6 py-5 sm:px-8 sm:py-6 flex items-center justify-center w-full md:w-auto">
+              <img
+                src={akerLogo.url}
+                alt="AKER Clothing logo"
+                className="h-12 sm:h-16 w-auto object-contain"
+              />
+            </div>
+            <div className="flex-1 text-center md:text-left text-white">
+              <h2 className="text-2xl sm:text-3xl font-extrabold mb-1">AKER Clothing</h2>
+              <p className="text-sm sm:text-base font-medium opacity-90 mb-3 italic">
+                Gymwear & Streetwear with a purpose
+              </p>
+              <p className="text-sm sm:text-base opacity-90 leading-relaxed mb-5 max-w-2xl">
+                AKER Clothing is a UK-based gymwear and streetwear brand built around mental health awareness. With every purchase, AKER donates £1 to mental health charities — because looking after yourself starts from the outside in. Wear it with purpose.
+              </p>
+              <Button variant="hero" asChild className="rounded-full min-h-[44px]">
+                <a
+                  href="https://www.akerclothing.co.uk"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="focus-ring"
+                >
+                  Visit AKER
+                  <ArrowRight className="ml-2 h-4 w-4" />
+                </a>
+              </Button>
+            </div>
+          </div>
+        </article>
+      </section>
+
       {/* Features Grid */}
       <section className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+
         {features.map((feature, index) => <article key={index} className="surface-card p-6 text-center group">
             <div className="inline-flex items-center justify-center w-12 h-12 mb-4 rounded-full bg-gradient-primary">
               <feature.icon className="h-6 w-6 text-primary-foreground" />
